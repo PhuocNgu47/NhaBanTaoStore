@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Admin User",
+    "email": "admin@example.com",
+    "password": "$2a$10$YourHashedPasswordHere",
+    "role": "admin",
+    "phone": "0123456789",
+    "isEmailVerified": true,
+    "isActive": true
+  },
+  {
+    "name": "Test User",
+    "email": "user@example.com",
+    "password": "$2a$10$YourHashedPasswordHere",
+    "role": "user",
+    "phone": "0987654321",
+    "isEmailVerified": true,
+    "isActive": true
+  }
+]
+

@@ -1,0 +1,503 @@
+### API Testing với REST Client (VS Code Extension)
+### Install: VS Code Extensions → Search "REST Client"
+### Sau đó click "Send Request" trên mỗi request
+
+@baseUrl = http://localhost:5000
+@token = YOUR_TOKEN_HERE
+@adminToken = YOUR_ADMIN_TOKEN_HERE
+
+### ============================================
+### HEALTH CHECK
+### ============================================
+
+GET {{baseUrl}}/api/health
+
+###
+
+GET {{baseUrl}}/api
+
+###
+
+### ============================================
+### AUTHENTICATION
+### ============================================
+
+### Register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Nguyễn Văn Test",
+  "email": "test@example.com",
+  "password": "password123",
+  "phone": "0901234567"
+}
+
+###
+
+### Login (Admin)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+###
+
+### Login (User)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+###
+
+### Verify Token
+POST {{baseUrl}}/api/auth/verify
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================
+### PRODUCTS
+### ============================================
+
+### Get All Products
+GET {{baseUrl}}/api/products
+
+###
+
+### Get Products với Filters
+GET {{baseUrl}}/api/products?category=iPhone&page=1&limit=10&sort=-price
+
+###
+
+### Get Product by ID
+GET {{baseUrl}}/api/products/507f1f77bcf86cd799439011
+
+###
+
+### Create Product (Admin)
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "iPhone 16 Pro",
+  "slug": "iphone-16-pro",
+  "sku": "IP16P",
+  "price": 32000000,
+  "originalPrice": 35000000,
+  "category": "iPhone",
+  "description": "iPhone 16 Pro mới nhất",
+  "image": "https://example.com/image.jpg",
+  "variants": [
+    {
+      "sku": "IP16P-256-BLU",
+      "name": "iPhone 16 Pro 256GB - Blue",
+      "price": 32000000,
+      "stock": 100,
+      "attributes": {
+        "color": "Blue",
+        "storage": "256GB"
+      }
+    }
+  ]
+}
+
+###
+
+### Update Product (Admin)
+PUT {{baseUrl}}/api/products/507f1f77bcf86cd799439011
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": 31000000,
+  "stock": 80
+}
+
+###
+
+### Delete Product (Admin)
+DELETE {{baseUrl}}/api/products/507f1f77bcf86cd799439011
+Authorization: Bearer {{adminToken}}
+
+###
+
+### ============================================
+### CART
+### ============================================
+
+### Get Cart
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{token}}
+
+###
+
+### Add to Cart
+POST {{baseUrl}}/api/cart/items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "507f1f77bcf86cd799439011",
+  "variantId": "507f1f77bcf86cd799439012",
+  "quantity": 1
+}
+
+###
+
+### Update Cart Item
+PUT {{baseUrl}}/api/cart/items/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 3
+}
+
+###
+
+### Remove from Cart
+DELETE {{baseUrl}}/api/cart/items/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+
+###
+
+### Clear Cart
+DELETE {{baseUrl}}/api/cart
+Authorization: Bearer {{token}}
+
+###
+
+### Merge Guest Cart
+POST {{baseUrl}}/api/cart/merge
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sessionId": "guest-session-123"
+}
+
+###
+
+### ============================================
+### ORDERS
+### ============================================
+
+### Get Orders
+GET {{baseUrl}}/api/orders
+Authorization: Bearer {{token}}
+
+###
+
+### Get Orders với Filters
+GET {{baseUrl}}/api/orders?status=delivered&page=1&limit=10
+Authorization: Bearer {{token}}
+
+###
+
+### Get Order by ID
+GET {{baseUrl}}/api/orders/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+
+###
+
+### Create Order
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "507f1f77bcf86cd799439011",
+      "variantId": "507f1f77bcf86cd799439012",
+      "quantity": 1
+    }
+  ],
+  "shippingAddress": {
+    "name": "Nguyễn Văn A",
+    "phone": "0901234567",
+    "addressLine1": "123 Đường Nguyễn Huệ",
+    "ward": "Phường Bến Nghé",
+    "district": "Quận 1",
+    "city": "Hồ Chí Minh",
+    "country": "Vietnam"
+  },
+  "paymentMethod": "cod",
+  "couponCode": "WELCOME10"
+}
+
+###
+
+### Cancel Order
+PATCH {{baseUrl}}/api/orders/507f1f77bcf86cd799439011/cancel
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "cancellationReason": "Không còn nhu cầu"
+}
+
+###
+
+### Update Order Status (Admin)
+PATCH {{baseUrl}}/api/orders/507f1f77bcf86cd799439011/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "shipped",
+  "trackingNumber": "VN123456789",
+  "shippingCompany": "Vietnam Post"
+}
+
+###
+
+### Get Guest Order
+GET {{baseUrl}}/api/orders/guest/user@example.com/1735689600000
+
+###
+
+### ============================================
+### REVIEWS
+### ============================================
+
+### Get Reviews by Product
+GET {{baseUrl}}/api/reviews/product/507f1f77bcf86cd799439011?status=approved&rating=5
+
+###
+
+### Create Review
+POST {{baseUrl}}/api/reviews
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "507f1f77bcf86cd799439011",
+  "variantId": "507f1f77bcf86cd799439012",
+  "orderId": "507f1f77bcf86cd799439013",
+  "rating": 5,
+  "title": "Sản phẩm tuyệt vời!",
+  "comment": "Rất hài lòng với sản phẩm này",
+  "images": ["https://example.com/review1.jpg"]
+}
+
+###
+
+### Update Review
+PUT {{baseUrl}}/api/reviews/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rating": 4,
+  "comment": "Sản phẩm tốt nhưng giá hơi cao"
+}
+
+###
+
+### Delete Review
+DELETE {{baseUrl}}/api/reviews/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+
+###
+
+### Mark Review as Helpful
+POST {{baseUrl}}/api/reviews/507f1f77bcf86cd799439011/helpful
+Authorization: Bearer {{token}}
+
+###
+
+### Moderate Review (Admin)
+PATCH {{baseUrl}}/api/reviews/507f1f77bcf86cd799439011/moderate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "approved",
+  "rejectionReason": null
+}
+
+###
+
+### ============================================
+### WISHLIST
+### ============================================
+
+### Get Wishlist
+GET {{baseUrl}}/api/wishlist
+Authorization: Bearer {{token}}
+
+###
+
+### Add to Wishlist
+POST {{baseUrl}}/api/wishlist
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "507f1f77bcf86cd799439011",
+  "variantId": "507f1f77bcf86cd799439012"
+}
+
+###
+
+### Remove from Wishlist
+DELETE {{baseUrl}}/api/wishlist
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": "507f1f77bcf86cd799439011",
+  "variantId": "507f1f77bcf86cd799439012"
+}
+
+###
+
+### Check if Product in Wishlist
+GET {{baseUrl}}/api/wishlist/check/507f1f77bcf86cd799439011/507f1f77bcf86cd799439012
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================
+### COUPONS
+### ============================================
+
+### Get All Coupons
+GET {{baseUrl}}/api/coupons
+
+###
+
+### Validate Coupon
+POST {{baseUrl}}/api/coupons/validate
+Content-Type: application/json
+
+{
+  "code": "WELCOME10",
+  "userId": "507f1f77bcf86cd799439011",
+  "totalAmount": 1000000
+}
+
+###
+
+### Create Coupon (Admin)
+POST {{baseUrl}}/api/coupons
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "BLACKFRIDAY50",
+  "name": "Black Friday 50%",
+  "discountType": "percentage",
+  "discountValue": 50,
+  "minPurchase": 1000000,
+  "maxDiscount": 500000,
+  "validFrom": "2024-11-01T00:00:00.000Z",
+  "validTo": "2024-11-30T23:59:59.000Z",
+  "usageLimit": 100,
+  "isActive": true
+}
+
+###
+
+### ============================================
+### ADDRESSES
+### ============================================
+
+### Get Addresses
+GET {{baseUrl}}/api/addresses
+Authorization: Bearer {{token}}
+
+###
+
+### Create Address
+POST {{baseUrl}}/api/addresses
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Nguyễn Văn A",
+  "phone": "0901234567",
+  "address": "123 Đường Nguyễn Huệ",
+  "ward": "Phường Bến Nghé",
+  "district": "Quận 1",
+  "city": "Hồ Chí Minh",
+  "country": "Vietnam",
+  "zipCode": "700000",
+  "isDefault": true,
+  "label": "Nhà riêng"
+}
+
+###
+
+### Update Address
+PUT {{baseUrl}}/api/addresses/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "phone": "0909876543",
+  "address": "456 Đường Lê Lợi"
+}
+
+###
+
+### Delete Address
+DELETE {{baseUrl}}/api/addresses/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+
+###
+
+### Set Default Address
+PATCH {{baseUrl}}/api/addresses/507f1f77bcf86cd799439011/default
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================
+### USERS
+### ============================================
+
+### Get User Profile
+GET {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+
+###
+
+### Update User Profile
+PUT {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Nguyễn Văn Updated",
+  "phone": "0909876543"
+}
+
+###
+
+### ============================================
+### STATISTICS (Admin Only)
+### ============================================
+
+### Get Statistics
+GET {{baseUrl}}/api/statistics
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get Sales Statistics
+GET {{baseUrl}}/api/statistics/sales?startDate=2024-01-01&endDate=2024-12-31
+Authorization: Bearer {{adminToken}}
+
+###
+

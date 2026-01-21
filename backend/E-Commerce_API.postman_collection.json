@@ -1,0 +1,1120 @@
+{
+	"info": {
+		"_postman_id": "ecommerce-api-collection",
+		"name": "E-Commerce API - Apple Store",
+		"description": "API collection cho hệ thống e-commerce bán sản phẩm Apple",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "health"]
+						}
+					}
+				},
+				{
+					"name": "API Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api",
+							"host": ["{{baseUrl}}"],
+							"path": ["api"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set(\"token\", jsonData.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Nguyễn Văn Test\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"0901234567\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set(\"token\", jsonData.token);",
+									"        pm.environment.set(\"adminToken\", jsonData.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login (User)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set(\"token\", jsonData.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Verify Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "verify"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "category",
+									"value": "iPhone",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "sort",
+									"value": "-price",
+									"disabled": true
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "PRODUCT_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Product (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"iPhone 16 Pro\",\n  \"slug\": \"iphone-16-pro\",\n  \"sku\": \"IP16P\",\n  \"price\": 32000000,\n  \"originalPrice\": 35000000,\n  \"category\": \"iPhone\",\n  \"description\": \"iPhone 16 Pro mới nhất\",\n  \"image\": \"https://example.com/image.jpg\",\n  \"variants\": [\n    {\n      \"sku\": \"IP16P-256-BLU\",\n      \"name\": \"iPhone 16 Pro 256GB - Blue\",\n      \"price\": 32000000,\n      \"stock\": 100,\n      \"attributes\": {\n        \"color\": \"Blue\",\n        \"storage\": \"256GB\"\n      }\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products"]
+						}
+					}
+				},
+				{
+					"name": "Update Product (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"price\": 31000000,\n  \"stock\": 80\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/products/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "PRODUCT_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Product (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/products/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "products", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "PRODUCT_ID_HERE"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Cart",
+			"item": [
+				{
+					"name": "Get Cart",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/cart",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cart"]
+						}
+					}
+				},
+				{
+					"name": "Add to Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"variantId\": \"VARIANT_ID_HERE\",\n  \"quantity\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/cart/items",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cart", "items"]
+						}
+					}
+				},
+				{
+					"name": "Update Cart Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"quantity\": 3\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/cart/items/:itemId",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cart", "items", ":itemId"],
+							"variable": [
+								{
+									"key": "itemId",
+									"value": "ITEM_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remove from Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/cart/items/:itemId",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cart", "items", ":itemId"],
+							"variable": [
+								{
+									"key": "itemId",
+									"value": "ITEM_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Clear Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/cart",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cart"]
+						}
+					}
+				},
+				{
+					"name": "Merge Carts",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"guest-session-123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/cart/merge",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cart", "merge"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Get Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders?status=delivered&page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders"],
+							"query": [
+								{
+									"key": "status",
+									"value": "delivered",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Order by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "ORDER_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"items\": [\n    {\n      \"productId\": \"PRODUCT_ID_HERE\",\n      \"variantId\": \"VARIANT_ID_HERE\",\n      \"quantity\": 1\n    }\n  ],\n  \"shippingAddress\": {\n    \"name\": \"Nguyễn Văn A\",\n    \"phone\": \"0901234567\",\n    \"addressLine1\": \"123 Đường Nguyễn Huệ\",\n    \"ward\": \"Phường Bến Nghé\",\n    \"district\": \"Quận 1\",\n    \"city\": \"Hồ Chí Minh\",\n    \"country\": \"Vietnam\"\n  },\n  \"paymentMethod\": \"cod\",\n  \"couponCode\": \"WELCOME10\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders"]
+						}
+					}
+				},
+				{
+					"name": "Cancel Order",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cancellationReason\": \"Không còn nhu cầu\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/:id/cancel",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", ":id", "cancel"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "ORDER_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Order Status (Admin)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"shipped\",\n  \"trackingNumber\": \"VN123456789\",\n  \"shippingCompany\": \"Vietnam Post\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/:id/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "orders", ":id", "status"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "ORDER_ID_HERE"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Reviews",
+			"item": [
+				{
+					"name": "Get Reviews by Product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/reviews/product/:productId?status=approved&rating=5",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "reviews", "product", ":productId"],
+							"query": [
+								{
+									"key": "status",
+									"value": "approved"
+								},
+								{
+									"key": "rating",
+									"value": "5",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "productId",
+									"value": "PRODUCT_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Review",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"variantId\": \"VARIANT_ID_HERE\",\n  \"orderId\": \"ORDER_ID_HERE\",\n  \"rating\": 5,\n  \"title\": \"Sản phẩm tuyệt vời!\",\n  \"comment\": \"Rất hài lòng với sản phẩm này\",\n  \"images\": [\"https://example.com/review1.jpg\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/reviews",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "reviews"]
+						}
+					}
+				},
+				{
+					"name": "Update Review",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rating\": 4,\n  \"comment\": \"Sản phẩm tốt nhưng giá hơi cao\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/reviews/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "reviews", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "REVIEW_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Review",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/reviews/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "reviews", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "REVIEW_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Mark Review as Helpful",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/reviews/:id/helpful",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "reviews", ":id", "helpful"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "REVIEW_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Moderate Review (Admin)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"approved\",\n  \"rejectionReason\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/reviews/:id/moderate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "reviews", ":id", "moderate"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "REVIEW_ID_HERE"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Wishlist",
+			"item": [
+				{
+					"name": "Get Wishlist",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/wishlist",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "wishlist"]
+						}
+					}
+				},
+				{
+					"name": "Add to Wishlist",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"variantId\": \"VARIANT_ID_HERE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/wishlist",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "wishlist"]
+						}
+					}
+				},
+				{
+					"name": "Remove from Wishlist",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"variantId\": \"VARIANT_ID_HERE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/wishlist",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "wishlist"]
+						}
+					}
+				},
+				{
+					"name": "Check if Product in Wishlist",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/wishlist/check/:productId/:variantId",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "wishlist", "check", ":productId", ":variantId"],
+							"variable": [
+								{
+									"key": "productId",
+									"value": "PRODUCT_ID_HERE"
+								},
+								{
+									"key": "variantId",
+									"value": "VARIANT_ID_HERE"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Coupons",
+			"item": [
+				{
+					"name": "Get All Coupons",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/coupons",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "coupons"]
+						}
+					}
+				},
+				{
+					"name": "Validate Coupon",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"WELCOME10\",\n  \"userId\": \"USER_ID_HERE\",\n  \"totalAmount\": 1000000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/coupons/validate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "coupons", "validate"]
+						}
+					}
+				},
+				{
+					"name": "Create Coupon (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"BLACKFRIDAY50\",\n  \"name\": \"Black Friday 50%\",\n  \"discountType\": \"percentage\",\n  \"discountValue\": 50,\n  \"minPurchase\": 1000000,\n  \"maxDiscount\": 500000,\n  \"validFrom\": \"2024-11-01T00:00:00.000Z\",\n  \"validTo\": \"2024-11-30T23:59:59.000Z\",\n  \"usageLimit\": 100,\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/coupons",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "coupons"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Addresses",
+			"item": [
+				{
+					"name": "Get Addresses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/addresses",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "addresses"]
+						}
+					}
+				},
+				{
+					"name": "Create Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Nguyễn Văn A\",\n  \"phone\": \"0901234567\",\n  \"address\": \"123 Đường Nguyễn Huệ\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"district\": \"Quận 1\",\n  \"city\": \"Hồ Chí Minh\",\n  \"country\": \"Vietnam\",\n  \"zipCode\": \"700000\",\n  \"isDefault\": true,\n  \"label\": \"Nhà riêng\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/addresses",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "addresses"]
+						}
+					}
+				},
+				{
+					"name": "Update Address",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"0909876543\",\n  \"address\": \"456 Đường Lê Lợi\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/addresses/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "addresses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "ADDRESS_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Address",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/addresses/:id",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "addresses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "ADDRESS_ID_HERE"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Set Default Address",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/addresses/:id/default",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "addresses", ":id", "default"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "ADDRESS_ID_HERE"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "me"]
+						}
+					}
+				},
+				{
+					"name": "Update User Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Nguyễn Văn Updated\",\n  \"phone\": \"0909876543\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "me"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

@@ -1,0 +1,16 @@
+[
+  {
+    "code": "WELCOME10",
+    "description": "Giảm 10% cho khách hàng mới",
+    "discountType": "percentage",
+    "discountValue": 10,
+    "minPurchaseAmount": 0,
+    "maxDiscountAmount": 1000000,
+    "startDate": "2024-01-01T00:00:00.000Z",
+    "endDate": "2025-12-31T23:59:59.999Z",
+    "usageLimit": 1000,
+    "usedCount": 0,
+    "isActive": true
+  }
+]
+

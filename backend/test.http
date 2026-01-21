@@ -1,0 +1,270 @@
+### ============================================
+### E-COMMERCE API TEST REQUESTS
+### ============================================
+### Sử dụng VS Code REST Client Extension
+### Extension: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseUrl = http://localhost:5000/api
+@token = YOUR_TOKEN_HERE
+
+### ============================================
+### AUTHENTICATION
+### ============================================
+
+### Register User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "password123",
+  "confirmPassword": "password123"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### Verify Token
+POST {{baseUrl}}/auth/verify
+Authorization: Bearer {{token}}
+
+### ============================================
+### PRODUCTS (Public)
+### ============================================
+
+### Get All Products
+GET {{baseUrl}}/products
+
+### Get Products with Filter
+GET {{baseUrl}}/products?category=iPhone&minPrice=10000000&maxPrice=50000000&page=1&limit=12
+
+### Get Product by ID
+GET {{baseUrl}}/products/PRODUCT_ID_HERE
+
+### Get Product Reviews
+GET {{baseUrl}}/products/PRODUCT_ID_HERE/reviews?page=1&limit=10&sort=newest
+
+### ============================================
+### PRODUCTS (Admin - Need Token)
+### ============================================
+
+### Create Product
+POST {{baseUrl}}/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "iPhone 15 Pro Max",
+  "description": "Latest iPhone model",
+  "price": 30000000,
+  "originalPrice": 35000000,
+  "category": "iPhone",
+  "image": "https://example.com/image.jpg",
+  "stock": 50
+}
+
+### Update Product
+PUT {{baseUrl}}/products/PRODUCT_ID_HERE
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "price": 28000000,
+  "stock": 45
+}
+
+### Delete Product
+DELETE {{baseUrl}}/products/PRODUCT_ID_HERE
+Authorization: Bearer {{token}}
+
+### Add Review to Product
+POST {{baseUrl}}/products/PRODUCT_ID_HERE/reviews
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Sản phẩm rất tốt!"
+}
+
+### ============================================
+### ORDERS (Need Token)
+### ============================================
+
+### Get User Orders
+GET {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+
+### Get Order by ID
+GET {{baseUrl}}/orders/ORDER_ID_HERE
+Authorization: Bearer {{token}}
+
+### Create Order
+POST {{baseUrl}}/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "productId": "PRODUCT_ID_HERE",
+      "quantity": 1,
+      "price": 20000000
+    }
+  ],
+  "shippingAddress": {
+    "name": "Nguyen Van A",
+    "phone": "0912345678",
+    "address": "123 Đường ABC",
+    "ward": "Phường 1",
+    "district": "Quận 1",
+    "city": "Hồ Chí Minh",
+    "country": "Vietnam"
+  },
+  "paymentMethod": "cash_on_delivery"
+}
+
+### Update Order Status (Admin)
+PATCH {{baseUrl}}/orders/ORDER_ID_HERE/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "confirmed",
+  "note": "Đơn hàng đã được xác nhận"
+}
+
+### ============================================
+### COUPONS
+### ============================================
+
+### Validate Coupon (Public)
+POST {{baseUrl}}/coupons/validate
+Content-Type: application/json
+
+{
+  "code": "DISCOUNT10",
+  "subtotal": 1000000
+}
+
+### Get All Coupons (Admin)
+GET {{baseUrl}}/coupons
+Authorization: Bearer {{token}}
+
+### Create Coupon (Admin)
+POST {{baseUrl}}/coupons
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "code": "NEWYEAR2024",
+  "name": "Giảm giá năm mới",
+  "description": "Giảm 20% cho đơn hàng trên 1 triệu",
+  "discountType": "percentage",
+  "discountValue": 20,
+  "minPurchaseAmount": 1000000,
+  "maxDiscountAmount": 500000,
+  "usageLimit": 100,
+  "validFrom": "2024-01-01",
+  "validUntil": "2024-12-31"
+}
+
+### ============================================
+### USERS (Need Token)
+### ============================================
+
+### Get User Profile
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+
+### Update User Profile
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "phone": "0912345678",
+  "address": "123 ABC Street",
+  "city": "Ho Chi Minh",
+  "country": "Vietnam"
+}
+
+### Get All Users (Admin)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### ============================================
+### ADDRESSES (Need Token)
+### ============================================
+
+### Get User Addresses
+GET {{baseUrl}}/addresses
+Authorization: Bearer {{token}}
+
+### Create Address
+POST {{baseUrl}}/addresses
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Nguyen Van A",
+  "phone": "0912345678",
+  "address": "123 Đường ABC",
+  "ward": "Phường 1",
+  "district": "Quận 1",
+  "city": "Hồ Chí Minh",
+  "country": "Vietnam",
+  "isDefault": true,
+  "label": "Nhà riêng"
+}
+
+### Update Address
+PUT {{baseUrl}}/addresses/ADDRESS_ID_HERE
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "phone": "0987654321"
+}
+
+### Set Default Address
+PATCH {{baseUrl}}/addresses/ADDRESS_ID_HERE/set-default
+Authorization: Bearer {{token}}
+
+### Delete Address
+DELETE {{baseUrl}}/addresses/ADDRESS_ID_HERE
+Authorization: Bearer {{token}}
+
+### ============================================
+### STATISTICS (Admin Only)
+### ============================================
+
+### Get Overview Statistics
+GET {{baseUrl}}/statistics/overview
+Authorization: Bearer {{token}}
+
+### Get Revenue Statistics
+GET {{baseUrl}}/statistics/revenue?period=30days
+Authorization: Bearer {{token}}
+
+### Get Order Statistics
+GET {{baseUrl}}/statistics/orders
+Authorization: Bearer {{token}}
+
+### Get Product Statistics
+GET {{baseUrl}}/statistics/products
+Authorization: Bearer {{token}}
+
+### Get Recent Orders
+GET {{baseUrl}}/statistics/recent-orders?limit=10
+Authorization: Bearer {{token}}
+

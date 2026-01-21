@@ -1,0 +1,684 @@
+[
+  {
+    "sku": "IPAD-PRO-M4-13-WIFI-256",
+    "name": "iPad Pro M4 13 inch Openbox Bản Wifi | Chính hãng Apple",
+    "slug": "ipad-pro-m4-13-inch-openbox-wifi",
+    "brand": "Apple",
+    "description": "iPad Pro M4 13 inch với chip M4 mạnh mẽ nhất, màn hình Ultra Retina XDR OLED, hỗ trợ Apple Pencil Pro. Phiên bản Openbox như mới với bảo hành chính hãng.",
+    "category": "ipad",
+    "subcategory": "ipad-pro",
+    "price": 27200000,
+    "originalPrice": 49900000,
+    "discountPercentage": 45,
+    "image": "/products/ipad-pro-m4-13.jpg",
+    "images": ["/products/ipad-pro-m4-13.jpg", "/products/ipad-pro-m4-13-2.jpg", "/products/ipad-pro-m4-13-3.jpg"],
+    "variants": [
+      {
+        "sku": "IPAD-PRO-M4-13-WIFI-256-GRAY",
+        "name": "256GB - Xám",
+        "attributes": { "storage": "256GB", "color": "Xám" },
+        "price": 27200000,
+        "originalPrice": 49900000,
+        "stock": 5,
+        "image": "/products/ipad-pro-m4-13-gray.jpg"
+      },
+      {
+        "sku": "IPAD-PRO-M4-13-WIFI-256-SILVER",
+        "name": "256GB - Bạc",
+        "attributes": { "storage": "256GB", "color": "Bạc" },
+        "price": 27200000,
+        "originalPrice": 49900000,
+        "stock": 3,
+        "image": "/products/ipad-pro-m4-13-silver.jpg"
+      },
+      {
+        "sku": "IPAD-PRO-M4-13-WIFI-512-GRAY",
+        "name": "512GB - Xám",
+        "attributes": { "storage": "512GB", "color": "Xám" },
+        "price": 32000000,
+        "originalPrice": 55900000,
+        "stock": 2,
+        "image": "/products/ipad-pro-m4-13-gray.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "13 inch Ultra Retina XDR OLED",
+      "chip": "Apple M4",
+      "ram": "8GB",
+      "storage": "256GB / 512GB / 1TB",
+      "camera": "12MP Wide + 10MP Ultra Wide",
+      "battery": "10 giờ sử dụng",
+      "weight": "579g",
+      "connectivity": "WiFi 6E, Bluetooth 5.3"
+    },
+    "tags": ["iPad", "iPad Pro", "M4", "Openbox", "13 inch"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 10,
+    "rating": 4.8,
+    "reviewCount": 25,
+    "status": "active",
+    "featured": true
+  },
+  {
+    "sku": "IPAD-PRO-M2-12.9-WIFI",
+    "name": "iPad Pro M2 12.9 inch Nguyên Seal Bản Wifi | Chính Hãng Apple",
+    "slug": "ipad-pro-m2-12-9-inch-nguyen-seal-wifi",
+    "brand": "Apple",
+    "description": "iPad Pro M2 12.9 inch nguyên seal với màn hình Liquid Retina XDR, chip M2 cực mạnh, hỗ trợ Apple Pencil 2 và Magic Keyboard.",
+    "category": "ipad",
+    "subcategory": "ipad-pro",
+    "price": 20800000,
+    "originalPrice": 29150000,
+    "discountPercentage": 29,
+    "image": "/products/ipad-pro-m2-12.9.jpg",
+    "images": ["/products/ipad-pro-m2-12.9.jpg", "/products/ipad-pro-m2-12.9-2.jpg"],
+    "variants": [
+      {
+        "sku": "IPAD-PRO-M2-12.9-WIFI-128-GRAY",
+        "name": "128GB - Xám",
+        "attributes": { "storage": "128GB", "color": "Xám" },
+        "price": 20800000,
+        "originalPrice": 29150000,
+        "stock": 0,
+        "image": "/products/ipad-pro-m2-12.9-gray.jpg"
+      },
+      {
+        "sku": "IPAD-PRO-M2-12.9-WIFI-256-GRAY",
+        "name": "256GB - Xám",
+        "attributes": { "storage": "256GB", "color": "Xám" },
+        "price": 24800000,
+        "originalPrice": 33150000,
+        "stock": 4,
+        "image": "/products/ipad-pro-m2-12.9-gray.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "12.9 inch Liquid Retina XDR",
+      "chip": "Apple M2",
+      "ram": "8GB",
+      "storage": "128GB / 256GB / 512GB",
+      "camera": "12MP Wide + 10MP Ultra Wide",
+      "battery": "10 giờ sử dụng",
+      "weight": "682g",
+      "connectivity": "WiFi 6, Bluetooth 5.3"
+    },
+    "tags": ["iPad", "iPad Pro", "M2", "Nguyên Seal", "12.9 inch"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 4,
+    "rating": 4.7,
+    "reviewCount": 42,
+    "status": "active",
+    "featured": true
+  },
+  {
+    "sku": "IPAD-PRO-M2-11-CPO-WIFI",
+    "name": "iPad Pro M2 11 inch Nguyên Seal CPO Bản Wifi | Chính Hãng Apple",
+    "slug": "ipad-pro-m2-11-inch-nguyen-seal-cpo-wifi",
+    "brand": "Apple",
+    "description": "iPad Pro M2 11 inch phiên bản CPO (Certified Pre-Owned) như mới với bảo hành chính hãng. Chip M2 mạnh mẽ, màn hình Liquid Retina 120Hz.",
+    "category": "ipad",
+    "subcategory": "ipad-pro",
+    "price": 18100000,
+    "originalPrice": 26000000,
+    "discountPercentage": 30,
+    "image": "/products/ipad-pro-m2-11.jpg",
+    "images": ["/products/ipad-pro-m2-11.jpg", "/products/ipad-pro-m2-11-2.jpg", "/products/ipad-pro-m2-11-3.jpg"],
+    "variants": [
+      {
+        "sku": "IPAD-PRO-M2-11-CPO-WIFI-128-GRAY",
+        "name": "128GB - Xám",
+        "attributes": { "storage": "128GB", "color": "Xám" },
+        "price": 18100000,
+        "originalPrice": 26000000,
+        "stock": 8,
+        "image": "/products/ipad-pro-m2-11-gray.jpg"
+      },
+      {
+        "sku": "IPAD-PRO-M2-11-CPO-WIFI-128-SILVER",
+        "name": "128GB - Bạc",
+        "attributes": { "storage": "128GB", "color": "Bạc" },
+        "price": 18100000,
+        "originalPrice": 26000000,
+        "stock": 5,
+        "image": "/products/ipad-pro-m2-11-silver.jpg"
+      },
+      {
+        "sku": "IPAD-PRO-M2-11-CPO-WIFI-256-GRAY",
+        "name": "256GB - Xám",
+        "attributes": { "storage": "256GB", "color": "Xám" },
+        "price": 22000000,
+        "originalPrice": 28000000,
+        "stock": 3,
+        "image": "/products/ipad-pro-m2-11-gray.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "11 inch Liquid Retina 120Hz",
+      "chip": "Apple M2",
+      "ram": "8GB",
+      "storage": "128GB / 256GB",
+      "camera": "12MP Wide + 10MP Ultra Wide",
+      "battery": "10 giờ sử dụng",
+      "weight": "466g",
+      "connectivity": "WiFi 6, Bluetooth 5.3"
+    },
+    "tags": ["iPad", "iPad Pro", "M2", "CPO", "11 inch", "Nguyên Seal"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 16,
+    "rating": 4.9,
+    "reviewCount": 58,
+    "status": "active",
+    "featured": true
+  },
+  {
+    "sku": "IPAD-AIR-M2-11-WIFI",
+    "name": "iPad Air M2 11 inch 2024 Nguyên Seal | Chính Hãng Apple",
+    "slug": "ipad-air-m2-11-inch-2024-nguyen-seal-wifi",
+    "brand": "Apple",
+    "description": "iPad Air M2 thế hệ mới 2024 với chip M2 mạnh mẽ, màn hình Liquid Retina 11 inch, hỗ trợ Apple Pencil Pro.",
+    "category": "ipad",
+    "subcategory": "ipad-air",
+    "price": 15990000,
+    "originalPrice": 19990000,
+    "discountPercentage": 20,
+    "image": "/products/ipad-air-m2-11.jpg",
+    "images": ["/products/ipad-air-m2-11.jpg", "/products/ipad-air-m2-11-2.jpg"],
+    "variants": [
+      {
+        "sku": "IPAD-AIR-M2-11-WIFI-128-BLUE",
+        "name": "128GB - Xanh",
+        "attributes": { "storage": "128GB", "color": "Xanh" },
+        "price": 15990000,
+        "originalPrice": 19990000,
+        "stock": 12,
+        "image": "/products/ipad-air-m2-11-blue.jpg"
+      },
+      {
+        "sku": "IPAD-AIR-M2-11-WIFI-128-PURPLE",
+        "name": "128GB - Tím",
+        "attributes": { "storage": "128GB", "color": "Tím" },
+        "price": 15990000,
+        "originalPrice": 19990000,
+        "stock": 8,
+        "image": "/products/ipad-air-m2-11-purple.jpg"
+      },
+      {
+        "sku": "IPAD-AIR-M2-11-WIFI-256-STARLIGHT",
+        "name": "256GB - Ánh Sao",
+        "attributes": { "storage": "256GB", "color": "Ánh Sao" },
+        "price": 19990000,
+        "originalPrice": 23990000,
+        "stock": 6,
+        "image": "/products/ipad-air-m2-11-starlight.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "11 inch Liquid Retina",
+      "chip": "Apple M2",
+      "ram": "8GB",
+      "storage": "128GB / 256GB",
+      "camera": "12MP Wide",
+      "battery": "10 giờ sử dụng",
+      "weight": "462g",
+      "connectivity": "WiFi 6, Bluetooth 5.3"
+    },
+    "tags": ["iPad", "iPad Air", "M2", "2024", "Nguyên Seal"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 26,
+    "rating": 4.6,
+    "reviewCount": 33,
+    "status": "active",
+    "featured": false
+  },
+  {
+    "sku": "IPAD-10-2022-WIFI",
+    "name": "iPad 10.9 inch 2022 Nguyên Seal | Chính Hãng Apple",
+    "slug": "ipad-10-9-inch-2022-nguyen-seal-wifi",
+    "brand": "Apple",
+    "description": "iPad 10.9 inch 2022 với chip A14 Bionic, màn hình Liquid Retina, thiết kế viền mỏng hiện đại. Phù hợp cho học sinh sinh viên.",
+    "category": "ipad",
+    "subcategory": "ipad",
+    "price": 9990000,
+    "originalPrice": 13190000,
+    "discountPercentage": 24,
+    "image": "/products/ipad-10-2022.jpg",
+    "images": ["/products/ipad-10-2022.jpg", "/products/ipad-10-2022-2.jpg"],
+    "variants": [
+      {
+        "sku": "IPAD-10-2022-WIFI-64-BLUE",
+        "name": "64GB - Xanh",
+        "attributes": { "storage": "64GB", "color": "Xanh" },
+        "price": 9990000,
+        "originalPrice": 13190000,
+        "stock": 20,
+        "image": "/products/ipad-10-2022-blue.jpg"
+      },
+      {
+        "sku": "IPAD-10-2022-WIFI-64-PINK",
+        "name": "64GB - Hồng",
+        "attributes": { "storage": "64GB", "color": "Hồng" },
+        "price": 9990000,
+        "originalPrice": 13190000,
+        "stock": 15,
+        "image": "/products/ipad-10-2022-pink.jpg"
+      },
+      {
+        "sku": "IPAD-10-2022-WIFI-256-SILVER",
+        "name": "256GB - Bạc",
+        "attributes": { "storage": "256GB", "color": "Bạc" },
+        "price": 13990000,
+        "originalPrice": 17190000,
+        "stock": 10,
+        "image": "/products/ipad-10-2022-silver.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "10.9 inch Liquid Retina",
+      "chip": "Apple A14 Bionic",
+      "ram": "4GB",
+      "storage": "64GB / 256GB",
+      "camera": "12MP Wide",
+      "battery": "10 giờ sử dụng",
+      "weight": "477g",
+      "connectivity": "WiFi 6, Bluetooth 5.2"
+    },
+    "tags": ["iPad", "2022", "Nguyên Seal", "Học sinh sinh viên"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 45,
+    "rating": 4.5,
+    "reviewCount": 89,
+    "status": "active",
+    "featured": false
+  },
+  {
+    "sku": "MACBOOK-AIR-M4-13-256",
+    "name": "MacBook Air M4 13.6 inch 16GB/256GB Nguyên Seal | Chính hãng Apple",
+    "slug": "macbook-air-m4-13-6-inch-16gb-256gb-nguyen-seal",
+    "brand": "Apple",
+    "description": "MacBook Air M4 thế hệ mới nhất với chip M4 cực mạnh, RAM 16GB, màn hình Liquid Retina 13.6 inch. Mỏng nhẹ, thời lượng pin cả ngày.",
+    "category": "macbook",
+    "subcategory": "macbook-air",
+    "price": 23300000,
+    "originalPrice": 29900000,
+    "discountPercentage": 22,
+    "image": "/products/macbook-air-m4-13.jpg",
+    "images": ["/products/macbook-air-m4-13.jpg", "/products/macbook-air-m4-13-2.jpg", "/products/macbook-air-m4-13-3.jpg"],
+    "variants": [
+      {
+        "sku": "MACBOOK-AIR-M4-13-256-MIDNIGHT",
+        "name": "256GB - Midnight",
+        "attributes": { "storage": "256GB", "color": "Midnight" },
+        "price": 23300000,
+        "originalPrice": 29900000,
+        "stock": 10,
+        "image": "/products/macbook-air-m4-13-midnight.jpg"
+      },
+      {
+        "sku": "MACBOOK-AIR-M4-13-256-STARLIGHT",
+        "name": "256GB - Starlight",
+        "attributes": { "storage": "256GB", "color": "Starlight" },
+        "price": 23300000,
+        "originalPrice": 29900000,
+        "stock": 8,
+        "image": "/products/macbook-air-m4-13-starlight.jpg"
+      },
+      {
+        "sku": "MACBOOK-AIR-M4-13-512-SILVER",
+        "name": "512GB - Silver",
+        "attributes": { "storage": "512GB", "color": "Silver" },
+        "price": 28300000,
+        "originalPrice": 34900000,
+        "stock": 5,
+        "image": "/products/macbook-air-m4-13-silver.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "13.6 inch Liquid Retina",
+      "chip": "Apple M4",
+      "ram": "16GB",
+      "storage": "256GB / 512GB SSD",
+      "camera": "1080p FaceTime HD",
+      "battery": "18 giờ sử dụng",
+      "weight": "1.24kg",
+      "ports": "2x Thunderbolt 4, MagSafe 3, 3.5mm jack"
+    },
+    "tags": ["MacBook", "MacBook Air", "M4", "Nguyên Seal", "13 inch"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 23,
+    "rating": 4.9,
+    "reviewCount": 45,
+    "status": "active",
+    "featured": true
+  },
+  {
+    "sku": "MACBOOK-AIR-M4-13-OPENBOX",
+    "name": "MacBook Air M4 13.6 inch 16GB/256GB Openbox | Chính hãng Apple",
+    "slug": "macbook-air-m4-13-6-inch-16gb-256gb-openbox",
+    "brand": "Apple",
+    "description": "MacBook Air M4 phiên bản Openbox - đã mở hộp nhưng như mới 100%. Giá ưu đãi hơn nguyên seal với cùng chất lượng.",
+    "category": "macbook",
+    "subcategory": "macbook-air",
+    "price": 21900000,
+    "originalPrice": 29900000,
+    "discountPercentage": 27,
+    "image": "/products/macbook-air-m4-13.jpg",
+    "images": ["/products/macbook-air-m4-13.jpg", "/products/macbook-air-m4-13-2.jpg"],
+    "variants": [
+      {
+        "sku": "MACBOOK-AIR-M4-13-256-OPENBOX-MIDNIGHT",
+        "name": "256GB - Midnight",
+        "attributes": { "storage": "256GB", "color": "Midnight" },
+        "price": 21900000,
+        "originalPrice": 29900000,
+        "stock": 3,
+        "image": "/products/macbook-air-m4-13-midnight.jpg"
+      },
+      {
+        "sku": "MACBOOK-AIR-M4-13-256-OPENBOX-SILVER",
+        "name": "256GB - Silver",
+        "attributes": { "storage": "256GB", "color": "Silver" },
+        "price": 21900000,
+        "originalPrice": 29900000,
+        "stock": 2,
+        "image": "/products/macbook-air-m4-13-silver.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "13.6 inch Liquid Retina",
+      "chip": "Apple M4",
+      "ram": "16GB",
+      "storage": "256GB SSD",
+      "camera": "1080p FaceTime HD",
+      "battery": "18 giờ sử dụng",
+      "weight": "1.24kg",
+      "ports": "2x Thunderbolt 4, MagSafe 3, 3.5mm jack"
+    },
+    "tags": ["MacBook", "MacBook Air", "M4", "Openbox", "13 inch"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 5,
+    "rating": 4.8,
+    "reviewCount": 12,
+    "status": "active",
+    "featured": false
+  },
+  {
+    "sku": "MACBOOK-AIR-M2-13-256",
+    "name": "MacBook Air M2 13 inch 8GB/256GB Nguyên Seal | Chính hãng Apple",
+    "slug": "macbook-air-m2-13-inch-8gb-256gb-nguyen-seal",
+    "brand": "Apple",
+    "description": "MacBook Air M2 với thiết kế mới mỏng nhẹ, chip M2 hiệu năng cao, màn hình Liquid Retina 13.6 inch. Lựa chọn hoàn hảo cho công việc và giải trí.",
+    "category": "macbook",
+    "subcategory": "macbook-air",
+    "price": 18500000,
+    "originalPrice": 25000000,
+    "discountPercentage": 26,
+    "image": "/products/macbook-air-m2-13.jpg",
+    "images": ["/products/macbook-air-m2-13.jpg", "/products/macbook-air-m2-13-2.jpg"],
+    "variants": [
+      {
+        "sku": "MACBOOK-AIR-M2-13-256-MIDNIGHT",
+        "name": "256GB - Midnight",
+        "attributes": { "storage": "256GB", "color": "Midnight" },
+        "price": 18500000,
+        "originalPrice": 25000000,
+        "stock": 0,
+        "image": "/products/macbook-air-m2-13-midnight.jpg"
+      },
+      {
+        "sku": "MACBOOK-AIR-M2-13-256-STARLIGHT",
+        "name": "256GB - Starlight",
+        "attributes": { "storage": "256GB", "color": "Starlight" },
+        "price": 18500000,
+        "originalPrice": 25000000,
+        "stock": 6,
+        "image": "/products/macbook-air-m2-13-starlight.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "13.6 inch Liquid Retina",
+      "chip": "Apple M2",
+      "ram": "8GB",
+      "storage": "256GB SSD",
+      "camera": "1080p FaceTime HD",
+      "battery": "18 giờ sử dụng",
+      "weight": "1.24kg",
+      "ports": "2x Thunderbolt 4, MagSafe 3, 3.5mm jack"
+    },
+    "tags": ["MacBook", "MacBook Air", "M2", "Nguyên Seal", "13 inch"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 6,
+    "rating": 4.7,
+    "reviewCount": 78,
+    "status": "active",
+    "featured": false
+  },
+  {
+    "sku": "MACBOOK-PRO-M3-14-512",
+    "name": "MacBook Pro M3 14 inch 8GB/512GB Nguyên Seal | Chính hãng Apple",
+    "slug": "macbook-pro-m3-14-inch-8gb-512gb-nguyen-seal",
+    "brand": "Apple",
+    "description": "MacBook Pro M3 14 inch với chip M3 mới, màn hình Liquid Retina XDR, hiệu năng đỉnh cao cho công việc chuyên nghiệp.",
+    "category": "macbook",
+    "subcategory": "macbook-pro",
+    "price": 35900000,
+    "originalPrice": 42990000,
+    "discountPercentage": 16,
+    "image": "/products/macbook-pro-m3-14.jpg",
+    "images": ["/products/macbook-pro-m3-14.jpg", "/products/macbook-pro-m3-14-2.jpg", "/products/macbook-pro-m3-14-3.jpg"],
+    "variants": [
+      {
+        "sku": "MACBOOK-PRO-M3-14-512-GRAY",
+        "name": "512GB - Space Gray",
+        "attributes": { "storage": "512GB", "color": "Space Gray" },
+        "price": 35900000,
+        "originalPrice": 42990000,
+        "stock": 5,
+        "image": "/products/macbook-pro-m3-14-gray.jpg"
+      },
+      {
+        "sku": "MACBOOK-PRO-M3-14-512-SILVER",
+        "name": "512GB - Silver",
+        "attributes": { "storage": "512GB", "color": "Silver" },
+        "price": 35900000,
+        "originalPrice": 42990000,
+        "stock": 3,
+        "image": "/products/macbook-pro-m3-14-silver.jpg"
+      }
+    ],
+    "specifications": {
+      "screen": "14.2 inch Liquid Retina XDR",
+      "chip": "Apple M3",
+      "ram": "8GB",
+      "storage": "512GB SSD",
+      "camera": "1080p FaceTime HD",
+      "battery": "17 giờ sử dụng",
+      "weight": "1.55kg",
+      "ports": "3x Thunderbolt 4, HDMI, SD card, MagSafe 3"
+    },
+    "tags": ["MacBook", "MacBook Pro", "M3", "Nguyên Seal", "14 inch"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 8,
+    "rating": 4.9,
+    "reviewCount": 34,
+    "status": "active",
+    "featured": true
+  },
+  {
+    "sku": "AIRPODS-PRO-2",
+    "name": "AirPods Pro 2 USB-C Nguyên Seal | Chính hãng Apple",
+    "slug": "airpods-pro-2-usb-c-nguyen-seal",
+    "brand": "Apple",
+    "description": "AirPods Pro 2 với cổng USB-C mới, chống ồn chủ động xuất sắc, âm thanh không gian, thời lượng pin cải thiện.",
+    "category": "am-thanh",
+    "subcategory": "airpods",
+    "price": 5290000,
+    "originalPrice": 6790000,
+    "discountPercentage": 22,
+    "image": "/products/airpods-pro-2.jpg",
+    "images": ["/products/airpods-pro-2.jpg", "/products/airpods-pro-2-2.jpg"],
+    "variants": [
+      {
+        "sku": "AIRPODS-PRO-2-USBC",
+        "name": "USB-C",
+        "attributes": { "type": "USB-C" },
+        "price": 5290000,
+        "originalPrice": 6790000,
+        "stock": 30,
+        "image": "/products/airpods-pro-2.jpg"
+      }
+    ],
+    "specifications": {
+      "chip": "Apple H2",
+      "anc": "Chống ồn chủ động",
+      "transparency": "Chế độ xuyên âm",
+      "battery": "6 giờ (case: 30 giờ)",
+      "charging": "USB-C, Magsafe, Qi",
+      "resistance": "IPX4"
+    },
+    "tags": ["AirPods", "AirPods Pro", "Chống ồn", "USB-C", "Âm thanh"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 30,
+    "rating": 4.8,
+    "reviewCount": 156,
+    "status": "active",
+    "featured": true
+  },
+  {
+    "sku": "AIRPODS-4",
+    "name": "AirPods 4 Nguyên Seal | Chính hãng Apple",
+    "slug": "airpods-4-nguyen-seal",
+    "brand": "Apple",
+    "description": "AirPods 4 thế hệ mới với thiết kế thoải mái, âm thanh xuất sắc, chip H2 cho kết nối ổn định.",
+    "category": "am-thanh",
+    "subcategory": "airpods",
+    "price": 3290000,
+    "originalPrice": 3990000,
+    "discountPercentage": 18,
+    "image": "/products/airpods-4.jpg",
+    "images": ["/products/airpods-4.jpg", "/products/airpods-4-2.jpg"],
+    "variants": [
+      {
+        "sku": "AIRPODS-4-STANDARD",
+        "name": "Tiêu chuẩn",
+        "attributes": { "type": "Standard" },
+        "price": 3290000,
+        "originalPrice": 3990000,
+        "stock": 25,
+        "image": "/products/airpods-4.jpg"
+      }
+    ],
+    "specifications": {
+      "chip": "Apple H2",
+      "audio": "Âm thanh không gian",
+      "battery": "5 giờ (case: 30 giờ)",
+      "charging": "USB-C",
+      "resistance": "IPX4"
+    },
+    "tags": ["AirPods", "AirPods 4", "Âm thanh"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 25,
+    "rating": 4.6,
+    "reviewCount": 42,
+    "status": "active",
+    "featured": false
+  },
+  {
+    "sku": "APPLE-PENCIL-PRO",
+    "name": "Apple Pencil Pro | Chính hãng Apple",
+    "slug": "apple-pencil-pro",
+    "brand": "Apple",
+    "description": "Apple Pencil Pro với tính năng squeeze, barrel roll, haptic feedback và Find My. Tương thích iPad Pro M4 và iPad Air M2.",
+    "category": "phu-kien-apple",
+    "subcategory": "apple-pencil",
+    "price": 3190000,
+    "originalPrice": 3490000,
+    "discountPercentage": 9,
+    "image": "/products/apple-pencil-pro.jpg",
+    "images": ["/products/apple-pencil-pro.jpg", "/products/apple-pencil-pro-2.jpg"],
+    "variants": [
+      {
+        "sku": "APPLE-PENCIL-PRO-1",
+        "name": "Apple Pencil Pro",
+        "attributes": {},
+        "price": 3190000,
+        "originalPrice": 3490000,
+        "stock": 20,
+        "image": "/products/apple-pencil-pro.jpg"
+      }
+    ],
+    "specifications": {
+      "compatibility": "iPad Pro M4, iPad Air M2",
+      "features": "Squeeze, Barrel roll, Haptic feedback, Find My",
+      "charging": "Wireless (magnetic)",
+      "hover": "Có"
+    },
+    "tags": ["Apple Pencil", "Phụ kiện", "iPad"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 20,
+    "rating": 4.7,
+    "reviewCount": 28,
+    "status": "active",
+    "featured": false
+  },
+  {
+    "sku": "MAGIC-KEYBOARD-IPAD-PRO-11",
+    "name": "Magic Keyboard cho iPad Pro 11 inch | Chính hãng Apple",
+    "slug": "magic-keyboard-ipad-pro-11-inch",
+    "brand": "Apple",
+    "description": "Magic Keyboard với trackpad tích hợp, bàn phím có đèn nền, cổng USB-C. Biến iPad Pro thành laptop chuyên nghiệp.",
+    "category": "phu-kien-ipad",
+    "subcategory": "keyboard",
+    "price": 7990000,
+    "originalPrice": 9490000,
+    "discountPercentage": 16,
+    "image": "/products/magic-keyboard-11.jpg",
+    "images": ["/products/magic-keyboard-11.jpg", "/products/magic-keyboard-11-2.jpg"],
+    "variants": [
+      {
+        "sku": "MAGIC-KEYBOARD-IPAD-PRO-11-BLACK",
+        "name": "Đen",
+        "attributes": { "color": "Đen" },
+        "price": 7990000,
+        "originalPrice": 9490000,
+        "stock": 8,
+        "image": "/products/magic-keyboard-11-black.jpg"
+      },
+      {
+        "sku": "MAGIC-KEYBOARD-IPAD-PRO-11-WHITE",
+        "name": "Trắng",
+        "attributes": { "color": "Trắng" },
+        "price": 7990000,
+        "originalPrice": 9490000,
+        "stock": 5,
+        "image": "/products/magic-keyboard-11-white.jpg"
+      }
+    ],
+    "specifications": {
+      "compatibility": "iPad Pro 11 inch (M4, M2, M1)",
+      "trackpad": "Có",
+      "backlight": "Có",
+      "port": "USB-C pass-through",
+      "angle": "130 độ"
+    },
+    "tags": ["Magic Keyboard", "Phụ kiện iPad", "Keyboard"],
+    "warranty": "12 tháng chính hãng Apple",
+    "returnPolicy": "Đổi trả miễn phí trong 7 ngày",
+    "stock": 13,
+    "rating": 4.8,
+    "reviewCount": 19,
+    "status": "active",
+    "featured": false
+  }
+]
