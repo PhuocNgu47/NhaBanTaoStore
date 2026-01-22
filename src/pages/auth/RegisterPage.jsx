@@ -111,17 +111,14 @@ const RegisterPage = () => {
         <div className="container-custom">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-5xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2">
-              {/* Left: Image */}
-              <div className="hidden lg:block relative">
-                <img
-                  src="/images/login-banner.jpg"
-                  alt="iPad trên bàn làm việc"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=1600&q=80';
-                  }}
-                />
+              {/* Right: gradient design */}
+              <div className="hidden lg:flex relative bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 items-center justify-center">
+                <div className="text-center text-white p-12">
+                  <div className="text-8xl mb-6">🍎</div>
+                  <h2 className="text-3xl font-bold mb-4">Apple Store</h2>
+                  <p className="text-lg opacity-90">Tham gia cùng chúng tôi</p>
+                  <p className="text-sm opacity-70 mt-2">Đăng ký để nhận ưu đãi đặc biệt</p>
+                </div>
               </div>
 
               {/* Right: Form */}

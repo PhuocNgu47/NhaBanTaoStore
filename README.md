@@ -18,6 +18,7 @@ Website thương mại điện tử bán sản phẩm Apple chính hãng tại V
 
 **Nhà Bán Táo Store** là dự án e-commerce fullstack với các tính năng:
 
+### 🛒 Khách hàng
 - 🛒 Xem danh sách sản phẩm, lọc theo danh mục và giá
 - 🔍 Tìm kiếm sản phẩm
 - 🛍️ Giỏ hàng và thanh toán
@@ -25,7 +26,17 @@ Website thương mại điện tử bán sản phẩm Apple chính hãng tại V
 - 📦 Tra cứu đơn hàng
 - 🎫 Áp dụng mã giảm giá
 - ⭐ Đánh giá sản phẩm
-- 🔐 Admin dashboard quản lý
+- ❤️ Danh sách yêu thích
+
+### 🔐 Admin Dashboard
+- 📊 **Dashboard** - Thống kê tổng quan với biểu đồ doanh thu, đơn hàng
+- 📦 **Sản phẩm** - CRUD sản phẩm với variants (màu sắc, dung lượng, loại)
+- 🗂️ **Danh mục** - Quản lý 3 cấp danh mục
+- 📋 **Đơn hàng** - Xem, cập nhật trạng thái, timeline
+- 👥 **Người dùng** - Quản lý users, phân quyền
+- 🎁 **Mã giảm giá** - Tạo coupon %, số tiền cố định
+- 📦 **Tồn kho** - Theo dõi stock, cảnh báo sắp hết
+- ⭐ **Khách hàng VIP** - Hệ thống loyalty points, 5 hạng thành viên
 
 ---
 
@@ -150,10 +161,16 @@ NhaBanTaoStore/
 │   │   │   ├── LoginPage.jsx      # Đăng nhập
 │   │   │   └── RegisterPage.jsx   # Đăng ký (3 bước)
 │   │   └── 📂 admin/              # Admin dashboard
-│   │       ├── DashboardPage.jsx  # Tổng quan
+│   │       ├── DashboardPage.jsx  # Tổng quan + biểu đồ
 │   │       ├── ProductsPage.jsx   # Quản lý sản phẩm
+│   │       ├── CategoriesPage.jsx # Quản lý danh mục 3 cấp
 │   │       ├── OrdersPage.jsx     # Quản lý đơn hàng
-│   │       └── UsersPage.jsx      # Quản lý users
+│   │       ├── OrderDetailPage.jsx# Chi tiết đơn hàng
+│   │       ├── UsersPage.jsx      # Quản lý users
+│   │       ├── CouponsPage.jsx    # Quản lý mã giảm giá
+│   │       ├── InventoryPage.jsx  # Quản lý tồn kho
+│   │       ├── CustomersPage.jsx  # Khách hàng VIP & Loyalty
+│   │       └── SettingsPage.jsx   # Cài đặt
 │   │
 │   ├── 📂 features/               # Redux slices
 │   │   ├── authSlice.js           # Auth state
@@ -283,6 +300,19 @@ npm run dev
   avatar: String,                  // URL ảnh đại diện
   isActive: Boolean,               // Trạng thái hoạt động
   isEmailVerified: Boolean,        // Email đã xác thực
+  
+  // 🎁 Loyalty Program
+  loyaltyPoints: Number,           // Điểm tích lũy
+  totalSpent: Number,              // Tổng chi tiêu
+  orderCount: Number,              // Số đơn hàng
+  tier: "bronze" | "silver" | "gold" | "platinum" | "diamond",
+  pointsHistory: [{                // Lịch sử điểm
+    amount: Number,
+    type: "earn" | "redeem" | "expire" | "bonus",
+    description: String,
+    createdAt: Date
+  }],
+  
   preferences: {
     notifications: {
       email: Boolean,
@@ -318,15 +348,23 @@ npm run dev
   variants: [{                     // Các biến thể
     sku: String,
     name: String,                  // "128GB - Xám"
+    type: "nguyen-seal" | "openbox" | "cpo",  // Loại sản phẩm
+    model: "wifi" | "wifi-cellular",          // Loại kết nối
     price: Number,
     originalPrice: Number,
+    costPrice: Number,             // Giá vốn
     stock: Number,
+    reserved: Number,              // Đã đặt trước
+    lowStockThreshold: Number,     // Ngưỡng cảnh báo hết hàng
     attributes: {
       color: String,               // Màu sắc
-      storage: String              // Dung lượng
+      storage: String,             // Dung lượng
+      memory: String,              // RAM
+      chip: String                 // Chip
     },
     image: String,
-    isActive: Boolean
+    isActive: Boolean,
+    isFeatured: Boolean            // Variant mặc định hiển thị
   }],
   
   image: String,                   // Ảnh chính
@@ -673,6 +711,38 @@ npm run dev
 | VIP50K | Fixed | Giảm 50,000đ |
 | SUMMER15 | % | Giảm 15% |
 | NEWUSER | Fixed | Giảm 100,000đ |
+
+---
+
+## 🎯 Admin Routes
+
+| Trang | URL | Mô tả |
+|-------|-----|-------|
+| Dashboard | `/admin` | Thống kê tổng quan, biểu đồ |
+| Sản phẩm | `/admin/san-pham` | CRUD sản phẩm + variants |
+| Danh mục | `/admin/danh-muc` | Quản lý danh mục 3 cấp |
+| Đơn hàng | `/admin/don-hang` | Danh sách đơn hàng |
+| Chi tiết đơn | `/admin/don-hang/:id` | Timeline, cập nhật trạng thái |
+| Người dùng | `/admin/nguoi-dung` | Quản lý users, phân quyền |
+| Khách hàng VIP | `/admin/khach-hang` | Loyalty points, 5 tier |
+| Mã giảm giá | `/admin/ma-giam-gia` | Tạo/sửa/xóa coupons |
+| Tồn kho | `/admin/ton-kho` | Theo dõi stock variants |
+| Thống kê | `/admin/thong-ke` | Báo cáo chi tiết |
+| Cài đặt | `/admin/cai-dat` | Cấu hình hệ thống |
+
+---
+
+## ⭐ Loyalty Tiers
+
+| Tier | Chi tiêu tối thiểu | Icon |
+|------|-------------------|------|
+| Bronze | 0 | 🥉 |
+| Silver | 10,000,000₫ | 🥈 |
+| Gold | 20,000,000₫ | 🥇 |
+| Platinum | 50,000,000₫ | 💎 |
+| Diamond | 100,000,000₫ | 👑 |
+
+**Quy tắc tích điểm:** 1 điểm / 10,000₫ chi tiêu
 
 ---
 

@@ -11,9 +11,16 @@ const router = express.Router();
 
 /**
  * GET /api/orders
- * Lấy danh sách đơn hàng của user hoặc tất cả (admin)
+ * Lấy danh sách đơn hàng với filter và phân trang
+ * Query: page, limit, status, paymentStatus, search, sortBy, startDate, endDate
  */
 router.get('/', protect, orderController.getOrders);
+
+/**
+ * GET /api/orders/stats
+ * Lấy thống kê đơn hàng (Admin only)
+ */
+router.get('/stats', protect, admin, orderController.getOrderStats);
 
 /**
  * POST /api/orders
@@ -58,12 +65,6 @@ router.patch('/:id/items', protect, admin, orderController.updateOrderItems);
  * Cập nhật đơn hàng (Admin)
  */
 router.put('/:id', protect, admin, orderController.updateOrder);
-
-/**
- * GET /api/orders/guest/:email/:orderNumber
- * Lấy đơn hàng của guest
- */
-router.get('/guest/:email/:orderNumber', orderController.getGuestOrder);
 
 /**
  * PATCH /api/orders/:id/cancel

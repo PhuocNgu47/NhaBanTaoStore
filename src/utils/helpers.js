@@ -98,3 +98,21 @@ export const isValidPhone = (phone) => {
   const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
   return phoneRegex.test(phone);
 };
+
+// Format date to Vietnamese locale
+export const formatDate = (dateString, options = {}) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  
+  const defaultOptions = {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    ...options
+  };
+  
+  return new Intl.DateTimeFormat('vi-VN', defaultOptions).format(date);
+};

@@ -175,6 +175,10 @@ app.use('/api/wishlist', wishlistRoutes);
 import reviewRoutes from './routes/reviews.js';
 app.use('/api/reviews', reviewRoutes);
 
+// Categories: Quản lý danh mục 3 cấp
+import categoryRoutes from './routes/categories.js';
+app.use('/api/categories', categoryRoutes);
+
 // ============================================
 // XỬ LÝ LỖI (ERROR HANDLING)
 // ============================================

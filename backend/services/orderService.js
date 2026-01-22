@@ -9,20 +9,158 @@ import { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } from './emailS
 import * as couponService from './couponService.js';
 
 /**
- * Lấy danh sách orders của user hoặc tất cả (admin)
+ * Lấy danh sách orders với phân trang và filter (Admin hoặc User)
  */
-export const getOrders = async (userId, isAdmin = false) => {
+export const getOrders = async (userId, isAdmin = false, options = {}) => {
+  const { 
+    page = 1, 
+    limit = 20, 
+    status, 
+    paymentStatus,
+    search,
+    sortBy = '-createdAt',
+    startDate,
+    endDate
+  } = options;
+
   let query = {};
+  
   if (!isAdmin) {
     query.userId = userId;
   }
 
-  const orders = await Order.find(query)
-    .populate('userId', 'name email')
-    .populate('items.productId', 'name price')
-    .sort({ createdAt: -1 });
+  // Filter by status
+  if (status && status !== 'all') {
+    query.status = status;
+  }
 
-  return orders;
+  // Filter by payment status
+  if (paymentStatus && paymentStatus !== 'all') {
+    query.paymentStatus = paymentStatus;
+  }
+
+  // Search by orderNumber, customer name, phone, email
+  if (search) {
+    query.$or = [
+      { orderNumber: { $regex: search, $options: 'i' } },
+      { 'shippingAddress.name': { $regex: search, $options: 'i' } },
+      { 'shippingAddress.phone': { $regex: search, $options: 'i' } },
+      { guestEmail: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  // Filter by date range
+  if (startDate || endDate) {
+    query.createdAt = {};
+    if (startDate) query.createdAt.$gte = new Date(startDate);
+    if (endDate) query.createdAt.$lte = new Date(endDate);
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [orders, total] = await Promise.all([
+    Order.find(query)
+      .populate('userId', 'name email')
+      .populate('items.productId', 'name price image slug')
+      .sort(sortBy)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Order.countDocuments(query)
+  ]);
+
+  return {
+    orders,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      total,
+      pages: Math.ceil(total / limit),
+      hasNext: page * limit < total,
+      hasPrev: page > 1
+    }
+  };
+};
+
+/**
+ * Lấy thống kê đơn hàng (Admin)
+ */
+export const getOrderStats = async (options = {}) => {
+  const { startDate, endDate } = options;
+  
+  let dateFilter = {};
+  if (startDate || endDate) {
+    dateFilter.createdAt = {};
+    if (startDate) dateFilter.createdAt.$gte = new Date(startDate);
+    if (endDate) dateFilter.createdAt.$lte = new Date(endDate);
+  }
+
+  // Count by status
+  const statusCounts = await Order.aggregate([
+    { $match: dateFilter },
+    { $group: { _id: '$status', count: { $sum: 1 } } }
+  ]);
+
+  // Count by payment status
+  const paymentCounts = await Order.aggregate([
+    { $match: dateFilter },
+    { $group: { _id: '$paymentStatus', count: { $sum: 1 } } }
+  ]);
+
+  // Revenue stats
+  const revenueStats = await Order.aggregate([
+    { $match: { ...dateFilter, status: { $nin: ['cancelled', 'refunded'] } } },
+    { 
+      $group: { 
+        _id: null, 
+        totalRevenue: { $sum: '$totalAmount' },
+        totalOrders: { $sum: 1 },
+        avgOrderValue: { $avg: '$totalAmount' }
+      } 
+    }
+  ]);
+
+  // Daily orders (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  const dailyOrders = await Order.aggregate([
+    { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        count: { $sum: 1 },
+        revenue: { $sum: '$totalAmount' }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  // Format results
+  const stats = {
+    byStatus: {},
+    byPaymentStatus: {},
+    revenue: revenueStats[0] || { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0 },
+    daily: dailyOrders
+  };
+
+  statusCounts.forEach(s => {
+    stats.byStatus[s._id] = s.count;
+  });
+
+  paymentCounts.forEach(p => {
+    stats.byPaymentStatus[p._id] = p.count;
+  });
+
+  // Totals
+  stats.total = Object.values(stats.byStatus).reduce((a, b) => a + b, 0);
+  stats.pending = stats.byStatus.pending || 0;
+  stats.processing = (stats.byStatus.confirmed || 0) + (stats.byStatus.processing || 0);
+  stats.shipped = stats.byStatus.shipped || 0;
+  stats.delivered = stats.byStatus.delivered || 0;
+  stats.cancelled = stats.byStatus.cancelled || 0;
+
+  return stats;
 };
 
 /**

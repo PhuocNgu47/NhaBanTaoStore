@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # ===========================================
+  # FRONTEND - React + Vite + Nginx
+  # ===========================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nhabantao-frontend
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=http://localhost:5001/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - nhabantao-network
+
+  # ===========================================
+  # BACKEND - Node.js + Express
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nhabantao-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRE=7d
+      - CORS_ORIGIN=http://localhost,http://localhost:80,http://localhost:3000
+      - FRONTEND_URL=http://localhost
+    volumes:
+      - backend-uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - nhabantao-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# ===========================================
+# VOLUMES
+# ===========================================
+volumes:
+  backend-uploads:
+    driver: local
+
+# ===========================================
+# NETWORKS
+# ===========================================
+networks:
+  nhabantao-network:
+    driver: bridge

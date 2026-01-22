@@ -1,22 +1,43 @@
 import mongoose from 'mongoose';
 
-// Variant Schema - Nâng cấp với giá và stock riêng
+// Variant Schema - Nâng cấp với type, model, giá và stock riêng
 const variantSchema = new mongoose.Schema({
   sku: { type: String, required: true },
-  name: String, // "iPhone 15 Pro Max 256GB - Titanium"
+  name: String, // "Nguyên Seal Wifi 256GB - Xám"
+  
+  // Type: Nguyên Seal / Openbox / CPO
+  type: { 
+    type: String, 
+    enum: ['nguyen-seal', 'openbox', 'cpo'],
+    default: 'nguyen-seal'
+  },
+  
+  // Model: Wifi / Wifi+Cellular (for iPad)
+  model: { 
+    type: String, 
+    enum: ['wifi', 'wifi-cellular'],
+    default: 'wifi'
+  },
+  
   attributes: {
     color: String,
     storage: String,
     size: String,
+    memory: String, // RAM for MacBook
+    chip: String,
     // Flexible - có thể thêm attributes khác
   },
   price: { type: Number, required: true }, // Giá riêng của variant
   originalPrice: Number,
+  costPrice: Number, // Giá vốn
   stock: { type: Number, default: 0 },
   reserved: { type: Number, default: 0 }, // Stock đã reserve cho orders
+  lowStockThreshold: { type: Number, default: 5 },
   image: String, // Ảnh riêng của variant
-  isActive: { type: Boolean, default: true }
-}, { _id: true });
+  images: [String],
+  isActive: { type: Boolean, default: true },
+  isFeatured: { type: Boolean, default: false } // Variant mặc định hiển thị
+}, { _id: true, timestamps: true });
 
 const productSchema = new mongoose.Schema({
   // Basic info
@@ -26,11 +47,14 @@ const productSchema = new mongoose.Schema({
   slug: { type: String, unique: true }, // SEO-friendly URL
   brand: String,
   description: String,
+  shortDescription: String,
   category: { type: String, required: true },
   subcategory: String,
+  productLine: String,
 
-  // Pricing (base price, variants có thể override)
-  price: { type: Number, required: true },
+  // Pricing (tự động tính từ variants nếu có)
+  price: { type: Number, default: 0 },
+  maxPrice: { type: Number },
   originalPrice: Number,
   discountPercentage: Number,
   currency: { type: String, default: 'VND' },
@@ -45,6 +69,7 @@ const productSchema = new mongoose.Schema({
 
   // Product details
   specifications: mongoose.Schema.Types.Mixed,
+  highlights: [String],
   tags: [String],
   warranty: String,
   returnPolicy: String,
@@ -89,9 +114,23 @@ productSchema.index({ 'variants.sku': 1 });
 productSchema.index({ rating: -1, reviewCount: -1 });
 productSchema.index({ status: 1 });
 
-// Auto update updatedAt
+// Auto update updatedAt and calculate price from variants
 productSchema.pre('save', function(next) {
   this.updatedAt = new Date();
+  
+  // Auto calculate price, maxPrice, stock from variants
+  if (this.variants && this.variants.length > 0) {
+    const activeVariants = this.variants.filter(v => v.isActive !== false);
+    if (activeVariants.length > 0) {
+      const prices = activeVariants.map(v => v.price).filter(p => p > 0);
+      if (prices.length > 0) {
+        this.price = Math.min(...prices);
+        this.maxPrice = Math.max(...prices);
+      }
+      this.stock = activeVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    }
+  }
+  
   next();
 });
 

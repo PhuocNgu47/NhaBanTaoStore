@@ -93,6 +93,31 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date
   },
+  // Loyalty Program
+  loyaltyPoints: {
+    type: Number,
+    default: 0
+  },
+  totalSpent: {
+    type: Number,
+    default: 0
+  },
+  orderCount: {
+    type: Number,
+    default: 0
+  },
+  tier: {
+    type: String,
+    enum: ['bronze', 'silver', 'gold', 'platinum', 'diamond'],
+    default: 'bronze'
+  },
+  pointsHistory: [{
+    amount: Number,
+    type: { type: String, enum: ['earn', 'redeem', 'expire', 'bonus'] },
+    description: String,
+    orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+    createdAt: { type: Date, default: Date.now }
+  }],
   // Timestamps
   createdAt: {
     type: Date,

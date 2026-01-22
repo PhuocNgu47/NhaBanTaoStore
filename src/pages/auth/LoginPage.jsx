@@ -118,17 +118,14 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              {/* Right: image */}
-              <div className="hidden lg:block relative">
-                <img
-                  src="/images/login-banner.jpg"
-                  alt="iPad trên bàn làm việc"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=1600&q=80';
-                  }}
-                />
+              {/* Right: gradient design */}
+              <div className="hidden lg:flex relative bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 items-center justify-center">
+                <div className="text-center text-white p-12">
+                  <div className="text-8xl mb-6">🍎</div>
+                  <h2 className="text-3xl font-bold mb-4">Apple Store</h2>
+                  <p className="text-lg opacity-90">Chào mừng bạn quay trở lại</p>
+                  <p className="text-sm opacity-70 mt-2">Đăng nhập để tiếp tục mua sắm</p>
+                </div>
               </div>
             </div>
           </div>

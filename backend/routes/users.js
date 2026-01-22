@@ -52,4 +52,22 @@ router.put('/:id/role', protect, admin, userController.updateUserRole);
  */
 router.delete('/:id', protect, admin, userController.deleteUser);
 
+/**
+ * GET /api/users/stats
+ * Lấy thống kê khách hàng (Admin only)
+ */
+router.get('/stats', protect, admin, userController.getCustomerStats);
+
+/**
+ * PUT /api/users/:id/loyalty
+ * Cập nhật điểm loyalty (Admin only)
+ */
+router.put('/:id/loyalty', protect, admin, userController.updateLoyaltyPoints);
+
+/**
+ * PUT /api/users/:id/tier
+ * Cập nhật tier khách hàng (Admin only)
+ */
+router.put('/:id/tier', protect, admin, userController.updateCustomerTier);
+
 export default router;

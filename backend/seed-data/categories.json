@@ -1,0 +1,292 @@
+[
+  {
+    "name": "iPhone",
+    "slug": "iphone",
+    "description": "Điện thoại thông minh Apple iPhone",
+    "icon": "FiSmartphone",
+    "image": "/categories/iphone.jpg",
+    "order": 1,
+    "isActive": true,
+    "isFeatured": true,
+    "showInMenu": true,
+    "children": [
+      {
+        "name": "iPhone 16 Series",
+        "slug": "iphone-16-series",
+        "description": "Dòng iPhone mới nhất 2024",
+        "order": 1,
+        "children": [
+          { "name": "iPhone 16 Pro Max", "slug": "iphone-16-pro-max", "order": 1 },
+          { "name": "iPhone 16 Pro", "slug": "iphone-16-pro", "order": 2 },
+          { "name": "iPhone 16 Plus", "slug": "iphone-16-plus", "order": 3 },
+          { "name": "iPhone 16", "slug": "iphone-16", "order": 4 }
+        ]
+      },
+      {
+        "name": "iPhone 15 Series",
+        "slug": "iphone-15-series",
+        "description": "Dòng iPhone 15",
+        "order": 2,
+        "children": [
+          { "name": "iPhone 15 Pro Max", "slug": "iphone-15-pro-max", "order": 1 },
+          { "name": "iPhone 15 Pro", "slug": "iphone-15-pro", "order": 2 },
+          { "name": "iPhone 15 Plus", "slug": "iphone-15-plus", "order": 3 },
+          { "name": "iPhone 15", "slug": "iphone-15", "order": 4 }
+        ]
+      },
+      {
+        "name": "iPhone 14 Series",
+        "slug": "iphone-14-series",
+        "description": "Dòng iPhone 14",
+        "order": 3,
+        "children": [
+          { "name": "iPhone 14 Pro Max", "slug": "iphone-14-pro-max", "order": 1 },
+          { "name": "iPhone 14 Pro", "slug": "iphone-14-pro", "order": 2 },
+          { "name": "iPhone 14 Plus", "slug": "iphone-14-plus", "order": 3 },
+          { "name": "iPhone 14", "slug": "iphone-14", "order": 4 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "iPad",
+    "slug": "ipad",
+    "description": "Máy tính bảng Apple iPad",
+    "icon": "FiTablet",
+    "image": "/categories/ipad.jpg",
+    "order": 2,
+    "isActive": true,
+    "isFeatured": true,
+    "showInMenu": true,
+    "children": [
+      {
+        "name": "iPad Pro",
+        "slug": "ipad-pro",
+        "description": "iPad Pro với chip M4",
+        "order": 1,
+        "children": [
+          { "name": "iPad Pro M4 13 inch", "slug": "ipad-pro-m4-13", "order": 1 },
+          { "name": "iPad Pro M4 11 inch", "slug": "ipad-pro-m4-11", "order": 2 }
+        ]
+      },
+      {
+        "name": "iPad Air",
+        "slug": "ipad-air",
+        "description": "iPad Air mỏng nhẹ",
+        "order": 2,
+        "children": [
+          { "name": "iPad Air M2 13 inch", "slug": "ipad-air-m2-13", "order": 1 },
+          { "name": "iPad Air M2 11 inch", "slug": "ipad-air-m2-11", "order": 2 }
+        ]
+      },
+      {
+        "name": "iPad mini",
+        "slug": "ipad-mini",
+        "description": "iPad mini nhỏ gọn",
+        "order": 3,
+        "children": [
+          { "name": "iPad mini 7", "slug": "ipad-mini-7", "order": 1 },
+          { "name": "iPad mini 6", "slug": "ipad-mini-6", "order": 2 }
+        ]
+      },
+      {
+        "name": "iPad Gen",
+        "slug": "ipad-gen",
+        "description": "iPad tiêu chuẩn",
+        "order": 4,
+        "children": [
+          { "name": "iPad Gen 10", "slug": "ipad-gen-10", "order": 1 },
+          { "name": "iPad Gen 9", "slug": "ipad-gen-9", "order": 2 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "MacBook",
+    "slug": "macbook",
+    "description": "Laptop Apple MacBook",
+    "icon": "FiMonitor",
+    "image": "/categories/macbook.jpg",
+    "order": 3,
+    "isActive": true,
+    "isFeatured": true,
+    "showInMenu": true,
+    "children": [
+      {
+        "name": "MacBook Pro",
+        "slug": "macbook-pro",
+        "description": "MacBook Pro chuyên nghiệp",
+        "order": 1,
+        "children": [
+          { "name": "MacBook Pro M4 16 inch", "slug": "macbook-pro-m4-16", "order": 1 },
+          { "name": "MacBook Pro M4 14 inch", "slug": "macbook-pro-m4-14", "order": 2 },
+          { "name": "MacBook Pro M3 16 inch", "slug": "macbook-pro-m3-16", "order": 3 },
+          { "name": "MacBook Pro M3 14 inch", "slug": "macbook-pro-m3-14", "order": 4 }
+        ]
+      },
+      {
+        "name": "MacBook Air",
+        "slug": "macbook-air",
+        "description": "MacBook Air mỏng nhẹ",
+        "order": 2,
+        "children": [
+          { "name": "MacBook Air M3 15 inch", "slug": "macbook-air-m3-15", "order": 1 },
+          { "name": "MacBook Air M3 13 inch", "slug": "macbook-air-m3-13", "order": 2 },
+          { "name": "MacBook Air M2 15 inch", "slug": "macbook-air-m2-15", "order": 3 },
+          { "name": "MacBook Air M2 13 inch", "slug": "macbook-air-m2-13", "order": 4 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Apple Watch",
+    "slug": "apple-watch",
+    "description": "Đồng hồ thông minh Apple Watch",
+    "icon": "FiWatch",
+    "image": "/categories/apple-watch.jpg",
+    "order": 4,
+    "isActive": true,
+    "isFeatured": true,
+    "showInMenu": true,
+    "children": [
+      {
+        "name": "Apple Watch Series",
+        "slug": "apple-watch-series",
+        "description": "Apple Watch Series tiêu chuẩn",
+        "order": 1,
+        "children": [
+          { "name": "Apple Watch Series 10", "slug": "apple-watch-series-10", "order": 1 },
+          { "name": "Apple Watch Series 9", "slug": "apple-watch-series-9", "order": 2 }
+        ]
+      },
+      {
+        "name": "Apple Watch Ultra",
+        "slug": "apple-watch-ultra",
+        "description": "Apple Watch Ultra cao cấp",
+        "order": 2,
+        "children": [
+          { "name": "Apple Watch Ultra 2", "slug": "apple-watch-ultra-2", "order": 1 }
+        ]
+      },
+      {
+        "name": "Apple Watch SE",
+        "slug": "apple-watch-se",
+        "description": "Apple Watch SE giá tốt",
+        "order": 3,
+        "children": [
+          { "name": "Apple Watch SE 2024", "slug": "apple-watch-se-2024", "order": 1 },
+          { "name": "Apple Watch SE 2022", "slug": "apple-watch-se-2022", "order": 2 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "AirPods",
+    "slug": "airpods",
+    "description": "Tai nghe không dây Apple AirPods",
+    "icon": "FiHeadphones",
+    "image": "/categories/airpods.jpg",
+    "order": 5,
+    "isActive": true,
+    "isFeatured": true,
+    "showInMenu": true,
+    "children": [
+      {
+        "name": "AirPods Pro",
+        "slug": "airpods-pro",
+        "description": "AirPods Pro chống ồn",
+        "order": 1,
+        "children": [
+          { "name": "AirPods Pro 2 USB-C", "slug": "airpods-pro-2-usbc", "order": 1 }
+        ]
+      },
+      {
+        "name": "AirPods Standard",
+        "slug": "airpods-standard",
+        "description": "AirPods tiêu chuẩn",
+        "order": 2,
+        "children": [
+          { "name": "AirPods 4 ANC", "slug": "airpods-4-anc", "order": 1 },
+          { "name": "AirPods 4", "slug": "airpods-4", "order": 2 },
+          { "name": "AirPods 3", "slug": "airpods-3", "order": 3 }
+        ]
+      },
+      {
+        "name": "AirPods Max",
+        "slug": "airpods-max",
+        "description": "AirPods Max over-ear",
+        "order": 3,
+        "children": [
+          { "name": "AirPods Max 2024", "slug": "airpods-max-2024", "order": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Phụ kiện",
+    "slug": "phu-kien",
+    "description": "Phụ kiện Apple chính hãng",
+    "icon": "FiPackage",
+    "image": "/categories/accessories.jpg",
+    "order": 6,
+    "isActive": true,
+    "isFeatured": false,
+    "showInMenu": true,
+    "children": [
+      {
+        "name": "Bàn phím & Chuột",
+        "slug": "keyboard-mouse",
+        "description": "Magic Keyboard, Magic Mouse, Magic Trackpad",
+        "order": 1,
+        "children": [
+          { "name": "Magic Keyboard", "slug": "magic-keyboard", "order": 1 },
+          { "name": "Magic Mouse", "slug": "magic-mouse", "order": 2 },
+          { "name": "Magic Trackpad", "slug": "magic-trackpad", "order": 3 }
+        ]
+      },
+      {
+        "name": "Apple Pencil",
+        "slug": "apple-pencil",
+        "description": "Bút cảm ứng Apple Pencil",
+        "order": 2,
+        "children": [
+          { "name": "Apple Pencil Pro", "slug": "apple-pencil-pro", "order": 1 },
+          { "name": "Apple Pencil USB-C", "slug": "apple-pencil-usbc", "order": 2 },
+          { "name": "Apple Pencil 2", "slug": "apple-pencil-2", "order": 3 }
+        ]
+      },
+      {
+        "name": "Sạc & Cáp",
+        "slug": "charger-cable",
+        "description": "Củ sạc, cáp sạc Apple",
+        "order": 3,
+        "children": [
+          { "name": "Củ sạc", "slug": "power-adapter", "order": 1 },
+          { "name": "Cáp USB-C", "slug": "usb-c-cable", "order": 2 },
+          { "name": "MagSafe Charger", "slug": "magsafe-charger", "order": 3 }
+        ]
+      },
+      {
+        "name": "Ốp lưng & Bao da",
+        "slug": "case-cover",
+        "description": "Ốp lưng, bao da Apple chính hãng",
+        "order": 4,
+        "children": [
+          { "name": "Ốp iPhone", "slug": "iphone-case", "order": 1 },
+          { "name": "Smart Folio iPad", "slug": "ipad-smart-folio", "order": 2 },
+          { "name": "Sleeve MacBook", "slug": "macbook-sleeve", "order": 3 }
+        ]
+      },
+      {
+        "name": "AirTag",
+        "slug": "airtag",
+        "description": "Thiết bị định vị AirTag",
+        "order": 5,
+        "children": [
+          { "name": "AirTag", "slug": "airtag-single", "order": 1 },
+          { "name": "AirTag 4 Pack", "slug": "airtag-4pack", "order": 2 }
+        ]
+      }
+    ]
+  }
+]

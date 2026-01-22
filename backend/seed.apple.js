@@ -19,6 +19,7 @@ import Address from './models/Address.js';
 import Review from './models/Review.js';
 import Cart from './models/Cart.js';
 import Wishlist from './models/Wishlist.js';
+import Category from './models/Category.js';
 
 dotenv.config();
 
@@ -77,6 +78,52 @@ async function seedCoupons() {
   return created;
 }
 
+async function seedCategories() {
+  const categoriesData = await readJson('categories.json');
+  const created = [];
+
+  // Recursive function to create categories with hierarchy
+  async function createCategory(data, parent = null, ancestors = []) {
+    const { children, ...categoryData } = data;
+    
+    // Calculate level based on parent
+    const level = parent ? ancestors.length + 1 : 0;
+    
+    const category = new Category({
+      ...categoryData,
+      parent: parent?._id || null,
+      level,
+      ancestors,
+      isActive: categoryData.isActive !== false,
+      showInMenu: categoryData.showInMenu !== false,
+    });
+    
+    await category.save();
+    created.push(category);
+    
+    // Create children recursively
+    if (children && children.length > 0) {
+      const newAncestors = [
+        ...ancestors,
+        { _id: category._id, name: category.name, slug: category.slug, level: category.level }
+      ];
+      
+      for (const child of children) {
+        await createCategory(child, category, newAncestors);
+      }
+    }
+    
+    return category;
+  }
+  
+  // Create all root categories and their children
+  for (const rootCategory of categoriesData) {
+    await createCategory(rootCategory);
+  }
+  
+  return created;
+}
+
 async function clearDatabase() {
   await Promise.all([
     Product.deleteMany({}),
@@ -86,7 +133,8 @@ async function clearDatabase() {
     Address.deleteMany({}),
     Review.deleteMany({}),
     Cart.deleteMany({}),
-    Wishlist.deleteMany({})
+    Wishlist.deleteMany({}),
+    Category.deleteMany({})
   ]);
 }
 
@@ -116,6 +164,10 @@ async function main() {
   console.log('🎫 Seeding coupons...');
   const coupons = await seedCoupons();
   console.log(`✅ Coupons: ${coupons.length}`);
+
+  console.log('📁 Seeding categories...');
+  const categories = await seedCategories();
+  console.log(`✅ Categories: ${categories.length}`);
 
   await mongoose.disconnect();
   console.log('✅ Done');

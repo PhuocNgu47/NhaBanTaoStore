@@ -26,6 +26,7 @@ const ForgotPasswordPage = lazy(() => import('../pages/auth/ForgotPasswordPage')
 // User Pages
 const AccountPage = lazy(() => import('../pages/user/AccountPage'));
 const OrdersPage = lazy(() => import('../pages/user/OrdersPage'));
+const UserOrderDetailPage = lazy(() => import('../pages/user/OrderDetailPage'));
 
 // Admin Pages
 const DashboardPage = lazy(() => import('../pages/admin/DashboardPage'));
@@ -34,6 +35,10 @@ const AdminOrdersPage = lazy(() => import('../pages/admin/OrdersPage'));
 const AdminUsersPage = lazy(() => import('../pages/admin/UsersPage'));
 const AdminCategoriesPage = lazy(() => import('../pages/admin/CategoriesPage'));
 const AdminSettingsPage = lazy(() => import('../pages/admin/SettingsPage'));
+const AdminOrderDetailPage = lazy(() => import('../pages/admin/OrderDetailPage'));
+const AdminCouponsPage = lazy(() => import('../pages/admin/CouponsPage'));
+const AdminInventoryPage = lazy(() => import('../pages/admin/InventoryPage'));
+const AdminCustomersPage = lazy(() => import('../pages/admin/CustomersPage'));
 
 // Wrapper for lazy loading
 const LazyPage = ({ children }) => (
@@ -71,7 +76,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'danh-muc/:categoryId',
+        path: 'danh-muc/:slug',
         element: (
           <LazyPage>
             <CategoryPage />
@@ -147,6 +152,16 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: 'don-hang/:id',
+        element: (
+          <ProtectedRoute>
+            <LazyPage>
+              <UserOrderDetailPage />
+            </LazyPage>
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
 
@@ -217,6 +232,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'don-hang/:id',
+        element: (
+          <LazyPage>
+            <AdminOrderDetailPage />
+          </LazyPage>
+        ),
+      },
+      {
         path: 'nguoi-dung',
         element: (
           <LazyPage>
@@ -229,6 +252,30 @@ const router = createBrowserRouter([
         element: (
           <LazyPage>
             <AdminSettingsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'ma-giam-gia',
+        element: (
+          <LazyPage>
+            <AdminCouponsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'ton-kho',
+        element: (
+          <LazyPage>
+            <AdminInventoryPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'khach-hang',
+        element: (
+          <LazyPage>
+            <AdminCustomersPage />
           </LazyPage>
         ),
       },

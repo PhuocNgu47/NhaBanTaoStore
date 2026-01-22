@@ -7,17 +7,58 @@ import * as orderService from '../services/orderService.js';
 import * as cartService from '../services/cartService.js';
 
 /**
- * Lấy danh sách orders
+ * Lấy danh sách orders với filter và phân trang
  */
 export const getOrders = async (req, res) => {
   try {
-    const orders = await orderService.getOrders(req.user.id, req.user.role === 'admin');
-    res.json({ orders });
+    const isAdmin = req.user.role === 'admin';
+    const options = {
+      page: req.query.page || 1,
+      limit: req.query.limit || 20,
+      status: req.query.status,
+      paymentStatus: req.query.paymentStatus,
+      search: req.query.search,
+      sortBy: req.query.sortBy || '-createdAt',
+      startDate: req.query.startDate,
+      endDate: req.query.endDate
+    };
+
+    const result = await orderService.getOrders(req.user.id, isAdmin, options);
+    
+    res.json({
+      success: true,
+      ...result
+    });
   } catch (error) {
     console.error('Get orders error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Lỗi khi lấy danh sách đơn hàng'
+    });
+  }
+};
+
+/**
+ * Lấy thống kê đơn hàng (Admin)
+ */
+export const getOrderStats = async (req, res) => {
+  try {
+    const options = {
+      startDate: req.query.startDate,
+      endDate: req.query.endDate
+    };
+
+    const stats = await orderService.getOrderStats(options);
+    
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.error('Get order stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lấy thống kê đơn hàng'
     });
   }
 };

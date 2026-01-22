@@ -1,0 +1,1435 @@
+# Phân Tích Chi Tiết Web Admin Anh Phi Bán Táo
+## Skill Phức Tạp & Logic Thực Tế
+
+---
+
+## I. PHÂN TÍCH CẤU TRÚC WEBSITE
+
+Website Anh Phi là **platform thương mại điện tử bán hàng Apple chính hãng** với:
+- Bán trên: Website + Shopee + Instagram + TikTok + Facebook
+- 2 cửa hàng: Hà Nội (Nghi Tàm) + TP.HCM (Gò Vấp)
+- Hình thức: Bán hàng trực tiếp + Trực tuyến
+- Đặc thù: Bán Apple chính hãng, hàng Openbox, CPO (Certified Pre-Owned)
+
+---
+
+## II. NHỮNG TÍNH NĂNG PHỨC TẠP CỦA WEBSITE
+
+### 1. QUẢN LÝ LOẠI SẢN PHẨM (Product Variants - PHỨC TẠP)
+
+**Website Anh Phi có điểm phức tạp đặc biệt:**
+
+Mỗi sản phẩm có **NHIỀU LOẠI** trong 1 bảng record:
+```
+iPad Air 6 (M2) 11 inch
+├─ Nguyên Seal - Bản Wifi         → Giá: 18.000.000 ₫
+├─ Nguyên Seal - Bản Wifi+Cellular → Giá: 19.500.000 ₫
+├─ Openbox - Bản Wifi             → Giá: 16.500.000 ₫
+├─ Openbox - Bản Wifi+Cellular    → Giá: 17.800.000 ₫
+├─ CPO - Bản Wifi                 → Giá: 15.200.000 ₫
+└─ CPO - Bản Wifi+Cellular        → Giá: 16.500.000 ₫
+
+MacBook Air M4 13.6 inch
+├─ 16GB/256GB - Nguyên Seal       → Giá: 29.900.000 ₫
+├─ 16GB/256GB - Openbox           → Giá: 21.900.000 ₫
+├─ 16GB/512GB - Nguyên Seal       → Giá: 34.900.000 ₫
+└─ 16GB/512GB - Openbox           → Giá: 25.900.000 ₫
+```
+
+**Độ phức tạp khi code:**
+- Không phải `1 sản phẩm = 1 bảng record`
+- Mà là `1 sản phẩm = nhiều variants (loại/model)`
+- Mỗi variant có: giá khác nhau, stock khác nhau, màu sắc khác, bộ nhớ khác, bản (Wifi/Cellular) khác
+- Khi hiển thị trang sản phẩm: phải load tất cả variants + tính giá min/max
+
+**Database Schema phức tạp:**
+```sql
+-- Bảng sản phẩm chính
+Table Products
+├─ id: 1
+├─ name: "iPad Air 6 (M2) 11 inch"
+├─ description: "Máy tính bảng cao cấp"
+├─ category_id: 1 (iPad)
+└─ image_url: "/images/ipad-air-6.jpg"
+
+-- Bảng variants (loại sản phẩm)
+Table ProductVariants
+├─ id: 1
+├─ product_id: 1
+├─ type: "Nguyên Seal"      -- Loại
+├─ model: "Wifi"            -- Bản
+├─ color: "Silver"          -- Màu (nếu có)
+├─ memory: "256GB"          -- Bộ nhớ
+├─ original_price: 18.000.000
+├─ selling_price: 13.200.000 (đã giảm)
+├─ discount_percent: 26.67%
+├─ stock_quantity: 5
+├─ status: "in_stock"
+└─ created_at: 2024-01-20
+
+-- Ví dụ 2
+├─ id: 2
+├─ product_id: 1
+├─ type: "Nguyên Seal"
+├─ model: "Wifi+Cellular"
+├─ stock_quantity: 3
+└─ selling_price: 14.500.000
+```
+
+**Logic phải code:**
+```javascript
+// Khi hiển thị sản phẩm trang chủ:
+1. Lấy product: iPad Air 6
+2. Lấy tất cả variants của product này
+3. Tìm giá MIN từ tất cả variants → Hiển thị "từ 13.2 triệu"
+4. Đếm tổng stock của tất cả variants → "Còn hàng" hay "Hết hàng"?
+5. Nếu click vào sản phẩm → Hiển thị filter dropdown:
+   - Chọn loại (Nguyên Seal, Openbox, CPO)
+   - Chọn bản (Wifi, Wifi+Cellular)
+   - Giá tự động cập nhật dựa vào lựa chọn
+   - Stock tự động cập nhật
+
+// Admin thêm sản phẩm mới:
+1. Tạo product: iPad Air 6
+2. Thêm 6 variants (mỗi cái khác giá, khác stock)
+3. Mỗi variant là 1 dòng trong bảng
+4. Không phải upload 6 ảnh, 1 ảnh dùng chung cho tất cả variants
+```
+
+---
+
+### 2. QUẢN LÝ DANH MỤC CÓ CẤP BẬC (Category Hierarchy - PHỨC TẠP)
+
+Website Anh Phi có cấu trúc danh mục **3 cấp**:
+
+```
+iPad (Cấp 1)
+├─ iPad Air (Cấp 2)
+│  ├─ iPad Air 7 (filter: loại = Air 7)
+│  ├─ iPad Air 6
+│  ├─ iPad Air 5
+│  └─ iPad Air 4
+├─ iPad Gen (Cấp 2)
+│  ├─ iPad Gen 11
+│  ├─ iPad Gen 10
+│  └─ iPad Gen 9
+└─ iPad Pro (Cấp 2)
+   ├─ iPad Pro M5
+   ├─ iPad Pro M4
+   ├─ iPad Pro M2
+   └─ iPad Pro M1
+
+MacBook (Cấp 1)
+├─ MacBook Pro (Cấp 2)
+│  └─ MacBook Pro M4
+└─ MacBook Air (Cấp 2)
+   ├─ MacBook Air M4
+   ├─ MacBook Air M3
+   ├─ MacBook Air M2
+   └─ MacBook Air M1
+
+Âm thanh (Cấp 1)
+├─ AirPods (Cấp 2)
+│  ├─ AirPods 4
+│  ├─ AirPods 3
+│  └─ AirPods Pro
+└─ Chụp Tai (Cấp 2)
+```
+
+**Database Schema:**
+```sql
+Table Categories
+├─ id: 1
+├─ name: "iPad"
+├─ parent_id: NULL      -- Danh mục cha (NULL = cấp 1)
+├─ slug: "ipad"
+└─ image_url: "/images/ipad.jpg"
+
+├─ id: 11
+├─ name: "iPad Air"
+├─ parent_id: 1         -- Cha là "iPad"
+├─ slug: "ipad-ipad-air"
+└─ image_url: "/images/ipad-air.jpg"
+
+├─ id: 111
+├─ name: "iPad Air 7"
+├─ parent_id: 11        -- Cha là "iPad Air"
+├─ slug: "ipad-ipad-air-ipad-air-7"
+└─ image_url: "/images/ipad-air-7.jpg"
+```
+
+**Logic phức tạp:**
+```javascript
+// Hiển thị breadcrumb trên trang sản phẩm:
+iPad > iPad Air > iPad Air 7 > Model Wifi > Giá từ 13.2 triệu
+
+// Phải tìm được path từ danh mục hiện tại về tổ tiên:
+function getBreadcrumb(categoryId) {
+  let breadcrumb = [];
+  let currentCat = categories[categoryId];
+  
+  while (currentCat) {
+    breadcrumb.unshift(currentCat);  // Thêm vào đầu
+    currentCat = categories[currentCat.parent_id];  // Lên cấp cha
+  }
+  
+  return breadcrumb;  // [iPad, iPad Air, iPad Air 7]
+}
+
+// Hiển thị menu sidebar:
+function buildCategoryTree() {
+  // Tất cả danh mục cấp 1
+  let level1 = categories.filter(c => c.parent_id === null);
+  
+  // Mỗi cấp 1 chứa cấp 2
+  level1.forEach(cat => {
+    cat.children = categories.filter(c => c.parent_id === cat.id);
+    
+    // Mỗi cấp 2 chứa cấp 3 (không cần vì là filter)
+  });
+  
+  return level1;
+}
+
+// Khi filter sản phẩm:
+// URL: /san-pham/ipad?loai=ipad-ipad-air
+// "loai" chính là slug của danh mục cấp 3
+// Phải tìm product có category = "ipad-ipad-air"
+```
+
+---
+
+### 3. HỆ THỐNG GIẢM GIÁ PHỨC TẠP (Discount System - RẤT PHỨC TẠP)
+
+**Website Anh Phi có 3 loại giảm giá:**
+
+#### **Loại 1: Giảm giá cố định trên sản phẩm**
+```
+iPad Air 6
+├─ Giá gốc: 18.000.000 ₫
+├─ Giảm: 27%
+└─ Giá bán: 13.200.000 ₫
+```
+
+#### **Loại 2: Chương trình khuyến mãi có thời gian**
+```
+Chương trình "Black Friday 11/11 - 30/11"
+├─ Giảm 15% tất cả sản phẩm iPad
+├─ Giảm 20% MacBook
+├─ Giảm 10% Phụ kiện
+├─ Thời gian: từ 11/11 đến 30/11
+└─ Điều kiện: Không kết hợp với khuyến mãi khác
+
+Chương trình "Tựu trường 1/8 - 15/9"
+├─ Mua iPad + Tặng Apple Pencil Pro
+├─ Mua MacBook + Tặng Tai nghe chụp
+└─ Thời gian: 1/8 - 15/9
+```
+
+#### **Loại 3: Mã giảm giá (Coupon Code)**
+```
+Mã: APHONE2024
+├─ Giảm: 5% tổng giá đơn hàng
+├─ Điều kiện: Đơn hàng ≥ 5 triệu
+├─ Lần dùng: Tối đa 100 lần
+└─ Hết hiệu lực: 31/12/2024
+
+Mã: FREESHIP10
+├─ Giảm: 50k tiền ship
+├─ Điều kiện: Đơn hàng ≥ 300k
+└─ Thời gian: 1/1 - 31/12/2024
+```
+
+**Database Schema:**
+```sql
+-- Loại 1: Giảm giá trên variant
+Table ProductVariants
+├─ id: 1
+├─ product_id: 1
+├─ discount_percent: 27
+├─ original_price: 18.000.000
+├─ selling_price: 13.200.000  -- Tính tự động
+└─ ...
+
+-- Loại 2: Chương trình khuyến mãi
+Table Promotions
+├─ id: 1
+├─ name: "Black Friday 11/11"
+├─ type: "percentage" | "fixed_amount" | "gift"  -- Loại
+├─ discount_value: 15  -- 15%
+├─ start_date: 2024-11-11
+├─ end_date: 2024-11-30
+├─ is_active: true
+├─ description: "Giảm 15% tất cả iPad"
+└─ conditions: {
+     category: ["ipad"],
+     min_price: 0,
+     max_quantity_per_customer: null
+   }
+
+-- Liên kết sản phẩm với promotion
+Table PromotionItems
+├─ id: 1
+├─ promotion_id: 1
+├─ product_id: 1  -- hoặc category_id: 1
+└─ ...
+
+-- Loại 3: Mã giảm giá (Coupon)
+Table Coupons
+├─ id: 1
+├─ code: "APHONE2024"
+├─ discount_type: "percentage" | "fixed_amount"
+├─ discount_value: 5  -- 5%
+├─ min_order_value: 5.000.000
+├─ max_uses: 100
+├─ current_uses: 42  -- Đã dùng bao nhiêu lần
+├─ start_date: 2024-01-01
+├─ end_date: 2024-12-31
+├─ is_active: true
+└─ ...
+```
+
+**Logic phức tạp khi tính giá:**
+```javascript
+// Khi khách add sản phẩm vào giỏ
+function calculateOrderTotal(cartItems, couponCode = null) {
+  let total = 0;
+  let promotionApplied = [];
+
+  // 1. Tính tổng giá sản phẩm (đã bao gồm giảm giá trên sản phẩm)
+  cartItems.forEach(item => {
+    let variantPrice = item.variant.selling_price;  // Đã tính % giảm
+    total += variantPrice * item.quantity;
+  });
+
+  // 2. Kiểm tra chương trình khuyến mãi hiện tại
+  const now = new Date();
+  const activePromotions = promotions.filter(p => 
+    p.is_active && 
+    p.start_date <= now && 
+    p.end_date >= now
+  );
+
+  // 3. Áp dụng promotion
+  activePromotions.forEach(promo => {
+    const applicableItems = cartItems.filter(item => 
+      promo.categories.includes(item.product.category_id)
+    );
+
+    if (applicableItems.length > 0) {
+      if (promo.type === "percentage") {
+        let promoDiscount = 0;
+        applicableItems.forEach(item => {
+          promoDiscount += item.variant.selling_price * item.quantity * (promo.discount_value / 100);
+        });
+        total -= promoDiscount;
+        promotionApplied.push(promo.name);
+      } 
+      else if (promo.type === "gift") {
+        // Mua MacBook → Tặng Tai nghe
+        cartItems.push({
+          product_id: promo.gift_product_id,
+          price: 0,  // Miễn phí
+          quantity: 1,
+          isGift: true
+        });
+      }
+    }
+  });
+
+  // 4. Áp dụng mã giảm giá (Coupon)
+  if (couponCode) {
+    const coupon = coupons.find(c => 
+      c.code === couponCode && 
+      c.is_active && 
+      c.current_uses < c.max_uses &&
+      new Date() >= c.start_date &&
+      new Date() <= c.end_date
+    );
+
+    if (coupon) {
+      if (total >= coupon.min_order_value) {
+        if (coupon.discount_type === "percentage") {
+          total -= total * (coupon.discount_value / 100);
+        } else {
+          total -= coupon.discount_value;
+        }
+        promotionApplied.push(coupon.code);
+      }
+    }
+  }
+
+  // 5. Thêm tiền ship
+  const shippingCost = calculateShipping(cartItems, total);  // Phức tạp tính tùy địa chỉ
+  
+  // 6. Áp dụng freeship nếu đủ điều kiện
+  if (total >= 300000) {  // Freeship từ 300k
+    shippingCost = 0;
+  }
+
+  total += shippingCost;
+
+  return {
+    subtotal: ...,      // Tổng sản phẩm chưa ship
+    promotionDiscount: ...,
+    couponDiscount: ...,
+    shippingCost: ...,
+    total: total,
+    appliedPromotions: promotionApplied
+  };
+}
+```
+
+**Admin phải code:**
+- ✅ Tạo chương trình khuyến mãi: nhập tên, loại (%, tiền cố định, tặng hàng), thời gian
+- ✅ Chọn sản phẩm / danh mục áp dụng
+- ✅ Kích hoạt / Tắt chương trình
+- ✅ Xem thống kê: bao nhiêu người dùng promotion này, tiết kiệm được bao nhiêu tiền
+- ✅ Quản lý coupon: tạo mã, set điều kiện, theo dõi số lần dùng, hết hạn tự động tắt
+
+---
+
+### 4. QUẢN LÝ ĐƠNHÀNG CÓ TÍNH PHỨC TẠP (Order Management - RẤT PHỨC TẠP)
+
+**Trạng thái đơn hàng:**
+```
+Khách đặt → Chờ xác nhận → Xử lý → Đang giao → Đã giao → Khách xác nhận nhận hàng
+    ↓
+  Có thể hủy         Có thể hủy        Không hủy      Không hủy
+
+Trường hợp đặc biệt:
+- Khách trả lại → Kiểm tra → Hoàn tiền
+- Khách yêu cầu đổi size → Tạo đơn đổi
+- Sản phẩm bị lỗi → Hoàn tiền 2x theo chính sách
+```
+
+**Thanh toán:**
+```
+Phương thức 1: COD (Thanh toán khi nhận hàng)
+├─ Status: Chưa thanh toán
+├─ Khi giao: Shipper nhận tiền mặt từ khách
+└─ Admin phải: Xác nhận thanh toán sau
+
+Phương thức 2: Chuyển khoản trực tiếp
+├─ Status: Chờ xác nhận thanh toán
+├─ Khách chuyển khoản → Hệ thống chưa biết
+└─ Admin phải: Manual check bank account, xác nhận thanh toán
+
+Phương thức 3: Thẻ Visa / MasterCard
+├─ Status: Đã thanh toán (tự động nếu kết nối với payment gateway)
+├─ Tích hợp Stripe / PayPal
+└─ Hệ thống tự động cập nhật
+
+Phương thức 4: Trả góp qua Krevido
+├─ Status: Chờ xác nhận từ Krevido
+├─ Hệ thống gọi Krevido API
+└─ Chờ Krevido phê duyệt
+```
+
+**Database Schema:**
+```sql
+Table Orders
+├─ id: 1001
+├─ order_code: "APT-001-20240115"  -- Mã đơn (duy nhất)
+├─ customer_id: 50
+├─ customer_name: "Nguyễn Văn A"
+├─ customer_phone: "0912345678"
+├─ customer_email: "a@gmail.com"
+├─ customer_address: "256 Nghi Tàm, Tây Hồ, Hà Nội"
+├─ customer_note: "Giao buổi sáng nếu được"
+├─ subtotal: 26.400.000  -- Tổng sản phẩm
+├─ promotion_discount: 0  -- Giảm từ promotion
+├─ coupon_discount: 0  -- Giảm từ coupon
+├─ shipping_cost: 0  -- Freeship
+├─ total: 26.400.000  -- Tổng cuối cùng
+├─ payment_method: "transfer" | "cod" | "credit_card" | "krevido"
+├─ payment_status: "unpaid" | "pending" | "paid" | "refunded"
+├─ order_status: "pending" | "confirmed" | "processing" | "shipping" | "delivered" | "cancelled" | "returned"
+├─ bank_reference: "QR20240115..."  -- Mã QR thanh toán (nếu chuyển khoản)
+├─ discount_info: {
+│   promotion_applied: "Black Friday Sale",
+│   coupon_applied: "APHONE2024",
+│   discount_reason: "..." 
+│ }
+├─ created_at: 2024-01-15 10:30:00
+├─ updated_at: 2024-01-15 14:50:00
+├─ confirmed_at: 2024-01-15 10:35:00  -- Khi nào xác nhận?
+├─ shipped_at: 2024-01-16 09:00:00  -- Khi nào gửi?
+├─ delivered_at: 2024-01-18 15:20:00  -- Khi nào giao xong?
+└─ ...
+
+Table OrderItems (Chi tiết sản phẩm trong đơn)
+├─ id: 1
+├─ order_id: 1001
+├─ variant_id: 100  -- ID variant (Nguyên Seal, Wifi, 256GB)
+├─ product_name: "iPad Air 6 (M2) 11 inch"
+├─ variant_name: "Nguyên Seal, Wifi, Silver"
+├─ quantity: 1
+├─ unit_price: 13.200.000  -- Giá lúc mua (có thể khác giá hiện tại)
+├─ subtotal: 13.200.000
+└─ ...
+
+Table OrderTracking (Theo dõi trạng thái)
+├─ id: 1
+├─ order_id: 1001
+├─ status: "processing"  -- Trạng thái mới
+├─ changed_by: "admin1"  -- Ai thay đổi?
+├─ changed_at: 2024-01-15 10:35:00
+├─ note: "Admin xác nhận đơn hàng"
+└─ ...
+```
+
+**Logic phức tạp:**
+```javascript
+// Xác nhận đơn hàng
+function confirmOrder(orderId) {
+  let order = orders[orderId];
+  
+  // 1. Kiểm tra thanh toán
+  if (order.payment_method === "transfer") {
+    // Chưa thanh toán → không thể xác nhận
+    if (order.payment_status === "unpaid") {
+      throw new Error("Khách chưa chuyển khoản");
+    }
+  }
+  
+  // 2. Kiểm tra hàng còn không
+  order.items.forEach(item => {
+    let variant = variants[item.variant_id];
+    if (variant.stock_quantity < item.quantity) {
+      throw new Error(`${item.product_name} chỉ còn ${variant.stock_quantity}, khách order ${item.quantity}`);
+    }
+  });
+  
+  // 3. Trừ stock
+  order.items.forEach(item => {
+    variants[item.variant_id].stock_quantity -= item.quantity;
+  });
+  
+  // 4. Cập nhật trạng thái
+  order.order_status = "confirmed";
+  order.confirmed_at = new Date();
+  
+  // 5. Ghi log
+  orderTracking.push({
+    order_id: orderId,
+    status: "confirmed",
+    changed_by: currentAdmin.id,
+    changed_at: new Date(),
+    note: "Admin xác nhận đơn hàng"
+  });
+  
+  // 6. Gửi email cho khách
+  sendEmail(order.customer_email, {
+    subject: "Đơn hàng được xác nhận",
+    body: `Đơn hàng ${order.order_code} đã được xác nhận, sẽ giao trong 1-2 ngày`
+  });
+  
+  // 7. Gửi thông báo warehouse (nếu có hệ thống WMS)
+  warehouseAPI.createTask({
+    order_id: orderId,
+    items: order.items,
+    address: order.customer_address
+  });
+}
+
+// Hủy đơn hàng
+function cancelOrder(orderId, reason) {
+  let order = orders[orderId];
+  
+  // Không thể hủy nếu đã giao
+  if (order.order_status === "delivered" || order.order_status === "shipping") {
+    throw new Error("Không thể hủy đơn hàng đã giao");
+  }
+  
+  // Hoàn lại stock
+  order.items.forEach(item => {
+    variants[item.variant_id].stock_quantity += item.quantity;
+  });
+  
+  // Hoàn tiền
+  if (order.payment_status === "paid") {
+    // Gọi API hoàn tiền (Stripe, PayPal, ngân hàng)
+    refundPayment(order.id, order.total);
+    order.payment_status = "refunded";
+  }
+  
+  order.order_status = "cancelled";
+  
+  // Gửi email
+  sendEmail(order.customer_email, {
+    subject: "Đơn hàng bị hủy",
+    body: `Đơn hàng ${order.order_code} đã bị hủy. Lý do: ${reason}`
+  });
+}
+
+// Cập nhật trạng thái giao hàng (từ Shipper hoặc Manual)
+function updateShippingStatus(orderId, newStatus, trackingNumber = null) {
+  let order = orders[orderId];
+  
+  if (newStatus === "shipping") {
+    order.shipped_at = new Date();
+  }
+  
+  if (newStatus === "delivered") {
+    order.delivered_at = new Date();
+    // Gửi email xin review / feedback
+    sendEmail(order.customer_email, {
+      subject: "Yêu cầu đánh giá sản phẩm",
+      body: "Vui lòng đánh giá sản phẩm bạn vừa nhận"
+    });
+  }
+  
+  order.order_status = newStatus;
+  order.tracking_number = trackingNumber;
+  
+  // Ghi log
+  orderTracking.push({...});
+}
+
+// Hoàn trả hàng (Return & Exchange)
+function processReturn(orderId, reason, returnType) {
+  // returnType: "return" (hoàn tiền) | "exchange" (đổi hàng)
+  
+  let order = orders[orderId];
+  
+  // Kiểm tra điều kiện: phải trong 7 ngày (trừ Apple chính hãng)
+  const daysSinceDelivery = (new Date() - order.delivered_at) / (1000 * 60 * 60 * 24);
+  
+  if (daysSinceDelivery > 7) {
+    throw new Error("Quá 7 ngày, không thể trả hàng");
+  }
+  
+  // Tạo return request
+  let returnRequest = {
+    id: generateId(),
+    order_id: orderId,
+    reason: reason,
+    type: returnType,  // return | exchange
+    status: "pending",  // pending → approved → returned → completed
+    created_at: new Date()
+  };
+  
+  // Nếu hoàn tiền 2x (hàng giả)
+  if (reason === "fake_product") {
+    const refundAmount = order.total * 2;
+    refundPayment(order.id, refundAmount);
+  }
+  
+  returnRequest.save();
+}
+```
+
+**Admin phải quản lý:**
+- ✅ Xem danh sách đơn hàng (lọc theo trạng thái, thời gian, khách, tổng tiền)
+- ✅ Xác nhận đơn hàng (kiểm tra thanh toán, kiểm tra stock, trừ stock)
+- ✅ Cập nhật trạng thái giao hàng
+- ✅ Hủy đơn hàng (hoàn tiền, hoàn stock)
+- ✅ Xử lý return / exchange (ghi nhận, phê
+
+5. QUẢN LÝ HÌNH ẢNH SẢN PHẨM (Image Management - PHỨC TẠP)
+Thách thức:
+- Mỗi sản phẩm có NHIỀU HÌNH ẢNH
+- Hình chính (thumbnail)
+- Hình phụ (gallery) - 5 ảnh khác góc độ
+- Tối ưu hóa: Resize, Compress để tải nhanh
+- Hỗ trợ webp format (tệp nhỏ hơn)
+Database Schema:
+sqlTable ProductImages
+├─ id: 1
+├─ product_id: 1
+├─ image_url: "/uploads/products/ipad-air-6-main.jpg"
+├─ thumbnail_url: "/uploads/products/ipad-air-6-main-thumb.jpg"  -- 200x200
+├─ webp_url: "/uploads/products/ipad-air-6-main.webp"
+├─ is_primary: true  -- Ảnh chính
+├─ display_order: 1  -- Sắp xếp ảnh
+├─ alt_text: "iPad Air 6 Silver"
+├─ uploaded_at: 2024-01-15
+└─ ...
+Logic phức tạp:
+javascript// Upload ảnh
+async function uploadProductImage(productId, file) {
+  // 1. Kiểm tra file
+  if (!["jpg", "png", "webp"].includes(file.extension)) {
+    throw new Error("Chỉ chấp nhận jpg, png, webp");
+  }
+  
+  if (file.size > 5 * 1024 * 1024) {  // 5MB
+    throw new Error("Ảnh quá lớn, max 5MB");
+  }
+  
+  // 2. Resize & compress
+  const mainImage = await imageProcessor.resize(file, 800, 600);  // Ảnh chính
+  const thumbnail = await imageProcessor.resize(file, 200, 200);  // Thumbnail
+  const webp = await imageProcessor.convert(file, "webp");  // WebP
+  
+  // 3. Upload lên server hoặc cloud (AWS S3, Cloudinary)
+  const mainPath = await storage.upload(mainImage, "/products/");
+  const thumbPath = await storage.upload(thumbnail, "/products/");
+  const webpPath = await storage.upload(webp, "/products/");
+  
+  // 4. Lưu vào database
+  ProductImages.create({
+    product_id: productId,
+    image_url: mainPath,
+    thumbnail_url: thumbPath,
+    webp_url: webpPath,
+    is_primary: file.isPrimary || false,
+    alt_text: file.altText
+  });
+  
+  // 5. Xóa file tạm
+  file.delete();
+}
+
+// Hiển thị hình ảnh (tối ưu)
+function getProductImages(productId) {
+  let images = productImages.filter(img => img.product_id === productId);
+  
+  // Sắp xếp: ảnh chính trước
+  images.sort((a, b) => {
+    if (a.is_primary) return -1;
+    if (b.is_primary) return 1;
+    return a.display_order - b.display_order;
+  });
+  
+  // Trả về các url khác nhau tùy nhu cầu
+  return images.map(img => ({
+    url: img.image_url,        // Full resolution
+    thumbnail: img.thumbnail_url,  // Để gallery thumbnail
+    webp: img.webp_url,        // Cho browser hỗ trợ
+    alt: img.alt_text
+  }));
+}
+```
+
+---
+
+### 6. QUẢN LÝ KHO HÀNG & STOCK (Inventory Management - RẤT PHỨC TẠP)
+
+**Thách thức:**
+```
+- iPad Air 6 có 6 variants, mỗi variant có stock khác nhau
+- Khi bán được 1 chiếc → trừ stock của variant đó
+- Không được bán quá stock (stock âm)
+- Cảnh báo khi stock sắp hết (< 5 cái)
+- Thống kê bao nhiêu variant sắp hết hàng
+- 2 cửa hàng khác nhau: stock riêng hay chung?
+Giả sử: Stock chung (Hà Nội + TP.HCM)
+Database Schema:
+sqlTable ProductVariants
+├─ id: 100
+├─ product_id: 1
+├─ variant_name: "Nguyên Seal, Wifi, Silver"
+├─ stock_quantity: 5  -- Tổng stock
+├─ reserved_quantity: 1  -- Đã order nhưng chưa giao
+├─ available_quantity: 4  -- = stock - reserved (có sẵn để bán)
+├─ reorder_level: 5  -- Khi nào order hàng mới? (< 5)
+├─ status: "in_stock" | "low_stock" | "out_of_stock"
+├─ last_restocked_at: 2024-01-10
+└─ ...
+
+Table StockHistory (Lịch sử thay đổi stock)
+├─ id: 1
+├─ variant_id: 100
+├─ change_type: "order" | "restock" | "damage" | "adjust"
+├─ quantity_change: -1  (Âm = giảm, Dương = tăng)
+├─ reason: "Đơn hàng #1001"
+├─ changed_by: "admin1"
+├─ changed_at: 2024-01-15 10:30:00
+├─ notes: "Khách order 1 cái"
+└─ ...
+Logic phức tạp:
+javascript// Khi khách add vào giỏ hàng
+function addToCart(variantId, quantity) {
+  let variant = variants[variantId];
+  
+  // Kiểm tra stock
+  if (variant.available_quantity < quantity) {
+    throw new Error(`Chỉ còn ${variant.available_quantity} cái`);
+  }
+  
+  // Thêm vào giỏ hàng tạm (chưa trừ stock)
+  cart.push({
+    variant_id: variantId,
+    quantity: quantity
+  });
+}
+
+// Khi khách thanh toán
+function checkoutOrder(cartItems) {
+  // 1. Double check stock (vì có thể khách khác mua cùng lúc)
+  cartItems.forEach(item => {
+    let variant = variants[item.variant_id];
+    if (variant.available_quantity < item.quantity) {
+      throw new Error(`${variant.name} chỉ còn ${variant.available_quantity}, bạn yêu cầu ${item.quantity}`);
+    }
+  });
+  
+  // 2. Tạo đơn hàng
+  let order = Order.create({...});
+  
+  // 3. Reserve stock (đánh dấu là đã order, nhưng chưa giao)
+  cartItems.forEach(item => {
+    let variant = variants[item.variant_id];
+    variant.reserved_quantity += item.quantity;
+    variant.available_quantity = variant.stock_quantity - variant.reserved_quantity;
+    
+    // Cập nhật status
+    if (variant.available_quantity === 0) {
+      variant.status = "out_of_stock";
+    } else if (variant.available_quantity < variant.reorder_level) {
+      variant.status = "low_stock";
+      // Gửi alert cho admin
+      sendAlert("low_stock", {
+        product: variant.product_name,
+        available: variant.available_quantity
+      });
+    }
+    
+    // Ghi log
+    StockHistory.create({
+      variant_id: item.variant_id,
+      change_type: "order",
+      quantity_change: -item.quantity,
+      reason: `Đơn hàng #${order.id}`,
+      changed_by: "system"
+    });
+  });
+  
+  return order;
+}
+
+// Khi order được giao (khách xác nhận nhận)
+function confirmDelivery(orderId) {
+  let order = orders[orderId];
+  
+  // Trừ stock thực tế
+  order.items.forEach(item => {
+    let variant = variants[item.variant_id];
+    variant.reserved_quantity -= item.quantity;
+    variant.stock_quantity -= item.quantity;  // Trừ vĩnh viễn
+    variant.available_quantity = variant.stock_quantity - variant.reserved_quantity;
+  });
+  
+  order.status = "delivered";
+}
+
+// Admin order hàng mới từ supplier
+function restock(variantId, quantity, costPrice) {
+  let variant = variants[variantId];
+  
+  variant.stock_quantity += quantity;
+  variant.available_quantity += quantity;
+  variant.status = "in_stock";
+  
+  StockHistory.create({
+    variant_id: variantId,
+    change_type: "restock",
+    quantity_change: quantity,
+    reason: "Admin nhập hàng",
+    changed_by: currentAdmin.id
+  });
+  
+  // Tạo purchase order để track chi phí
+  PurchaseOrder.create({
+    variant_id: variantId,
+    quantity: quantity,
+    unit_cost: costPrice,
+    total_cost: quantity * costPrice,
+    supplier_id: supplierId,
+    created_at: new Date()
+  });
+}
+
+// Admin điều chỉnh stock (nếu hàng bị lỗi, mất...)
+function adjustStock(variantId, quantityDifference, reason) {
+  let variant = variants[variantId];
+  
+  variant.stock_quantity += quantityDifference;
+  variant.available_quantity += quantityDifference;
+  
+  StockHistory.create({
+    variant_id: variantId,
+    change_type: "adjust",
+    quantity_change: quantityDifference,
+    reason: reason,  // "Hàng bị lỗi", "Hàng bị mất", etc
+    changed_by: currentAdmin.id
+  });
+}
+```
+
+**Admin phải quản lý:**
+- ✅ Xem tổng stock từng variant
+- ✅ Xem lịch sử thay đổi stock
+- ✅ Nhập hàng mới (restock)
+- ✅ Điều chỉnh stock (nếu kiểm kho)
+- ✅ Cảnh báo variant sắp hết hàng
+- ✅ Báo cáo: variant nào bán chạy nhất, nào tồn kho lâu
+
+---
+
+### 7. QUẢN LÝ KHÁCH HÀNG & LOYALTY (Customer Management - PHỨC TẠP)
+
+**Dữ liệu khách hàng:**
+```
+Khách hàng ABC
+├─ Tên: Nguyễn Văn A
+├─ SĐT: 0912345678
+├─ Email: abc@gmail.com
+├─ Địa chỉ:
+│  ├─ Địa chỉ mặc định: 256 Nghi Tàm, Tây Hồ, Hà Nội
+│  ├─ Địa chỉ công ty: Toà nhà ABC, Q1, TP.HCM
+│  └─ Địa chỉ quê: ...
+├─ Lịch sử mua:
+│  ├─ 10/01/2024: Mua iPad Air 6 → 13.2 triệu
+│  ├─ 05/01/2024: Mua MacBook Air M4 → 23.3 triệu
+│  └─ Tổng chi tiêu: 36.5 triệu
+├─ Điểm tích lũy (Loyalty Points): 365 điểm (1 triệu = 10 điểm)
+├─ Hạng (Tier): Gold (chi > 30 triệu)
+│  ├─ Benefits: Giảm 5% mỗi đơn, miễn ship, ưu tiên hỗ trợ
+│  └─ Hạn: đến 31/12/2024
+├─ Yêu thích:
+│  ├─ iPad Air 7
+│  ├─ Apple Pencil Pro
+│  └─ AirPods Pro
+└─ Lần truy cập cuối: 20/01/2024
+Database Schema:
+sqlTable Customers
+├─ id: 50
+├─ phone: "0912345678"  (Primary key)
+├─ email: "abc@gmail.com"
+├─ first_name: "Nguyễn"
+├─ last_name: "Văn A"
+├─ gender: "M" | "F" | "Other"
+├─ date_of_birth: "1990-05-15"
+├─ total_spent: 36500000
+├─ total_orders: 10
+├─ loyalty_points: 365
+├─ tier: "gold" | "silver" | "bronze" | "regular"
+├─ tier_expires_at: 2024-12-31
+├─ created_at: 2023-06-10
+├─ last_order_at: 2024-01-10
+└─ ...
+
+Table CustomerAddresses
+├─ id: 1
+├─ customer_id: 50
+├─ address_type: "home" | "office" | "other"
+├─ province: "Hà Nội"
+├─ district: "Tây Hồ"
+├─ ward: "Phú Thượng"
+├─ street: "256 Nghi Tàm"
+├─ is_default: true
+├─ ...
+
+Table Wishlist
+├─ id: 1
+├─ customer_id: 50
+├─ variant_id: 110  (iPad Air 7)
+├─ added_at: 2024-01-15
+└─ ...
+
+Table CustomerLoyalty
+├─ id: 1
+├─ customer_id: 50
+├─ tier: "gold"
+├─ tier_achieved_at: 2024-01-01
+├─ tier_expires_at: 2024-12-31
+├─ benefits: {
+│   discount_percent: 5,
+│   free_shipping: true,
+│   priority_support: true
+│ }
+└─ ...
+
+Table LoyaltyPointsHistory
+├─ id: 1
+├─ customer_id: 50
+├─ points_change: +100  (Dương = cộng, Âm = trừ)
+├─ reason: "Mua hàng đơn #1001"
+├─ order_id: 1001
+├─ created_at: 2024-01-10
+└─ ...
+Logic phức tạp:
+javascript// Tính loyalty points
+function addLoyaltyPoints(customerId, orderTotal, orderId) {
+  // Mỗi triệu = 10 điểm
+  const points = Math.floor(orderTotal / 1000000) * 10;
+  
+  let customer = customers[customerId];
+  customer.loyalty_points += points;
+  customer.total_spent += orderTotal;
+  customer.total_orders += 1;
+  
+  // Cập nhật tier
+  updateCustomerTier(customerId);
+  
+  // Ghi lịch
+  LoyaltyPointsHistory.create({
+    customer_id: customerId,
+    points_change: points,
+    reason: `Mua hàng đơn #${orderId}`,
+    order_id: orderId
+  });
+}
+
+// Xác định tier khách hàng
+function updateCustomerTier(customerId) {
+  let customer = customers[customerId];
+  let newTier = "regular";
+  
+  if (customer.total_spent >= 100000000) {  // >= 100 triệu
+    newTier = "platinum";
+  } else if (customer.total_spent >= 50000000) {  // >= 50 triệu
+    newTier = "gold";
+  } else if (customer.total_spent >= 20000000) {  // >= 20 triệu
+    newTier = "silver";
+  } else if (customer.total_spent >= 10000000) {  // >= 10 triệu
+    newTier = "bronze";
+  }
+  
+  // Nếu tier thay đổi
+  if (newTier !== customer.tier) {
+    customer.tier = newTier;
+    customer.tier_expires_at = new Date().addYear(1);
+    
+    // Gửi email chúc mừng
+    sendEmail(customer.email, {
+      subject: `Chúc mừng bạn đạt hạng ${newTier.toUpperCase()}`,
+      body: `Bạn nhận được ưu đãi: ${getTierBenefits(newTier)}`
+    });
+  }
+}
+
+// Lấy ưu đãi theo tier
+function getTierBenefits(tier) {
+  const benefits = {
+    platinum: { discount: 10, free_shipping: true, priority_support: true },
+    gold: { discount: 5, free_shipping: true, priority_support: true },
+    silver: { discount: 3, free_shipping: false, priority_support: false },
+    bronze: { discount: 2, free_shipping: false, priority_support: false },
+    regular: { discount: 0, free_shipping: false, priority_support: false }
+  };
+  return benefits[tier];
+}
+
+// Sử dụng loyalty points để giảm giá
+function redeemLoyaltyPoints(customerId, pointsToUse) {
+  let customer = customers[customerId];
+  
+  if (customer.loyalty_points < pointsToUse) {
+    throw new Error("Không đủ điểm tích lũy");
+  }
+  
+  // 1 điểm = 1000 VNĐ
+  const discountAmount = pointsToUse * 1000;
+  
+  customer.loyalty_points -= pointsToUse;
+  
+  LoyaltyPointsHistory.create({
+    customer_id: customerId,
+    points_change: -pointsToUse,
+    reason: "Sử dụng điểm giảm giá"
+  });
+  
+  return discountAmount;
+}
+```
+
+**Admin phải quản lý:**
+- ✅ Xem danh sách khách hàng (tìm kiếm, lọc theo tier, tổng chi tiêu)
+- ✅ Xem chi tiết khách (lịch sử mua, điểm tích lũy, tier)
+- ✅ Gửi email marketing cho khách
+- ✅ Thống kê: khách tiềm năng, khách có nguy cơ rời bỏ
+- ✅ Quản lý loyalty program
+
+---
+
+### 8. MULTI-CHANNEL SALES (BÁN TRÊN NHIỀU NỀN TẢNG - RẤT PHỨC TẠP)
+
+**Website Anh Phi bán trên:**
+```
+1. Website: anhphibantao.com
+2. Shopee: https://shopee.vn/anhphi.bantao
+3. Instagram: @anhphibantao.vn
+4. Facebook: facebook.com/anhphibantao.vn
+5. TikTok: @anhphibantao.com
+Thách thức:
+
+Cùng sản phẩm, nhưng stock chung (nếu 1 người mua trên Shopee → website stock phải giảm)
+Giá có thể khác nhau trên các nền tảng
+Order từ Shopee phải sync về system chính
+Admin phải quản lý order từ nhiều nơi ở 1 dashboard
+
+Database Schema:
+sqlTable Orders
+├─ id: 1001
+├─ order_code: "APT-001-20240115"
+├─ channel: "website" | "shopee" | "instagram" | "facebook"
+├─ channel_order_id: "12345678" (ID gốc từ Shopee/Shopee/...)
+├─ sync_status: "synced" | "pending_sync" | "error"
+├─ ...
+
+Table ChannelPrices
+├─ id: 1
+├─ variant_id: 100
+├─ channel: "website" | "shopee"
+├─ price: 13.200.000  (Giá trên channel này)
+├─ is_active: true
+└─ ...
+Logic phức tạp:
+javascript// Sync order từ Shopee
+async function syncShopeeOrder() {
+  // 1. Gọi Shopee API lấy danh sách order mới
+  const shopeeOrders = await shopeeAPI.getOrders({
+    status: "unpaid"  // Chỉ lấy order chưa thanh toán
+  });
+  
+  // 2. Duyệt qua từng order
+  for (let shopeeOrder of shopeeOrders) {
+    // 3. Kiểm tra xem order này có trong hệ thống không
+    let existingOrder = orders.find(o => 
+      o.channel === "shopee" && 
+      o.channel_order_id === shopeeOrder.order_sn
+    );
+    
+    if (existingOrder) {
+      // Đã sync rồi, bỏ qua
+      continue;
+    }
+    
+    // 4. Lấy chi tiết order từ Shopee
+    const orderDetails = await shopeeAPI.getOrderDetails(shopeeOrder.order_sn);
+    
+    // 5. Chuyển đổi dữ liệu từ Shopee sang format của chúng ta
+    const order = convertShopeeOrder(orderDetails);
+    
+    // 6. Kiểm tra stock
+    for (let item of order.items) {
+      const variant = variants[item.variant_id];
+      if (variant.available_quantity < item.quantity) {
+        // Stock không đủ → Ghi log, có thể hủy order
+        logger.warn(`Insufficient stock for variant ${item.variant_id}`);
+        continue;
+      }
+    }
+    
+    // 7. Lưu order vào hệ thống
+    orders.push(order);
+    
+    // 8. Giảm stock
+    for (let item of order.items) {
+      variants[item.variant_id].reserved_quantity += item.quantity;
+    }
+    
+    // 9. Cập nhật trạng thái trên Shopee
+    await shopeeAPI.updateOrderStatus(shopeeOrder.order_sn, "confirmed");
+    
+    order.sync_status = "synced";
+  }
+}
+
+// Thêm webhook để Shopee gọi khi có order mới
+app.post("/webhook/shopee", (req, res) => {
+  const event = req.body;
+  
+  if (event.type === "order_created") {
+    // Có order mới từ Shopee
+    syncShopeeOrder();
+  }
+  
+  res.json({ status: "ok" });
+});
+
+// Cập nhật giá trên Shopee
+function updateChannelPrice(variantId, newPrice, channel) {
+  // channel = "website" | "shopee" | ...
+  
+  // 1. Cập nhật DB
+  ChannelPrices.update({
+    variant_id: variantId,
+    channel: channel
+  }, {
+    price: newPrice
+  });
+  
+  // 2. Nếu là Shopee, gọi API update
+  if (channel === "shopee") {
+    shopeeAPI.updateItemPrice(variantId, newPrice);
+  }
+  
+  // 3. Nếu là website, update luôn
+  if (channel === "website") {
+    variants[variantId].selling_price = newPrice;
+  }
+}
+```
+
+**Admin phải quản lý:**
+- ✅ Đồng bộ hóa order từ nhiều channel
+- ✅ Quản lý giá trên từng channel
+- ✅ Xem tổng doanh số từ từng channel
+- ✅ Sync stock với Shopee (nếu stock website thay đổi → Shopee)
+
+---
+
+### 9. QUẢN LÝ BLOG & CONTENT (Blog Management)
+
+**Website có section "Góc Công Nghệ"** với các bài viết:
+```
+- ANH PHI BÁN TÁO x CHƯƠNG TRÌNH GIÁNG SINH 2025
+- BLACK FRIDAY ĐỔ BỘ
+- Các Hình Thức Mua Hàng Trả Góp
+- Gói Bảo Hành Cơ Bản & Nâng Cao
+Database Schema:
+sqlTable BlogPosts
+├─ id: 1
+├─ title: "BLACK FRIDAY ĐỔ BỘ"
+├─ slug: "black-friday-do-bo"
+├─ content: "<h2>Giới thiệu</h2><p>..." (HTML content)
+├─ excerpt: "Mùa "cháy ví" lớn nhất năm..."
+├─ featured_image: "/uploads/blog/black-friday.jpg"
+├─ category: "promotion" | "guide" | "review"
+├─ author_id: 1 (Admin nào viết?)
+├─ status: "draft" | "published"
+├─ view_count: 1500
+├─ created_at: 2024-11-11
+├─ published_at: 2024-11-11
+├─ updated_at: 2024-01-20
+└─ ...
+
+Table BlogComments
+├─ id: 1
+├─ post_id: 1
+├─ customer_id: 50
+├─ content: "Sản phẩm hay lắm!"
+├─ rating: 5  (★★★★★)
+├─ status: "pending" | "approved" | "rejected"
+├─ created_at: 2024-01-20
+└─ ...
+Logic:
+javascript// Admin tạo bài viết
+function createBlogPost(title, content, featuredImage) {
+  // 1. Tạo slug từ title
+  const slug = generateSlug(title);  // "BLACK FRIDAY ĐỔ BỘ" → "black-friday-do-bo"
+  
+  // 2. Nén hình
+  const image = await imageProcessor.resize(featuredImage, 800, 600);
+  
+  // 3. Lưu hình
+  const imagePath = await storage.upload(image, "/blog/");
+  
+  // 4. Lưu bài
+  BlogPosts.create({
+    title: title,
+    slug: slug,
+    content: content,
+    featured_image: imagePath,
+    author_id: currentAdmin.id,
+    status: "published",
+    published_at: new Date()
+  });
+}
+
+// Hiển thị bài blog
+function getBlogPost(slug) {
+  let post = blogPosts.find(p => p.slug === slug);
+  
+  if (!post) {
+    throw new Error("Bài viết không tồn tại");
+  }
+  
+  // Tăng view count
+  post.view_count += 1;
+  
+  return post;
+}
+```
+
+**Admin phải quản lý:**
+- ✅ Tạo bài viết (WYSIWYG editor)
+- ✅ Upload hình thumbnail
+- ✅ Lên lịch publish (tự động công bố vào ngày nào)
+- ✅ Duyệt bình luận (approve / reject)
+- ✅ Xem view count, like, share
+
+---
+
+## III. DANH SÁCH CÁC PAGE ADMIN CẦN CODE
+
+### 1. **Dashboard (Trang Chủ Admin)**
+```
+- Tổng doanh số hôm nay / tháng / năm
+- Số đơn hàng: chờ xác nhận, đang xử lý, đã giao
+- Top 5 sản phẩm bán chạy
+- Biểu đồ doanh thu (line chart)
+- Thông báo đơn hàng mới (real-time)
+- Quick actions: Xác nhận đơn, Cập nhật trạng thái, Thêm sản phẩm
+```
+
+### 2. **Quản Lý Sản Phẩm (Products)**
+```
+- Danh sách sản phẩm (dạng bảng, 20 item/page)
+- Tìm kiếm: theo tên, SKU
+- Lọc: theo danh mục, trạng thái (còn hàng, hết, hạ), giá
+- Sắp xếp: theo tên, giá, lượt bán, ngày thêm
+- Hành động: Xem chi tiết, Chỉnh sửa, Xóa, Nhân bản
+
+Trang Chi Tiết Sản Phẩm:
+- Thông tin cơ bản: tên, mô tả, danh mục, hình
+- Variants (loại sản phẩm): thêm/sửa/xóa variant
+  └─ Mỗi variant: loại, model, màu, bộ nhớ, giá, stock
+- Hình ảnh: upload/xóa/sắp xếp
+- SEO: meta description, keywords
+- Status: draft, published, hidden
+- Save / Delete / Preview
+
+Trang Thêm Sản Phẩm:
+- Form tương tự như trang Chi Tiết
+- Có thể bulk add variants
+3. Quản Lý Danh Mục (Categories)
+- Danh sách danh mục (tree view)
+-Continue11:27 AMThêm danh mục cấp 1: iPad, MacBook, Âm thanh...
+
+Thêm danh mục cấp 2: iPad Air, iPad Pro, iPad Gen...
+Sắp xếp danh mục (drag & drop)
+Xóa danh mục (kiểm tra sản phẩm trước)
+
+
+### 4. **Quản Lý Đơn Hàng (Orders)**
+
+Danh sách đơn hàng (100 item/page)
+Lọc: theo trạng thái, ngày, khoảng giá, channel (website/shopee)
+Tìm kiếm: theo mã đơn, SĐT khách, email
+Sắp xếp: ngày mới nhất, tổng tiền cao nhất
+Hiển thị: mã đơn, khách, tổng tiền, status, ngày
+
+Trang Chi Tiết Đơn:
+
+Thông tin khách
+Danh sách sản phẩm trong đơn
+Tính chất đơn: subtotal, discount, ship, total
+Trạng thái thanh toán
+Trạng thái đơn + history (ai thay đổi, khi nào, ghi chú gì)
+Hành động: Xác nhận, Cập nhật status, Hủy, In bill, Gửi email
+
+
+### 5. **Quản Lý Khuyến Mãi (Promotions)**
+
+Danh sách khuyến mãi
+Tìm kiếm: theo tên, loại
+Trạng thái: Đang chạy, Sắp bắt đầu, Đã kết thúc, Tắt
+
+Trang Thêm/Chỉnh Sửa Promotion:
+
+Tên chương trình
+Loại: % giảm, số tiền cố định, tặng hàng
+Giá trị
+Thời gian: từ-đến
+Sản phẩm / Danh mục áp dụng (multi-select)
+Điều kiện: đơn tối thiểu, tối đa, per customer, etc
+Active / Inactive
+Thống kê: mấy người dùng, tiết kiệm bao nhiêu
+
+
+### 6. **Quản Lý Coupon (Mã Giảm Giá)**
+
+Danh sách coupon
+Tạo coupon: code, loại, giá trị, điều kiện, hạn sử dụng
+Tắt/Bật coupon
+Xem thống kê: bao nhiêu người dùng, hiệu lực còn bao lâu
+
+
+### 7. **Quản Lý Khách Hàng (Customers)**
+
+Danh sách khách (100 item/page)
+Lọc: theo tier (Gold, Silver...), tổng chi tiêu
+Tìm kiếm: theo tên, SĐT, email
+
+Trang Chi Tiết Khách:
+
+Thông tin cơ bản
+Lịch sử mua: 20 đơn gần nhất
+Tổng chi tiêu, số đơn
+Tier, điểm tích lũy
+Wishlist: sản phẩm yêu thích
+Hành động: Gửi email, Điều chỉnh tier/points, Xóa khách
+
+
+### 8. **Quản Lý Kho (Inventory)**
+
+Danh sách variant (tất cả sản phẩm)
+Cột: sản phẩm, variant, stock, reserved, available, status (low/out)
+Lọc: theo status (low stock, out of stock)
+Tìm kiếm: theo tên sản phẩm
+
+Nhập Hàng (Restock):
+
+Chọn variant
+Nhập số lượng
+Giá nhập (để tính chi phí)
+Supplier (nơi mua)
+Ngày nhập
+Ghi chú
+
+Lịch Sử Stock:
+
+Hiển thị tất cả thay đổi stock
+Loại: order, restock, adjust, damage
+Số lượng thay đổi
+Lý do
+Ai thực hiện, khi nào
+
+
+### 9. **Quản Lý Blog (Blog Posts)**
+
+Danh sách bài viết
+Lọc: theo loại (promotion, guide), status (draft, published)
+
+Tạo/Chỉnh Sửa Bài:
+
+Tiêu đề
+Nội dung (WYSIWYG editor: tinyMCE, CKEditor)
+Upload hình thumbnail
+Excerpt (tóm tắt)
+Loại bài
+Tags / Keywords
+Status: draft / published
+Lên lịch publish (ngày giờ)
+Save / Preview / Publish
+
+Quản Lý Bình Luận:
+
+Danh sách comment chờ duyệt
+Approve / Reject / Delete
+Reply comment
+
+
+### 10. **Quản Lý Nhân Viên Admin (Staff)**
+
+Danh sách admin/staff
+Thêm nhân viên: username, password, email, role, permissions
+Vai trò: Admin (full), Manager (quản lý sản phẩm + đơn), Staff (xem + cập nhật status)
+Xem log hoạt động: ai đã xoá gì, chỉnh sửa gì, khi nào
+Disable tài khoản
+
+
+### 11. **Báo Cáo & Thống Kê (Reports)**
+
+Doanh số: daily, weekly, monthly, yearly
+Sản phẩm bán chạy: top 10, 20, 50
+Khách hàng: mới, quay lại, chưa mua gì 30 ngày
+Tỷ lệ hoàn trả
+Channel performance (website vs shopee)
+Export Excel, PDF
+
+
+### 12. **Cài Đặt (Settings)**
+
+Thông tin cửa hàng (logo, tên, địa chỉ, SĐT)
+Cấu hình giao hàng: freeship từ bao nhiêu, giá ship theo khu vực
+Cấu hình thanh toán: các phương thức, thông tin ngân hàng
+Cài đặt email: SMTP settings
+Backup database
+

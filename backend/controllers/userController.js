@@ -178,3 +178,63 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+/**
+ * Lấy thống kê khách hàng (Admin only)
+ */
+export const getCustomerStats = async (req, res) => {
+  try {
+    const stats = await userService.getCustomerStats();
+    res.json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.error('Get customer stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lấy thống kê khách hàng'
+    });
+  }
+};
+
+/**
+ * Cập nhật điểm loyalty (Admin only)
+ */
+export const updateLoyaltyPoints = async (req, res) => {
+  try {
+    const { amount, type, description } = req.body;
+    const user = await userService.updateLoyaltyPoints(req.params.id, amount, type, description);
+    res.json({
+      success: true,
+      message: type === 'earn' ? 'Đã cộng điểm thành công' : 'Đã trừ điểm thành công',
+      user
+    });
+  } catch (error) {
+    console.error('Update loyalty points error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi cập nhật điểm loyalty'
+    });
+  }
+};
+
+/**
+ * Cập nhật tier khách hàng (Admin only)
+ */
+export const updateCustomerTier = async (req, res) => {
+  try {
+    const { tier } = req.body;
+    const user = await userService.updateCustomerTier(req.params.id, tier);
+    res.json({
+      success: true,
+      message: 'Cập nhật hạng thành viên thành công',
+      user
+    });
+  } catch (error) {
+    console.error('Update customer tier error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi cập nhật hạng thành viên'
+    });
+  }
+};
