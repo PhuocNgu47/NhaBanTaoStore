@@ -1,6 +1,9 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { FiShoppingCart, FiCheck } from 'react-icons/fi';
 import { formatPrice } from '../utils/helpers';
+
+import { useEffect, useState } from 'react';
+import { orderService } from '../services/orderService';
 
 // Checkout steps component
 const CheckoutSteps = ({ currentStep }) => {
@@ -48,34 +51,56 @@ const CheckoutSteps = ({ currentStep }) => {
   );
 };
 
-// Mock order data - In real app, this would come from API or state
-const mockOrder = {
-  orderId: '000735',
-  customerName: 'Phuoc Nguyen',
-  phone: '09357*****',
-  email: 'phuoc***********@gmail.com',
-  orderDate: '21-01-2026 20:04:45',
-  address: '1 Hai ** *****, Phường Tam *****, Thành phố **',
-  paymentMethod: 'Chuyển khoản ngân hàng',
-  shippingMethod: 'Giao hàng Tiêu chuẩn',
-  items: [
-    {
-      id: 1,
-      name: 'iPad Pro M2 11 inch Nguyên Seal CPO Bán Wifi | Chính Hãng Apple',
-      price: 18100000,
-      quantity: 1,
-      variant: '128GB - Xám',
-      image: '/products/ipad-pro.jpg',
-    },
-  ],
-  subtotal: 18100000,
-  shippingFee: null, // null means "Nhân viên gọi trao đổi"
-  total: 18100000,
-};
+
 
 const OrderSuccessPage = () => {
   const location = useLocation();
-  const order = location.state?.order || mockOrder;
+  const params = useParams();
+  const [order, setOrder] = useState(location.state?.order || null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Nếu đã có order từ state (chuyển hướng sau khi đặt hàng), không cần gọi API
+    if (order) return;
+    // Ưu tiên lấy orderId từ params, nếu không có thì thử lấy từ query hoặc location.state
+    let orderId = params.orderId || location.state?.orderId;
+    if (!orderId) {
+      // Thử lấy từ query string nếu có
+      const searchParams = new URLSearchParams(location.search);
+      orderId = searchParams.get('orderId');
+    }
+    if (!orderId) {
+      setError('Không tìm thấy mã đơn hàng.');
+      return;
+    }
+    setLoading(true);
+    orderService.getOrderById(orderId)
+      .then((data) => {
+        setOrder(data);
+        setError('');
+      })
+      .catch(() => {
+        setError('Không tìm thấy thông tin đơn hàng.');
+      })
+      .finally(() => setLoading(false));
+  }, [location, params, order]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-lg text-gray-600">Đang tải thông tin đơn hàng...</div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-lg text-red-500">{error}</div>
+      </div>
+    );
+  }
+  if (!order) return null;
 
   return (
     <div className="py-8 bg-gray-50 min-h-screen">
@@ -114,7 +139,7 @@ const OrderSuccessPage = () => {
                   key={`${item.id}-${item.variant}`}
                   className="flex gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
                 >
-                  <div className="relative w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                  <div className="relative w-20 h-20 bg-gray-100 rounded-xl overflow-hidden shrink-0">
                     <img
                       src={item.image || '/placeholder-product.jpg'}
                       alt={item.name}

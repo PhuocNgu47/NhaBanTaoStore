@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FiMinus, FiPlus, FiTrash2, FiArrowLeft, FiShoppingCart, FiChevronRight, FiTruck, FiRefreshCw, FiAward, FiCreditCard } from 'react-icons/fi';
 import { useCart } from '../hooks';
 import { formatPrice } from '../utils/helpers';
+import Modal from '../components/Modal';
 
 // Checkout steps component
 const CheckoutSteps = ({ currentStep }) => {
@@ -52,6 +53,7 @@ const CartPage = () => {
   const { items, total, removeFromCart, updateQuantity, clearCart } = useCart();
   const [selectedItems, setSelectedItems] = useState(items.map((item) => `${item.id}-${item.variant}`));
   const [voucherCode, setVoucherCode] = useState('');
+  const [voucherModalOpen, setVoucherModalOpen] = useState(false);
 
   const toggleSelectItem = (itemKey) => {
     setSelectedItems((prev) =>
@@ -72,6 +74,14 @@ const CartPage = () => {
   const selectedTotal = items
     .filter((item) => selectedItems.includes(`${item.id}-${item.variant}`))
     .reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const openVoucherModal = () => {
+    setVoucherModalOpen(true);
+  };
+
+  const closeVoucherModal = () => {
+    setVoucherModalOpen(false);
+  };
 
   if (items.length === 0) {
     return (
@@ -148,7 +158,7 @@ const CartPage = () => {
                     </div>
 
                     {/* Image */}
-                    <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                    <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden shrink-0">
                       <img
                         src={item.image || '/placeholder-product.jpg'}
                         alt={item.name}
@@ -251,7 +261,10 @@ const CartPage = () => {
 
                 <div className="flex justify-between items-center py-4 border-y border-gray-200">
                   <span className="text-gray-600">Voucher khuyến mãi</span>
-                  <button className="flex items-center gap-1 text-gray-500 hover:text-blue-600">
+                  <button 
+                    onClick={openVoucherModal}
+                    className="flex items-center gap-1 text-gray-500 hover:text-blue-600"
+                  >
                     <span>Chọn hoặc nhập mã</span>
                     <FiChevronRight />
                   </button>
@@ -278,7 +291,7 @@ const CartPage = () => {
         {/* Trust Badges */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
           <div className="bg-white rounded-xl p-5 shadow-sm flex items-center gap-4">
-            <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
               <FiRefreshCw className="w-7 h-7 text-blue-600" />
             </div>
             <div>
@@ -289,7 +302,7 @@ const CartPage = () => {
           </div>
 
           <div className="bg-white rounded-xl p-5 shadow-sm flex items-center gap-4">
-            <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center shrink-0">
               <FiAward className="w-7 h-7 text-purple-600" />
             </div>
             <div>
@@ -300,7 +313,7 @@ const CartPage = () => {
           </div>
 
           <div className="bg-white rounded-xl p-5 shadow-sm flex items-center gap-4">
-            <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center shrink-0">
               <FiTruck className="w-7 h-7 text-orange-600" />
             </div>
             <div>
@@ -322,6 +335,32 @@ const CartPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Voucher Modal */}
+      <Modal open={voucherModalOpen} onClose={closeVoucherModal} title="Chọn Voucher Khuyến Mãi">
+        <div className="space-y-4">
+          <p className="text-gray-600">Chọn một voucher để áp dụng cho đơn hàng của bạn:</p>
+          <div className="space-y-2">
+            {/* Placeholder for available vouchers - you can replace with actual data */}
+            <div className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer">
+              <div className="font-medium">VOUCHER10</div>
+              <div className="text-sm text-gray-600">Giảm 10% cho đơn hàng từ 500k</div>
+            </div>
+            <div className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer">
+              <div className="font-medium">FREESHIP</div>
+              <div className="text-sm text-gray-600">Miễn phí vận chuyển</div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={closeVoucherModal}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
