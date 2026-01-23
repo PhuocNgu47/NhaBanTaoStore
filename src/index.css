@@ -1,6 +1,29 @@
 @import "tailwindcss";
 
-/* Custom base styles */
+/* ===== Extend Tailwind với màu mới ===== */
+@theme {
+  --color-primary: #5CDB95;
+  --color-primary-dark: #379683;
+  --color-primary-light: #8EE4AF;
+  --color-secondary: #907163;
+  --color-accent: #EDF5E1;
+  
+  /* Thêm vào palette Tailwind */
+  --color-palette-primary: var(--color-primary);
+  --color-palette-primary-dark: var(--color-primary-dark);
+  --color-palette-primary-light: var(--color-primary-light);
+  --color-palette-secondary: var(--color-secondary);
+  --color-palette-accent: var(--color-accent);
+  
+  /* Override màu blue và orange của Tailwind */
+  --color-blue-500: var(--color-primary);
+  --color-blue-600: var(--color-primary-dark);
+  --color-blue-700: #2a7c5f; /* Darker shade của primary-dark */
+  --color-orange-500: var(--color-secondary);
+  --color-orange-600: #7a5a4d; /* Darker shade của secondary */
+}
+
+/* ===== Custom base styles ===== */
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -10,35 +33,245 @@
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     min-height: 100vh;
+    background-color: var(--white, #ffffff);
+    color: var(--gray-dark, #333333);
+  }
+  
+  /* Link styles sử dụng màu từ App.css */
+  a {
+    color: #379683; /* primary-dark */
+    transition: color 0.2s ease;
+  }
+  
+  a:hover {
+    color: #5CDB95; /* primary */
+  }
+  
+  /* Selection color */
+  ::selection {
+    background-color: #8EE4AF; /* primary-light */
+    color: #333333; /* gray-dark */
   }
 }
 
-/* Custom utilities */
+/* ===== Custom utilities ===== */
 @layer utilities {
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
+  
+  /* Text colors dùng màu mới */
+  .text-palette-primary {
+    color: #5CDB95;
+  }
+  
+  .text-palette-primary-dark {
+    color: #379683;
+  }
+  
+  .text-palette-secondary {
+    color: #907163;
+  }
+  
+  .text-palette-accent {
+    color: #EDF5E1;
+  }
+  
+  /* Background colors */
+  .bg-palette-primary {
+    background-color: #5CDB95;
+  }
+  
+  .bg-palette-primary-dark {
+    background-color: #379683;
+  }
+  
+  .bg-palette-primary-light {
+    background-color: #8EE4AF;
+  }
+  
+  .bg-palette-secondary {
+    background-color: #907163;
+  }
+  
+  .bg-palette-accent {
+    background-color: #EDF5E1;
+  }
 }
 
-/* Custom component styles */
+/* ===== Custom component styles ===== */
 @layer components {
+  /* Primary button với màu mới */
   .btn-primary {
-    @apply bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium;
+    @apply bg-[#5CDB95] text-white px-6 py-2 rounded-lg 
+           hover:bg-[#379683] transition-colors duration-200 
+           font-medium focus:outline-none focus:ring-2 
+           focus:ring-[#8EE4AF] focus:ring-offset-2;
   }
   
+  /* Secondary button với màu mới */
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors duration-200 font-medium;
+    @apply bg-[#EDF5E1] text-[#333333] px-6 py-2 rounded-lg 
+           hover:bg-[#8EE4AF] transition-colors duration-200 
+           font-medium focus:outline-none focus:ring-2 
+           focus:ring-[#5CDB95] focus:ring-offset-2;
   }
   
+  /* Orange button → Secondary button */
   .btn-orange {
-    @apply bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors duration-200 font-medium;
+    @apply bg-[#907163] text-white px-6 py-2 rounded-lg 
+           hover:bg-[#5CDB95] transition-colors duration-200 
+           font-medium focus:outline-none focus:ring-2 
+           focus:ring-[#8EE4AF] focus:ring-offset-2;
   }
   
+  /* Input field với focus màu primary */
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-[#5CDB95] 
+           focus:border-transparent placeholder:text-gray-400;
   }
   
+  /* Card với shadow */
   .card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200;
+    @apply bg-white rounded-xl shadow-md hover:shadow-lg 
+           transition-shadow duration-200 border border-gray-100;
+  }
+}
+
+/* ===== Luxury Effects & Animations ===== */
+@layer utilities {
+  /* Glass morphism effect (rất sang cho Apple) */
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .glass-card {
+    @apply bg-gradient-to-br from-white/20 to-white/5 
+           backdrop-blur-lg border border-white/30 
+           shadow-2xl shadow-[#5CDB95]/10;
+  }
+  
+  /* Smooth transitions */
+  .transition-luxury {
+    @apply transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)];
+  }
+  
+  /* Subtle hover lifts */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+  
+  .hover-lift-lg {
+    @apply transition-transform duration-300 hover:-translate-y-2;
+  }
+  
+  /* Gradient borders */
+  .gradient-border {
+    position: relative;
+    border: double 2px transparent;
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
+  }
+  
+  .gradient-border-primary {
+    background-image: 
+      linear-gradient(white, white),
+      linear-gradient(135deg, #5CDB95, #379683);
+  }
+  
+  /* Shine effect */
+  .shine-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shine-effect::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    transition: transform 0.8s;
+  }
+  
+  .shine-effect:hover::after {
+    transform: rotate(30deg) translate(20%, 20%);
+  }
+  
+  /* Apple-like button */
+  .btn-apple {
+    @apply bg-gradient-to-r from-[#5CDB95] to-[#379683] 
+           text-white font-semibold py-3 px-8 rounded-full 
+           shadow-lg shadow-[#5CDB95]/30 
+           hover:shadow-xl hover:shadow-[#5CDB95]/40 
+           hover:scale-[1.02] 
+           active:scale-[0.98] 
+           transition-all duration-300;
+  }
+  
+  /* Subttyping cursor */
+  .typing-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 1em;
+    background-color: #5CDB95;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  
+  /* Floating animation */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* Fade in up */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fadeInUp {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+  
+  /* Pulse for attention */
+  @keyframes subtle-pulse {
+    0%, 100% { 
+      box-shadow: 0 0 0 0 rgba(92, 219, 149, 0.4); 
+    }
+    70% { 
+      box-shadow: 0 0 0 10px rgba(92, 219, 149, 0); 
+    }
+  }
+  
+  .animate-subtle-pulse {
+    animation: subtle-pulse 2s infinite;
   }
 }

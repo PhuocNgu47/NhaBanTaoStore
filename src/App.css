@@ -1,21 +1,50 @@
+/* ===== CSS Variables cho toàn bộ app ===== */
+:root {
+  /* Bộ màu chính */
+  --primary: #5CDB95;
+  --primary-dark: #379683;
+  --primary-light: #8EE4AF;
+  --secondary: #907163;
+  --accent: #EDF5E1;
+  
+  /* Màu trung tính */
+  --black: #000000;
+  --white: #FFFFFF;
+  --gray-light: #F5F5F5;
+  --gray: #9E9E9E;
+  --gray-dark: #333333;
+  
+  /* Ứng dụng */
+  --bg-color: var(--white);
+  --text-color: var(--gray-dark);
+  --border-color: var(--gray-light);
+  --shadow-color: rgba(92, 219, 149, 0.1);
+}
+
+/* ===== Reset và base styles ===== */
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
+/* ===== Logo styles ===== */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em var(--primary-light)); /* #8EE4AF */
 }
+
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em var(--primary)); /* #5CDB95 */
 }
 
 @keyframes logo-spin {
@@ -33,10 +62,11 @@
   }
 }
 
+/* ===== Card component ===== */
 .card {
   padding: 2em;
 }
 
 .read-the-docs {
-  color: #888;
+  color: var(--secondary); /* #907163 thay vì #888 */
 }
