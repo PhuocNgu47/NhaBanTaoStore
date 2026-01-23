@@ -8,10 +8,14 @@
  * - Xử lý lỗi
  */
 
+
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+import swaggerUi from 'swagger-ui-express';
+import swaggerJSDoc from 'swagger-jsdoc';
 
 // Import cấu hình database (file riêng để dễ quản lý)
 import { connectDB, getConnectionStatus } from './config/database.js';
@@ -40,6 +44,34 @@ dotenv.config();
 
 // Tạo Express application
 const app = express();
+
+// Swagger setup
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Apple E-commerce API',
+      version: '1.0.0',
+      description: 'API documentation for Apple E-commerce backend',
+    },
+    servers:[
+  {
+    url: 'http://localhost:5000/api',
+    description: 'Local',
+  },
+  {
+    url: 'https://YOUR-BACKEND.onrender.com/api',
+    description: 'Production',
+  },
+],
+
+  },
+  // apis: ['./routes/*.js', './models/*.js'],
+  apis: ['./routes/**/*.js', './models/**/*.js'],
+
+};
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ============================================
 // MIDDLEWARE (XỬ LÝ TRƯỚC KHI ĐẾN ROUTES)

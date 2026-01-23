@@ -19,7 +19,9 @@
     "mongodb": "^7.0.0",
     "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.10.1"
+    "nodemailer": "^6.10.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "author": "Nguyen Huu Phuoc",
   "license": "MIT"
