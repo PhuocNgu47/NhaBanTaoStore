@@ -5,7 +5,7 @@
 
 import express from 'express';
 import * as orderController from '../controllers/orderController.js';
-import { protect, admin } from '../middleware/auth.js';
+import { protect, admin, optionalProtect } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -26,14 +26,14 @@ router.get('/stats', protect, admin, orderController.getOrderStats);
  * POST /api/orders
  * Tạo đơn hàng mới (authenticated or guest)
  */
-router.post('/', orderController.createOrder);
+router.post('/', optionalProtect, orderController.createOrder);
 
 /**
  * POST /api/orders/from-cart
  * Tạo đơn hàng từ giỏ hàng (tự động lấy items từ cart)
  * Phải đặt TRƯỚC route /:id để tránh conflict
  */
-router.post('/from-cart', orderController.createOrderFromCart);
+router.post('/from-cart', optionalProtect, orderController.createOrderFromCart);
 
 /**
  * GET /api/orders/guest/:email/:orderNumber

@@ -66,14 +66,15 @@ export const getCategoryBySlug = async (req, res) => {
     const breadcrumb = await Category.getBreadcrumb(category._id);
 
     // Get products count
-    const descendantIds = (await Category.getDescendants(category._id)).map(d => d._id.toString());
-    const allCategoryIds = [category._id.toString(), ...descendantIds];
+    // Get products count - matching SLUGS
+    const descendants = await Category.getDescendants(category._id);
+    const allCategorySlugs = [category.slug, ...descendants.map(d => d.slug)];
 
     const productCount = await Product.countDocuments({
       $or: [
-        { category: { $in: allCategoryIds } },
-        { subcategory: { $in: allCategoryIds } },
-        { productLine: { $in: allCategoryIds } },
+        { category: { $in: allCategorySlugs } },
+        { subcategory: { $in: allCategorySlugs } },
+        { productLine: { $in: allCategorySlugs } },
       ],
       status: 'active',
     });
