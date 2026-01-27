@@ -4,10 +4,13 @@ import { formatPrice } from '../../utils/helpers';
 import { productService } from '../../services/productService';
 import { CATEGORIES } from '../../constants';
 import { toast } from 'react-toastify';
+import VariantManager from '../../components/admin/VariantManager';
+import Modal, { ConfirmModal } from '../../components/Modal';
 
 // Initial form state
 const initialFormState = {
   name: '',
+  sku: '',
   category: '',
   price: '',
   originalPrice: '',
@@ -20,6 +23,7 @@ const initialFormState = {
   featured: false,
   status: 'active',
   specifications: {},
+  variants: [], // NEW: Array of product variants
 };
 
 const AdminProductsPage = () => {
@@ -30,7 +34,7 @@ const AdminProductsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
-  
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -51,9 +55,9 @@ const AdminProductsPage = () => {
         ...(categoryFilter && { category: categoryFilter }),
         ...(statusFilter && { status: statusFilter }),
       };
-      
+
       const response = await productService.getProducts(params);
-      
+
       if (response.success) {
         setProducts(response.products || []);
         setPagination(prev => ({
@@ -88,6 +92,7 @@ const AdminProductsPage = () => {
       setEditingProduct(product);
       setFormData({
         name: product.name || '',
+        sku: product.sku || '',
         category: product.category || '',
         price: product.price || '',
         originalPrice: product.originalPrice || '',
@@ -100,6 +105,7 @@ const AdminProductsPage = () => {
         featured: product.featured || false,
         status: product.status || 'active',
         specifications: product.specifications || {},
+        variants: product.variants || [],
       });
     } else {
       setEditingProduct(null);
@@ -161,7 +167,7 @@ const AdminProductsPage = () => {
   // Submit form (create/update)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.name.trim()) {
       toast.error('Vui lòng nhập tên sản phẩm');
@@ -178,12 +184,19 @@ const AdminProductsPage = () => {
 
     try {
       setSubmitting(true);
-      
+
+      // Calculate stock from variants if has variants
+      let calculatedStock = Number(formData.stock) || 0;
+      if (formData.variants && formData.variants.length > 0) {
+        calculatedStock = formData.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+      }
+
       const productData = {
         ...formData,
         price: Number(formData.price),
         originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
-        stock: Number(formData.stock) || 0,
+        stock: calculatedStock,
+        variants: formData.variants || [],
       };
 
       if (editingProduct) {
@@ -220,11 +233,11 @@ const AdminProductsPage = () => {
   // Confirm delete
   const handleDelete = async () => {
     if (!deletingProduct) return;
-    
+
     try {
       setSubmitting(true);
       const response = await productService.deleteProduct(deletingProduct._id);
-      
+
       if (response.success) {
         toast.success('Xóa sản phẩm thành công!');
         setShowDeleteModal(false);
@@ -244,13 +257,13 @@ const AdminProductsPage = () => {
     if (stock === 0) {
       return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">Hết hàng</span>;
     }
-    
+
     const statusConfig = {
       active: { bg: 'bg-green-100', text: 'text-green-600', label: 'Đang bán' },
       inactive: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Ngừng bán' },
       draft: { bg: 'bg-yellow-100', text: 'text-yellow-600', label: 'Nháp' },
     };
-    
+
     const config = statusConfig[status] || statusConfig.active;
     return <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>{config.label}</span>;
   };
@@ -422,11 +435,10 @@ const AdminProductsPage = () => {
                   <button
                     key={i}
                     onClick={() => setPagination(prev => ({ ...prev, page: i + 1 }))}
-                    className={`px-3 py-1 rounded ${
-                      pagination.page === i + 1
-                        ? 'bg-blue-600 text-white'
-                        : 'border hover:bg-gray-50'
-                    }`}
+                    className={`px-3 py-1 rounded ${pagination.page === i + 1
+                      ? 'bg-blue-600 text-white'
+                      : 'border hover:bg-gray-50'
+                      }`}
                   >
                     {i + 1}
                   </button>
@@ -445,303 +457,294 @@ const AdminProductsPage = () => {
       </div>
 
       {/* Add/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-bold">
-                {editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
-              </h2>
-              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-full">
-                <FiX size={20} />
-              </button>
+      <Modal
+        open={showModal}
+        onClose={closeModal}
+        title={editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
+        subtitle={editingProduct ? `Cập nhật thông tin cho ${editingProduct.name}` : 'Điền thông tin sản phẩm mới'}
+        size="full"
+        footer={
+          <div className="flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 font-medium"
+              disabled={submitting}
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              form="product-form"
+              disabled={submitting}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 font-medium"
+            >
+              {submitting && <FiLoader className="animate-spin" />}
+              {editingProduct ? 'Cập nhật' : 'Thêm sản phẩm'}
+            </button>
+          </div>
+        }
+      >
+
+        <form id="product-form" onSubmit={handleSubmit}>
+          <div className="p-6 space-y-4">
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tên sản phẩm <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="VD: iPad Pro 11 inch M4 2024"
+              />
             </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="p-6 space-y-4">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên sản phẩm <span className="text-red-500">*</span>
-                  </label>
+
+            {/* Category & Brand */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Danh mục <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Chọn danh mục</option>
+                  {CATEGORIES.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Thương hiệu
+                </label>
+                <input
+                  type="text"
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Apple"
+                />
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Giá bán <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Giá gốc (trước giảm)
+                </label>
+                <input
+                  type="number"
+                  name="originalPrice"
+                  value={formData.originalPrice}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            {/* Stock & Status */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số lượng tồn kho
+                </label>
+                <input
+                  type="number"
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Trạng thái
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="active">Đang bán</option>
+                  <option value="inactive">Ngừng bán</option>
+                  <option value="draft">Nháp</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Warranty & Featured */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bảo hành
+                </label>
+                <input
+                  type="text"
+                  name="warranty"
+                  value={formData.warranty}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="12 tháng"
+                />
+              </div>
+              <div className="flex items-center pt-6">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
+                    type="checkbox"
+                    name="featured"
+                    checked={formData.featured}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="VD: iPad Pro 11 inch M4 2024"
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
-                </div>
+                  <span className="text-sm font-medium text-gray-700">Sản phẩm nổi bật</span>
+                </label>
+              </div>
+            </div>
 
-                {/* Category & Brand */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Danh mục <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            {/* Variant Manager */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Biến thể sản phẩm
+              </label>
+              <VariantManager
+                variants={formData.variants || []}
+                onChange={(variants) => setFormData(prev => ({ ...prev, variants }))}
+                basePrice={Number(formData.price) || 0}
+                baseSku={formData.sku || formData.name?.slice(0, 10).toUpperCase().replace(/\s+/g, '-') || 'SKU'}
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mô tả
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={4}
+                placeholder="Nhập mô tả sản phẩm..."
+              />
+            </div>
+
+            {/* Images */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Hình ảnh
+              </label>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={imageInput}
+                  onChange={(e) => setImageInput(e.target.value)}
+                  className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Nhập URL hình ảnh..."
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
+                />
+                <button
+                  type="button"
+                  onClick={addImageUrl}
+                  className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Thêm
+                </button>
+              </div>
+
+              {/* Image previews */}
+              <div className="flex flex-wrap gap-3">
+                {formData.image && (
+                  <div className="relative group">
+                    <img
+                      src={formData.image}
+                      alt="Main"
+                      className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500"
+                      onError={(e) => { e.target.src = '/placeholder.png'; }}
+                    />
+                    <span className="absolute top-1 left-1 text-xs bg-blue-500 text-white px-1 rounded">Chính</span>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(-1)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <option value="">Chọn danh mục</option>
-                      {CATEGORIES.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
+                      <FiX size={12} />
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Thương hiệu
-                    </label>
-                    <input
-                      type="text"
-                      name="brand"
-                      value={formData.brand}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Apple"
-                    />
-                  </div>
-                </div>
-
-                {/* Price */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Giá bán <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                      min="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Giá gốc (trước giảm)
-                    </label>
-                    <input
-                      type="number"
-                      name="originalPrice"
-                      value={formData.originalPrice}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                      min="0"
-                    />
-                  </div>
-                </div>
-
-                {/* Stock & Status */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Số lượng tồn kho
-                    </label>
-                    <input
-                      type="number"
-                      name="stock"
-                      value={formData.stock}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                      min="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Trạng thái
-                    </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="active">Đang bán</option>
-                      <option value="inactive">Ngừng bán</option>
-                      <option value="draft">Nháp</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Warranty & Featured */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Bảo hành
-                    </label>
-                    <input
-                      type="text"
-                      name="warranty"
-                      value={formData.warranty}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="12 tháng"
-                    />
-                  </div>
-                  <div className="flex items-center pt-6">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="featured"
-                        checked={formData.featured}
-                        onChange={handleInputChange}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Sản phẩm nổi bật</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mô tả
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={4}
-                    placeholder="Nhập mô tả sản phẩm..."
-                  />
-                </div>
-
-                {/* Images */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Hình ảnh
-                  </label>
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      type="text"
-                      value={imageInput}
-                      onChange={(e) => setImageInput(e.target.value)}
-                      className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Nhập URL hình ảnh..."
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
+                )}
+                {formData.images.map((img, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={img}
+                      alt={`Image ${index + 1}`}
+                      className="w-24 h-24 object-cover rounded-lg border"
+                      onError={(e) => { e.target.src = '/placeholder.png'; }}
                     />
                     <button
                       type="button"
-                      onClick={addImageUrl}
-                      className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      Thêm
+                      <FiX size={12} />
                     </button>
                   </div>
-                  
-                  {/* Image previews */}
-                  <div className="flex flex-wrap gap-3">
-                    {formData.image && (
-                      <div className="relative group">
-                        <img
-                          src={formData.image}
-                          alt="Main"
-                          className="w-24 h-24 object-cover rounded-lg border-2 border-blue-500"
-                          onError={(e) => { e.target.src = '/placeholder.png'; }}
-                        />
-                        <span className="absolute top-1 left-1 text-xs bg-blue-500 text-white px-1 rounded">Chính</span>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(-1)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <FiX size={12} />
-                        </button>
-                      </div>
-                    )}
-                    {formData.images.map((img, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={img}
-                          alt={`Image ${index + 1}`}
-                          className="w-24 h-24 object-cover rounded-lg border"
-                          onError={(e) => { e.target.src = '/placeholder.png'; }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <FiX size={12} />
-                        </button>
-                      </div>
-                    ))}
-                    {!formData.image && formData.images.length === 0 && (
-                      <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center text-gray-400">
-                        <FiImage size={24} />
-                      </div>
-                    )}
+                ))}
+                {!formData.image && formData.images.length === 0 && (
+                  <div className="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center text-gray-400">
+                    <FiImage size={24} />
                   </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="p-6 border-t flex justify-end gap-4 sticky bottom-0 bg-white">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                  disabled={submitting}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  {submitting && <FiLoader className="animate-spin" />}
-                  {editingProduct ? 'Cập nhật' : 'Thêm sản phẩm'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && deletingProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md">
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Xác nhận xóa</h3>
-              <p className="text-gray-600 mb-4">
-                Bạn có chắc chắn muốn xóa sản phẩm <strong>"{deletingProduct.name}"</strong>?
-              </p>
-              <p className="text-sm text-red-500 mb-6">
-                ⚠️ Hành động này không thể hoàn tác.
-              </p>
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => { setShowDeleteModal(false); setDeletingProduct(null); }}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                  disabled={submitting}
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={submitting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  {submitting && <FiLoader className="animate-spin" />}
-                  Xóa
-                </button>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={showDeleteModal && !!deletingProduct}
+        onClose={() => { setShowDeleteModal(false); setDeletingProduct(null); }}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa sản phẩm"
+        message={
+          deletingProduct
+            ? `Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct.name}"? Hành động này không thể hoàn tác.`
+            : ''
+        }
+        type="danger"
+        confirmText="Xóa sản phẩm"
+        cancelText="Hủy"
+        loading={submitting}
+      />
     </div>
   );
 };

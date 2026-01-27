@@ -22,8 +22,16 @@ const addressSchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    required: true,
     trim: true
+  },
+  addressLine1: {
+    type: String,
+    trim: true
+  },
+  addressLine2: {
+    type: String,
+    trim: true,
+    default: ''
   },
   ward: {
     type: String,

@@ -25,6 +25,7 @@ import Coupon from './models/Coupon.js';
 import Review from './models/Review.js';
 import Cart from './models/Cart.js';
 import Wishlist from './models/Wishlist.js';
+import Lead from './models/Lead.js';
 
 // Import seed scripts
 import { seedUsers } from './seed-scripts/seedUsers.js';
@@ -35,6 +36,7 @@ import { seedCoupons } from './seed-scripts/seedCoupons.js';
 import { seedReviews } from './seed-scripts/seedReviews.js';
 import { seedCarts } from './seed-scripts/seedCarts.js';
 import { seedWishlists } from './seed-scripts/seedWishlists.js';
+import { seedLeads } from './seed-scripts/seedLeads.js';
 
 // Import data
 import { USERS } from './seed-data/users.js';
@@ -59,6 +61,7 @@ async function seedDatabase() {
     await Review.deleteMany({});
     await Cart.deleteMany({});
     await Wishlist.deleteMany({});
+    await Lead.deleteMany({});
     console.log('✅ Đã xóa dữ liệu cũ\n');
 
     // Seed Users
@@ -88,6 +91,9 @@ async function seedDatabase() {
     // Seed Wishlists
     const createdWishlists = await seedWishlists(regularUsers, createdProducts);
 
+    // Seed Leads (needs products to reference)
+    const createdLeads = await seedLeads();
+
     // Summary
     console.log('═══════════════════════════════════════════════════════');
     console.log('✅ Database seeded successfully!');
@@ -101,7 +107,8 @@ async function seedDatabase() {
     console.log(`   • Coupons: ${createdCoupons.length}`);
     console.log(`   • Reviews: ${createdReviews.length}`);
     console.log(`   • Carts: ${createdCarts.length}`);
-    console.log(`   • Wishlists: ${createdWishlists.length}\n`);
+    console.log(`   • Wishlists: ${createdWishlists.length}`);
+    console.log(`   • Leads: ${createdLeads.length}\n`);
 
     console.log('👤 Test Accounts:');
     USERS.forEach(user => {

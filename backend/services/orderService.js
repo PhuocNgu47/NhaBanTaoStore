@@ -41,11 +41,13 @@ export const getOrders = async (userId, isAdmin = false, options = {}) => {
 
   // Search by orderNumber, customer name, phone, email
   if (search) {
+    const searchTerm = search.trim();
     query.$or = [
-      { orderNumber: { $regex: search, $options: 'i' } },
-      { 'shippingAddress.name': { $regex: search, $options: 'i' } },
-      { 'shippingAddress.phone': { $regex: search, $options: 'i' } },
-      { guestEmail: { $regex: search, $options: 'i' } }
+      { orderNumber: { $regex: searchTerm, $options: 'i' } },
+      { 'shippingAddress.name': { $regex: searchTerm, $options: 'i' } },
+      { 'shippingAddress.phone': { $regex: searchTerm, $options: 'i' } },
+      { guestEmail: { $regex: searchTerm, $options: 'i' } },
+      { guestPhone: { $regex: searchTerm, $options: 'i' } }
     ];
   }
 
@@ -462,10 +464,19 @@ export const createOrder = async (orderData, userId = null) => {
     },
     paymentMethod: paymentMethod || 'cod',
     status: 'pending',
-    paymentStatus: 'pending'
+    // Set paymentStatus based on paymentMethod: cod orders are 'cod', others are 'unpaid'
+    paymentStatus: (paymentMethod === 'cod' ? 'cod' : 'unpaid')
   });
 
-  await order.save();
+  try {
+    await order.save();
+  } catch (saveError) {
+    console.error('Error saving order:', saveError);
+    console.error('Order validation errors:', saveError.errors);
+    console.error('Order paymentStatus:', order.paymentStatus);
+    console.error('Order paymentMethod:', order.paymentMethod);
+    throw new Error(`Lỗi khi lưu đơn hàng: ${saveError.message}`);
+  }
 
   // Send confirmation email asynchronously
   const customerName = shippingAddress.name.trim() || 'Khách hàng';
@@ -483,10 +494,14 @@ export const createOrder = async (orderData, userId = null) => {
  * Cập nhật order status (Admin only)
  */
 export const updateOrderStatus = async (orderId, status, note, adminId, trackingNumber = null) => {
-  const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'];
+  const validStatuses = [
+    'pending', 'confirmed', 'shipping_ready', 'shipping_created', 'delivering', 'completed', 'cancelled', 'returned',
+    // Backward compatibility
+    'processing', 'shipped', 'delivered', 'refunded'
+  ];
 
   if (!validStatuses.includes(status)) {
-    throw new Error('Trạng thái không hợp lệ');
+    throw new Error(`Trạng thái không hợp lệ: ${status}`);
   }
 
   const order = await Order.findById(orderId).populate('userId', 'email name');
@@ -499,9 +514,8 @@ export const updateOrderStatus = async (orderId, status, note, adminId, tracking
 
   // Inventory management based on status change
   if (oldStatus !== status) {
-    // Nếu chuyển từ pending/confirmed sang confirmed/processing: Trừ stock thật
-    if ((oldStatus === 'pending' || oldStatus === 'confirmed') && 
-        (status === 'confirmed' || status === 'processing')) {
+    // Nếu chuyển từ pending sang confirmed: Trừ stock thật
+    if (oldStatus === 'pending' && status === 'confirmed') {
       await deductStock(order);
     }
 
@@ -532,13 +546,23 @@ export const updateOrderStatus = async (orderId, status, note, adminId, tracking
     note: note || null,
     trackingNumber: trackingNumber || null
   });
+  
+  // Mark statusHistory as modified so Mongoose knows it changed
+  order.markModified('statusHistory');
 
   // Update tracking number if provided
   if (trackingNumber) {
     order.trackingNumber = trackingNumber;
   }
 
-  await order.save();
+  try {
+    await order.save();
+  } catch (saveError) {
+    console.error('Error saving order:', saveError);
+    console.error('Order status:', order.status);
+    console.error('Order validation errors:', saveError.errors);
+    throw new Error(`Lỗi khi lưu đơn hàng: ${saveError.message}`);
+  }
 
   // Send email notification if status changed
   if (oldStatus !== status) {
@@ -739,16 +763,172 @@ export const updateOrderItems = async (orderId, items, adminId) => {
 
 /**
  * Lấy guest order theo email và orderNumber
+ * Trả về đầy đủ thông tin để tra cứu
+ * Hỗ trợ tìm kiếm không phân biệt hoa thường và trim whitespace
  */
 export const getGuestOrder = async (email, orderNumber) => {
+  // Normalize email: lowercase và trim
+  const normalizedEmail = email ? email.trim().toLowerCase() : '';
+  const normalizedOrderNumber = orderNumber ? String(orderNumber).trim() : '';
+  
+  if (!normalizedEmail || !normalizedOrderNumber) {
+    throw new Error('Vui lòng nhập đầy đủ mã đơn hàng và email.');
+  }
+
+  // Tìm order: so sánh email không phân biệt hoa thường
   const order = await Order.findOne({
-    guestEmail: email,
-    orderNumber: orderNumber
-  }).populate('items.productId', 'name price image');
+    $or: [
+      // Exact match với email đã normalize
+      { 
+        guestEmail: { $regex: new RegExp(`^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        orderNumber: normalizedOrderNumber
+      },
+      // Fallback: tìm với orderNumber và kiểm tra email sau
+      {
+        orderNumber: normalizedOrderNumber
+      }
+    ]
+  })
+    .populate('items.productId', 'name price image slug')
+    .populate('items.variantId', 'name price sku')
+    .populate('statusHistory.updatedBy', 'name email')
+    .lean();
 
   if (!order) {
-    throw new Error('Order not found');
+    throw new Error('Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã đơn hàng và email.');
   }
+
+  // Verify email matches (case-insensitive)
+  const orderEmail = order.guestEmail ? order.guestEmail.trim().toLowerCase() : '';
+  if (orderEmail && orderEmail !== normalizedEmail) {
+    throw new Error('Email không khớp với đơn hàng. Vui lòng kiểm tra lại email.');
+  }
+
+  return order;
+};
+
+/**
+ * Xác nhận đơn hàng (Admin only)
+ * Logic: Chuyển khoản: chỉ xác nhận khi đã nhận tiền (paid)
+ *        COD: có thể xác nhận ngay
+ */
+export const confirmOrder = async (orderId, adminId, note) => {
+  const order = await Order.findById(orderId).populate('userId', 'email name');
+
+  if (!order) {
+    throw new Error('Không tìm thấy đơn hàng');
+  }
+
+  // Check current status
+  if (order.status !== 'pending') {
+    throw new Error(`Không thể xác nhận đơn hàng ở trạng thái: ${order.status}`);
+  }
+
+  // Validate payment: Chuyển khoản phải đã thanh toán, COD có thể xác nhận ngay
+  if (order.paymentMethod === 'bank_transfer' && order.paymentStatus !== 'paid') {
+    throw new Error('Đơn hàng chuyển khoản phải đã thanh toán trước khi xác nhận');
+  }
+
+  // Update status to confirmed
+  order.status = 'confirmed';
+  order.confirmedAt = new Date();
+
+  // Trừ stock khi xác nhận
+  await deductStock(order);
+
+  // Add to status history
+  if (!order.statusHistory) {
+    order.statusHistory = [];
+  }
+  order.statusHistory.push({
+    status: 'confirmed',
+    updatedAt: new Date(),
+    updatedBy: adminId,
+    note: note || 'Admin xác nhận đơn hàng'
+  });
+
+  await order.save();
+
+  // Send email notification
+  const recipientEmail = order.userId?.email || order.guestEmail;
+  if (recipientEmail) {
+    sendOrderStatusUpdateEmail(recipientEmail, order, 'pending', 'confirmed')
+      .catch(err => console.error('Email send error:', err));
+  }
+
+  return order;
+};
+
+/**
+ * Cập nhật trạng thái thanh toán (Admin only)
+ */
+export const updatePayment = async (orderId, paymentStatus, adminId, note, paymentDetails = {}) => {
+  const validPaymentStatuses = ['unpaid', 'paid', 'cod', 'failed', 'refunded'];
+
+  if (!validPaymentStatuses.includes(paymentStatus)) {
+    throw new Error('Trạng thái thanh toán không hợp lệ');
+  }
+
+  const order = await Order.findById(orderId).populate('userId', 'email name');
+
+  if (!order) {
+    throw new Error('Không tìm thấy đơn hàng');
+  }
+
+  const oldPaymentStatus = order.paymentStatus;
+
+  // Update payment status
+  order.paymentStatus = paymentStatus;
+
+  // If paid, set paidAt
+  if (paymentStatus === 'paid' && !order.paidAt) {
+    order.paidAt = new Date();
+  }
+
+  // Update payment details if provided
+  if (paymentDetails && Object.keys(paymentDetails).length > 0) {
+    order.paymentDetails = {
+      ...order.paymentDetails,
+      ...paymentDetails
+    };
+  }
+
+  // Update payment note
+  if (note) {
+    order.paymentNote = note;
+  }
+
+  // If payment is confirmed and order is confirmed, move to shipping_ready
+  if (paymentStatus === 'paid' && order.status === 'confirmed') {
+    order.status = 'shipping_ready';
+
+    if (!order.statusHistory) {
+      order.statusHistory = [];
+    }
+    order.statusHistory.push({
+      status: 'shipping_ready',
+      updatedAt: new Date(),
+      updatedBy: adminId,
+      note: 'Đã xác nhận thanh toán, sẵn sàng lên đơn'
+    });
+  }
+
+  // If COD, move to shipping_ready after confirmation
+  if (paymentStatus === 'cod' && order.status === 'confirmed') {
+    order.status = 'shipping_ready';
+
+    if (!order.statusHistory) {
+      order.statusHistory = [];
+    }
+    order.statusHistory.push({
+      status: 'shipping_ready',
+      updatedAt: new Date(),
+      updatedBy: adminId,
+      note: 'COD - Sẵn sàng lên đơn'
+    });
+  }
+
+  await order.save();
 
   return order;
 };

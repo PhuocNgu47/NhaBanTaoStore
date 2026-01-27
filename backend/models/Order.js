@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
-  orderNumber: { type: String, unique: true },
+  orderNumber: { type: String, unique: true }, // unique: true tự động tạo index
   // Customer
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -55,8 +55,8 @@ const orderSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'refunded'],
-    default: 'pending'
+    enum: ['unpaid', 'paid', 'cod', 'failed', 'refunded'], // Updated per spec: unpaid, paid, cod
+    default: 'unpaid'
   },
   // New payment fields for SePay integration
   paidAt: {
@@ -78,10 +78,14 @@ const orderSchema = new mongoose.Schema({
   couponCode: String,
   couponId: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
   
-  // Order Status - MỞ RỘNG
+  // Order Status - Updated per spec
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned', 'refunded'],
+    enum: [
+      'pending', 'confirmed', 'shipping_ready', 'shipping_created', 'delivering', 'completed', 'cancelled', 'returned',
+      // Backward compatibility for old statuses
+      'processing', 'shipped', 'delivered', 'refunded'
+    ],
     default: 'pending'
   },
   
@@ -133,21 +137,48 @@ orderSchema.pre('save', async function(next) {
   }
   
   // Track status changes
+  // Note: Only auto-add to statusHistory if not already added by service layer
+  // Service layer will handle statusHistory updates with proper adminId
   if (this.isModified('status')) {
-    if (!this.statusHistory) {
-      this.statusHistory = [];
+    // Only auto-add if statusHistory is empty or last entry is different status
+    // This prevents duplicate entries when service layer handles it
+    const shouldAutoAdd = !this.statusHistory || 
+                         this.statusHistory.length === 0 ||
+                         (this.statusHistory.length > 0 && 
+                          this.statusHistory[this.statusHistory.length - 1].status !== this.status);
+    
+    if (shouldAutoAdd) {
+      if (!this.statusHistory) {
+        this.statusHistory = [];
+      }
+      this.statusHistory.push({
+        status: this.status,
+        updatedAt: new Date(),
+        updatedBy: this.userId || null
+      });
     }
-    this.statusHistory.push({
-      status: this.status,
-      updatedAt: new Date(),
-      updatedBy: this.userId
-    });
     
     // Set timestamps based on status
     const now = new Date();
     if (this.status === 'confirmed' && !this.confirmedAt) {
       this.confirmedAt = now;
     }
+    if (this.status === 'shipping_ready' && !this.processingAt) {
+      this.processingAt = now;
+    }
+    if (this.status === 'shipping_created' && !this.shippedAt) {
+      this.shippedAt = now;
+    }
+    if (this.status === 'delivering' && !this.shippedAt) {
+      this.shippedAt = now;
+    }
+    if (this.status === 'completed' && !this.deliveredAt) {
+      this.deliveredAt = now;
+    }
+    if (this.status === 'cancelled' && !this.cancelledAt) {
+      this.cancelledAt = now;
+    }
+    // Backward compatibility for old statuses
     if (this.status === 'processing' && !this.processingAt) {
       this.processingAt = now;
     }
@@ -157,12 +188,6 @@ orderSchema.pre('save', async function(next) {
     if (this.status === 'delivered' && !this.deliveredAt) {
       this.deliveredAt = now;
     }
-    if (this.status === 'cancelled' && !this.cancelledAt) {
-      this.cancelledAt = now;
-    }
-    if (this.status === 'refunded' && !this.refundedAt) {
-      this.refundedAt = now;
-    }
   }
   
   this.updatedAt = new Date();
@@ -170,8 +195,8 @@ orderSchema.pre('save', async function(next) {
 });
 
 // Indexes
+// Lưu ý: orderNumber đã có unique: true nên không cần index riêng
 orderSchema.index({ userId: 1, createdAt: -1 });
-orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ 'items.productId': 1 });

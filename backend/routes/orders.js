@@ -49,6 +49,18 @@ router.get('/guest/:email/:orderNumber', orderController.getGuestOrder);
 router.get('/:id', protect, orderController.getOrderById);
 
 /**
+ * PUT /api/orders/:id/confirm
+ * Xác nhận đơn hàng (Admin only)
+ */
+router.put('/:id/confirm', protect, admin, orderController.confirmOrder);
+
+/**
+ * PUT /api/orders/:id/payment
+ * Cập nhật trạng thái thanh toán (Admin only)
+ */
+router.put('/:id/payment', protect, admin, orderController.updatePayment);
+
+/**
  * PATCH /api/orders/:id/status
  * Cập nhật trạng thái đơn hàng (Admin only)
  */

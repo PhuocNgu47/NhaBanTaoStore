@@ -1,6 +1,6 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { FiShoppingCart, FiCheck } from 'react-icons/fi';
-import { formatPrice } from '../utils/helpers';
+import { formatPrice, formatDate } from '../utils/helpers';
 
 import { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
@@ -62,29 +62,105 @@ const OrderSuccessPage = () => {
 
   useEffect(() => {
     // Nếu đã có order từ state (chuyển hướng sau khi đặt hàng), không cần gọi API
-    if (order) return;
+    if (order && order._id) {
+      return;
+    }
+    
     // Ưu tiên lấy orderId từ params, nếu không có thì thử lấy từ query hoặc location.state
-    let orderId = params.orderId || location.state?.orderId;
+    let orderId = params.orderId || location.state?.orderId || location.state?.order?._id;
     if (!orderId) {
       // Thử lấy từ query string nếu có
       const searchParams = new URLSearchParams(location.search);
       orderId = searchParams.get('orderId');
     }
+    
+    // Nếu có order object từ state nhưng chưa có _id, thử lấy từ order object
+    if (!orderId && location.state?.order?._id) {
+      orderId = location.state.order._id;
+    }
+    
     if (!orderId) {
       setError('Không tìm thấy mã đơn hàng.');
       return;
     }
+    
     setLoading(true);
     orderService.getOrderById(orderId)
-      .then((data) => {
-        setOrder(data);
-        setError('');
+      .then((response) => {
+        if (response.success && response.order) {
+          setOrder(response.order);
+          setError('');
+        } else {
+          setError('Không tìm thấy thông tin đơn hàng.');
+        }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Get order error:', err);
         setError('Không tìm thấy thông tin đơn hàng.');
       })
       .finally(() => setLoading(false));
-  }, [location, params, order]);
+  }, [location, params]);
+
+  // Helper functions to format order data
+  const getPaymentMethodLabel = (method) => {
+    const methods = {
+      cod: 'Thanh toán khi nhận hàng (COD)',
+      bank_transfer: 'Chuyển khoản ngân hàng',
+      momo: 'Ví MoMo',
+      zalopay: 'ZaloPay',
+      vnpay: 'VNPay',
+      stripe: 'Thẻ quốc tế',
+    };
+    return methods[method] || method;
+  };
+
+  const formatAddress = (address) => {
+    if (!address) return '';
+    if (typeof address === 'string') return address;
+    const parts = [];
+    if (address.addressLine1 || address.address) {
+      parts.push(address.addressLine1 || address.address);
+    }
+    if (address.ward) parts.push(address.ward);
+    if (address.district) parts.push(address.district);
+    if (address.city) parts.push(address.city);
+    return parts.join(', ');
+  };
+
+  // Transform API order to display format
+  const getDisplayOrder = () => {
+    if (!order) return null;
+    
+    // If order is already in display format (from old checkout flow)
+    if (order.orderId && order.customerName) {
+      return order;
+    }
+    
+    // Transform API order format to display format
+    return {
+      orderId: order.orderNumber || order._id,
+      customerName: order.shippingAddress?.name || 'N/A',
+      phone: order.shippingAddress?.phone || 'N/A',
+      email: order.guestEmail || order.userId?.email || 'N/A',
+      orderDate: formatDate(order.createdAt),
+      address: formatAddress(order.shippingAddress),
+      paymentMethod: getPaymentMethodLabel(order.paymentMethod),
+      shippingMethod: order.trackingNumber ? 'Đang giao hàng' : 'Chưa giao hàng',
+      items: order.items?.map(item => ({
+        id: item._id || item.productId?._id || item.productId,
+        name: item.productName || item.productId?.name,
+        price: item.price,
+        quantity: item.quantity,
+        variant: item.variantName || '',
+        image: item.productId?.image || '/placeholder-product.jpg',
+      })) || [],
+      subtotal: order.subtotal || 0,
+      shippingFee: order.shippingFee || 0,
+      total: order.totalAmount || 0,
+    };
+  };
+
+  const displayOrder = getDisplayOrder();
 
   if (loading) {
     return (
@@ -93,14 +169,21 @@ const OrderSuccessPage = () => {
       </div>
     );
   }
-  if (error) {
+  if (error || !displayOrder) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-lg text-red-500">{error}</div>
+        <div className="text-center">
+          <div className="text-lg text-red-500 mb-4">{error || 'Không tìm thấy đơn hàng'}</div>
+          <Link
+            to="/tra-cuu-don-hang"
+            className="text-blue-600 hover:underline"
+          >
+            Tra cứu đơn hàng
+          </Link>
+        </div>
       </div>
     );
   }
-  if (!order) return null;
 
   return (
     <div className="py-8 bg-gray-50 min-h-screen">
@@ -134,7 +217,7 @@ const OrderSuccessPage = () => {
             <p className="font-semibold text-gray-800 mb-4">Danh sách sản phẩm</p>
 
             <div className="space-y-4">
-              {order.items.map((item) => (
+              {displayOrder.items.map((item) => (
                 <div
                   key={`${item.id}-${item.variant}`}
                   className="flex gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
@@ -175,24 +258,24 @@ const OrderSuccessPage = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Mã đơn hàng</span>
-                <span className="text-blue-700 font-bold">{order.orderId}</span>
+                <span className="text-blue-700 font-bold">#{displayOrder.orderId}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Tên người nhận</span>
-                <span className="text-blue-700 font-medium">{order.customerName}</span>
+                <span className="text-blue-700 font-medium">{displayOrder.customerName}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Số điện thoại</span>
-                <span className="text-blue-700 font-medium">{order.phone}</span>
+                <span className="text-blue-700 font-medium">{displayOrder.phone}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Ngày đặt hàng</span>
-                <span className="text-blue-700 font-medium">{order.orderDate}</span>
+                <span className="text-blue-700 font-medium">{displayOrder.orderDate}</span>
               </div>
               <div className="flex justify-between items-start py-2">
                 <span className="text-gray-600">Địa chỉ</span>
                 <span className="text-blue-700 font-medium text-right max-w-xs">
-                  {order.address}
+                  {displayOrder.address}
                 </span>
               </div>
             </div>
@@ -203,11 +286,11 @@ const OrderSuccessPage = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Hình thức thanh toán</span>
-                <span className="text-blue-700 font-medium">{order.paymentMethod}</span>
+                <span className="text-blue-700 font-medium">{displayOrder.paymentMethod}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Phương thức vận chuyển</span>
-                <span className="text-blue-700 font-medium">{order.shippingMethod}</span>
+                <span className="text-blue-700 font-medium">{displayOrder.shippingMethod}</span>
               </div>
             </div>
           </div>
@@ -217,12 +300,18 @@ const OrderSuccessPage = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Tổng tiền hàng</span>
-                <span className="text-red-600 font-bold">{formatPrice(order.subtotal)}</span>
+                <span className="text-red-600 font-bold">{formatPrice(displayOrder.subtotal)}</span>
               </div>
+              {order.discountAmount > 0 && (
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-600">Giảm giá</span>
+                  <span className="text-green-600 font-bold">-{formatPrice(order.discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-600">Phí vận chuyển</span>
                 <span className="text-blue-700 font-medium">
-                  {order.shippingFee ? formatPrice(order.shippingFee) : 'Nhân viên gọi trao đổi'}
+                  {displayOrder.shippingFee > 0 ? formatPrice(displayOrder.shippingFee) : 'Miễn phí'}
                 </span>
               </div>
             </div>
@@ -232,11 +321,11 @@ const OrderSuccessPage = () => {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <span className="text-lg font-bold text-gray-900 uppercase">Tổng thanh toán</span>
-              <span className="text-2xl font-bold text-red-600">{formatPrice(order.total)}</span>
+              <span className="text-2xl font-bold text-red-600">{formatPrice(displayOrder.total)}</span>
             </div>
             <div className="mt-4 text-sm text-gray-500 space-y-1">
               <p>
-                * Chúng tôi đã gửi thông tin đơn hàng về địa chỉ email {order.email}
+                * Chúng tôi đã gửi thông tin đơn hàng về địa chỉ email {displayOrder.email}
               </p>
               <p>
                 * Vui lòng kiểm tra hộp thư (bao gồm mục Spam/Quảng cáo nếu không thấy trong inbox).

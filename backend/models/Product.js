@@ -4,21 +4,21 @@ import mongoose from 'mongoose';
 const variantSchema = new mongoose.Schema({
   sku: { type: String, required: true },
   name: String, // "Nguyên Seal Wifi 256GB - Xám"
-  
+
   // Type: Nguyên Seal / Openbox / CPO
-  type: { 
-    type: String, 
+  type: {
+    type: String,
     enum: ['nguyen-seal', 'openbox', 'cpo'],
     default: 'nguyen-seal'
   },
-  
+
   // Model: Wifi / Wifi+Cellular (for iPad)
-  model: { 
-    type: String, 
+  model: {
+    type: String,
     enum: ['wifi', 'wifi-cellular'],
     default: 'wifi'
   },
-  
+
   attributes: {
     color: String,
     storage: String,
@@ -42,9 +42,9 @@ const variantSchema = new mongoose.Schema({
 const productSchema = new mongoose.Schema({
   // Basic info
   product_id: String,        // optional external id
-  sku: { type: String, unique: true },
+  sku: { type: String, unique: true }, // unique: true tự động tạo index
   name: { type: String, required: true },
-  slug: { type: String, unique: true }, // SEO-friendly URL
+  slug: { type: String, unique: true }, // unique: true tự động tạo index
   brand: String,
   description: String,
   shortDescription: String,
@@ -58,7 +58,7 @@ const productSchema = new mongoose.Schema({
   originalPrice: Number,
   discountPercentage: Number,
   currency: { type: String, default: 'VND' },
-  
+
   // Variants - NÂNG CẤP
   variants: [variantSchema],
 
@@ -81,7 +81,7 @@ const productSchema = new mongoose.Schema({
   // Ratings & Reviews (moved to separate collection)
   rating: { type: Number, default: 0 },
   reviewCount: { type: Number, default: 0 },
-  
+
   // Analytics
   viewCount: { type: Number, default: 0 },
 
@@ -90,15 +90,15 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  
+
   // Status
-  status: { 
-    type: String, 
-    enum: ['draft', 'active', 'inactive'], 
+  status: {
+    type: String,
+    enum: ['draft', 'active', 'inactive'],
     default: 'active'
   },
   featured: { type: Boolean, default: false },
-  
+
   // Timestamps
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -107,17 +107,21 @@ const productSchema = new mongoose.Schema({
 });
 
 // Indexes
-productSchema.index({ sku: 1 });
-productSchema.index({ slug: 1 });
+// Lưu ý: sku và slug đã có unique: true nên không cần index riêng
 productSchema.index({ category: 1, status: 1 });
 productSchema.index({ 'variants.sku': 1 });
 productSchema.index({ rating: -1, reviewCount: -1 });
 productSchema.index({ status: 1 });
 
 // Auto update updatedAt and calculate price from variants
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function (next) {
   this.updatedAt = new Date();
-  
+
+  // Track old category for post-save hook
+  if (this.isModified('category') && !this.isNew) {
+    this._oldCategory = this._original?.category;
+  }
+
   // Auto calculate price, maxPrice, stock from variants
   if (this.variants && this.variants.length > 0) {
     const activeVariants = this.variants.filter(v => v.isActive !== false);
@@ -130,8 +134,54 @@ productSchema.pre('save', function(next) {
       this.stock = activeVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
     }
   }
-  
+
   next();
 });
 
-export default mongoose.model('Product', productSchema);
+// Post-save: Update category productCount
+productSchema.post('save', async function (doc) {
+  try {
+    // Get Category model dynamically to avoid circular dependency
+    const Category = mongoose.model('Category');
+
+    // Update current category's productCount
+    if (doc.category) {
+      const category = await Category.findOne({ slug: doc.category });
+      if (category) {
+        await Category.updateProductCount(category._id);
+      }
+    }
+
+    // If category changed, also update old category
+    if (doc._oldCategory && doc._oldCategory !== doc.category) {
+      const oldCategory = await Category.findOne({ slug: doc._oldCategory });
+      if (oldCategory) {
+        await Category.updateProductCount(oldCategory._id);
+      }
+    }
+  } catch (err) {
+    console.error('Error updating category productCount:', err);
+  }
+});
+
+// Post-remove: Update category productCount when product deleted
+productSchema.post('findOneAndDelete', async function (doc) {
+  if (doc && doc.category) {
+    try {
+      // Get Category model dynamically to avoid circular dependency
+      const Category = mongoose.model('Category');
+
+      const category = await Category.findOne({ slug: doc.category });
+      if (category) {
+        await Category.updateProductCount(category._id);
+      }
+    } catch (err) {
+      console.error('Error updating category productCount on delete:', err);
+    }
+  }
+});
+
+const Product = mongoose.model('Product', productSchema);
+
+export default Product;
+

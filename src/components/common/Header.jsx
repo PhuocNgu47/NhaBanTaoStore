@@ -1,15 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiSearch, FiShoppingCart, FiUser, FiMenu, FiX, FiChevronDown } from 'react-icons/fi';
 import { useAuth, useCart } from '../../hooks';
-import { CATEGORIES, NAV_LINKS } from '../../constants';
+import { NAV_LINKS } from '../../constants';
+import { categoryService } from '../../services/categoryService';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [categories, setCategories] = useState([]);
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const { itemCount } = useCart();
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryService.getMenuCategories();
+        if (response.success && response.menu) {
+          // Chỉ lấy các category cấp 1 (parent categories)
+          setCategories(response.menu.filter(cat => !cat.parent || cat.level === 0));
+        }
+      } catch (err) {
+        // Không log lỗi để tránh spam console
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -136,28 +156,32 @@ const Header = () => {
       </div>
 
       {/* Category Navigation */}
-      <div className="bg-white border-t hidden lg:block">
-        <div className="container-custom">
-          <nav className="flex items-center gap-1 py-2 overflow-x-auto">
-            {CATEGORIES.map((category) => (
-              <div
-                key={category.id}
-                className="relative group"
-                onMouseEnter={() => setActiveDropdown(category.id)}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <Link
-                  to={`/danh-muc/${category.id}`}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-blue-600 whitespace-nowrap"
+      {categories.length > 0 && (
+        <div className="bg-white border-t hidden lg:block">
+          <div className="container-custom">
+            <nav className="flex items-center gap-1 py-2 overflow-x-auto">
+              {categories.map((category) => (
+                <div
+                  key={category._id}
+                  className="relative group"
+                  onMouseEnter={() => setActiveDropdown(category._id)}
+                  onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <span>{category.name}</span>
-                  <FiChevronDown size={14} />
-                </Link>
-              </div>
-            ))}
-          </nav>
+                  <Link
+                    to={`/danh-muc/${category.slug}`}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-red-600 whitespace-nowrap"
+                  >
+                    <span>{category.name}</span>
+                    {category.children && category.children.length > 0 && (
+                      <FiChevronDown size={14} />
+                    )}
+                  </Link>
+                </div>
+              ))}
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Mobile Menu */}
       {isMenuOpen && (
@@ -194,18 +218,20 @@ const Header = () => {
                   {link.label}
                 </Link>
               ))}
-              <div className="border-t pt-2 mt-2">
-                {CATEGORIES.map((category) => (
-                  <Link
-                    key={category.id}
-                    to={`/danh-muc/${category.id}`}
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-              </div>
+              {categories.length > 0 && (
+                <div className="border-t pt-2 mt-2">
+                  {categories.map((category) => (
+                    <Link
+                      key={category._id}
+                      to={`/danh-muc/${category.slug}`}
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </nav>
           </div>
         </div>

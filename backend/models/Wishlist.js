@@ -4,8 +4,8 @@ const wishlistSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
-    required: true, 
-    index: true 
+    required: true
+    // Index được tạo ở dưới
   },
   productId: { 
     type: mongoose.Schema.Types.ObjectId, 

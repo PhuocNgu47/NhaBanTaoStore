@@ -11,6 +11,7 @@ import {
   FiMove,
   FiEye,
   FiEyeOff,
+  FiRefreshCw,
 } from 'react-icons/fi';
 import { categoryService } from '../../services/categoryService';
 import { toast } from 'react-toastify';
@@ -27,13 +28,14 @@ const CategoriesPage = () => {
   const [loading, setLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // create | edit
   const [editingCategory, setEditingCategory] = useState(null);
   const [saving, setSaving] = useState(false);
-  
+  const [syncing, setSyncing] = useState(false);
+
   // Form data
   const [formData, setFormData] = useState({
     name: '',
@@ -59,7 +61,7 @@ const CategoriesPage = () => {
         categoryService.getCategories({ onlyActive: 'false' }),
         categoryService.getCategoriesFlat({ onlyActive: 'false' }),
       ]);
-      
+
       if (treeResponse.success) {
         setCategories(treeResponse.categories || []);
         // Expand all by default
@@ -73,7 +75,7 @@ const CategoriesPage = () => {
         expandAll(treeResponse.categories || []);
         setExpandedCategories(expanded);
       }
-      
+
       if (flatResponse.success) {
         setFlatCategories(flatResponse.categories || []);
       }
@@ -90,6 +92,22 @@ const CategoriesPage = () => {
       ...prev,
       [categoryId]: !prev[categoryId],
     }));
+  };
+
+  const handleSyncCounts = async () => {
+    try {
+      setSyncing(true);
+      const response = await categoryService.syncProductCounts();
+      if (response.success) {
+        toast.success(response.message || 'Đồng bộ thành công');
+        fetchCategories(); // Refresh data
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast.error('Lỗi khi đồng bộ số lượng');
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const generateSlug = (name) => {
@@ -149,20 +167,20 @@ const CategoriesPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast.error('Tên danh mục là bắt buộc');
       return;
     }
-    
+
     try {
       setSaving(true);
-      
+
       const data = {
         ...formData,
         parent: formData.parent || null,
       };
-      
+
       let response;
       if (modalMode === 'create') {
         response = await categoryService.createCategory(data);
@@ -171,7 +189,7 @@ const CategoriesPage = () => {
         response = await categoryService.updateCategory(editingCategory._id, data);
         toast.success('Cập nhật danh mục thành công');
       }
-      
+
       if (response.success) {
         setShowModal(false);
         fetchCategories();
@@ -186,13 +204,13 @@ const CategoriesPage = () => {
 
   const handleDelete = async (category) => {
     const hasChildren = category.children && category.children.length > 0;
-    
+
     const message = hasChildren
       ? `Danh mục "${category.name}" có ${category.children.length} danh mục con. Bạn có chắc muốn xóa tất cả?`
       : `Bạn có chắc muốn xóa danh mục "${category.name}"?`;
-    
+
     if (!window.confirm(message)) return;
-    
+
     try {
       const response = await categoryService.deleteCategory(category._id, hasChildren);
       if (response.success) {
@@ -220,7 +238,7 @@ const CategoriesPage = () => {
   // Filter categories by search
   const filterCategories = (cats, query) => {
     if (!query) return cats;
-    
+
     return cats.filter(cat => {
       const matchSelf = cat.name.toLowerCase().includes(query.toLowerCase());
       const matchChildren = cat.children && filterCategories(cat.children, query).length > 0;
@@ -238,7 +256,7 @@ const CategoriesPage = () => {
     if (modalMode === 'create') {
       return flatCategories.filter(c => c.level < 2);
     }
-    
+
     // For edit, exclude self and descendants
     const excludeIds = new Set([editingCategory?._id]);
     const addDescendants = (cats) => {
@@ -249,7 +267,7 @@ const CategoriesPage = () => {
       });
     };
     addDescendants(flatCategories);
-    
+
     return flatCategories.filter(c => !excludeIds.has(c._id) && c.level < 2);
   };
 
@@ -324,7 +342,7 @@ const CategoriesPage = () => {
                 <FiPlus className="w-4 h-4" />
               </button>
             )}
-            
+
             {/* Toggle Active */}
             <button
               onClick={() => toggleActive(category)}
@@ -333,7 +351,7 @@ const CategoriesPage = () => {
             >
               {category.isActive ? <FiEye className="w-4 h-4" /> : <FiEyeOff className="w-4 h-4" />}
             </button>
-            
+
             {/* Edit */}
             <button
               onClick={() => openEditModal(category)}
@@ -342,7 +360,7 @@ const CategoriesPage = () => {
             >
               <FiEdit2 className="w-4 h-4" />
             </button>
-            
+
             {/* Delete */}
             <button
               onClick={() => handleDelete(category)}
@@ -372,13 +390,23 @@ const CategoriesPage = () => {
           <h1 className="text-2xl font-bold text-gray-800">Quản lý danh mục</h1>
           <p className="text-gray-600">Hệ thống danh mục 3 cấp</p>
         </div>
-        <button
-          onClick={() => openCreateModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <FiPlus className="w-5 h-5" />
-          Thêm danh mục gốc
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSyncCounts}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+          >
+            <FiRefreshCw className={`w-5 h-5 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Đang đồng bộ...' : 'Đồng bộ số lượng'}
+          </button>
+          <button
+            onClick={() => openCreateModal()}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <FiPlus className="w-5 h-5" />
+            Thêm danh mục gốc
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -522,7 +550,7 @@ const CategoriesPage = () => {
                 />
               </div>
 
-              {/* Icon & Image */}
+              {/* Icon & Order */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -550,6 +578,30 @@ const CategoriesPage = () => {
                 </div>
               </div>
 
+              {/* Image URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ảnh danh mục (URL)
+                </label>
+                <input
+                  type="text"
+                  value={formData.image}
+                  onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://example.com/category-image.jpg"
+                />
+                {formData.image && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.image}
+                      alt="Preview"
+                      className="w-24 h-24 object-cover rounded-lg border"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Toggles */}
               <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -561,7 +613,7 @@ const CategoriesPage = () => {
                   />
                   <span className="text-sm text-gray-700">Kích hoạt</span>
                 </label>
-                
+
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -571,7 +623,7 @@ const CategoriesPage = () => {
                   />
                   <span className="text-sm text-gray-700">Hiện trong menu</span>
                 </label>
-                
+
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"

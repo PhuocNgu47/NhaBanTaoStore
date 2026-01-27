@@ -22,6 +22,11 @@ if (!fs.existsSync(avatarsDir)) {
   fs.mkdirSync(avatarsDir, { recursive: true });
 }
 
+const bannersDir = path.join(uploadsDir, 'banners');
+if (!fs.existsSync(bannersDir)) {
+  fs.mkdirSync(bannersDir, { recursive: true });
+}
+
 // Cấu hình storage cho avatar
 const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -48,11 +53,34 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
+// Cấu hình storage cho banner
+const bannerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, bannersDir);
+  },
+  filename: (req, file, cb) => {
+    // Tên file: banner-timestamp.extension
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const filename = `banner-${timestamp}${ext}`;
+    cb(null, filename);
+  }
+});
+
 // Multer instance cho avatar
 export const uploadAvatar = multer({
   storage: avatarStorage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB max
+  },
+  fileFilter: imageFilter
+});
+
+// Multer instance cho banner
+export const uploadBanner = multer({
+  storage: bannerStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB max
   },
   fileFilter: imageFilter
 });

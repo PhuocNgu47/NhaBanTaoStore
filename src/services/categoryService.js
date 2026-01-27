@@ -9,8 +9,8 @@ export const categoryService = {
 
   // Get categories flat list
   getCategoriesFlat: async (params = {}) => {
-    const response = await api.get('/categories', { 
-      params: { ...params, flat: 'true' } 
+    const response = await api.get('/categories', {
+      params: { ...params, flat: 'true' }
     });
     return response.data;
   },
@@ -56,6 +56,12 @@ export const categoryService = {
   // Admin: Reorder categories
   reorderCategories: async (orders) => {
     const response = await api.put('/categories/reorder', { orders });
+    return response.data;
+  },
+
+  // Admin: Sync product counts for all categories
+  syncProductCounts: async () => {
+    const response = await api.post('/categories/sync-counts');
     return response.data;
   },
 };

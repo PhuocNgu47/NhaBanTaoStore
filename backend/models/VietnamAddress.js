@@ -24,7 +24,7 @@ const districtSchema = new mongoose.Schema({
   fullNameEn: String,
   codeName: String,
   administrativeUnit: String, // Quận, Huyện, Thị xã, Thành phố
-  provinceCode: { type: String, required: true, index: true },
+  provinceCode: { type: String, required: true }, // Index được tạo ở dưới
   provinceName: String
 }, { timestamps: false });
 
@@ -36,14 +36,14 @@ const wardSchema = new mongoose.Schema({
   fullNameEn: String,
   codeName: String,
   administrativeUnit: String, // Phường, Xã, Thị trấn
-  districtCode: { type: String, required: true, index: true },
+  districtCode: { type: String, required: true }, // Index được tạo ở dưới
   districtName: String,
-  provinceCode: { type: String, required: true, index: true },
+  provinceCode: { type: String, required: true }, // Index được tạo ở dưới
   provinceName: String
 }, { timestamps: false });
 
 // Indexes
-provinceSchema.index({ code: 1 });
+// Lưu ý: code đã có unique: true nên không cần index riêng cho provinceSchema
 districtSchema.index({ provinceCode: 1, code: 1 });
 wardSchema.index({ districtCode: 1, code: 1 });
 wardSchema.index({ provinceCode: 1 });

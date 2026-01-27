@@ -137,6 +137,13 @@ export const createOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Request body:', {
+      items: req.body.items?.length,
+      paymentMethod: req.body.paymentMethod,
+      guestEmail: req.body.guestEmail ? 'provided' : 'missing',
+      shippingAddress: req.body.shippingAddress ? 'provided' : 'missing'
+    });
     
     const statusCode = error.message.includes('Vui lòng') || 
                       error.message.includes('không hợp lệ') ||
@@ -145,7 +152,8 @@ export const createOrder = async (req, res) => {
     
     res.status(statusCode).json({
       success: false,
-      message: error.message || 'Lỗi khi tạo đơn hàng. Vui lòng thử lại.'
+      message: error.message || 'Lỗi khi tạo đơn hàng. Vui lòng thử lại.',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
@@ -171,13 +179,17 @@ export const updateOrderStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Update order status error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Request body:', req.body);
+    console.error('Order ID:', req.params.id);
     
     const statusCode = error.message.includes('Không tìm thấy') ? 404 :
                       error.message.includes('không hợp lệ') ? 400 : 500;
     
     res.status(statusCode).json({
       success: false,
-      message: error.message || 'Lỗi khi cập nhật trạng thái đơn hàng'
+      message: error.message || 'Lỗi khi cập nhật trạng thái đơn hàng',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
@@ -273,12 +285,84 @@ export const updateOrderItems = async (req, res) => {
 export const getGuestOrder = async (req, res) => {
   try {
     const order = await orderService.getGuestOrder(req.params.email, req.params.orderNumber);
-    res.json(order);
+    res.json({
+      success: true,
+      order
+    });
   } catch (error) {
     console.error('Get guest order error:', error);
     res.status(404).json({
       success: false,
-      message: error.message || 'Order not found'
+      message: error.message || 'Không tìm thấy đơn hàng'
+    });
+  }
+};
+
+/**
+ * Xác nhận đơn hàng (Admin only)
+ * PUT /api/orders/:id/confirm
+ */
+export const confirmOrder = async (req, res) => {
+  try {
+    const { note } = req.body;
+    const order = await orderService.confirmOrder(req.params.id, req.user.id, note);
+    
+    res.json({
+      success: true,
+      message: 'Xác nhận đơn hàng thành công',
+      order
+    });
+  } catch (error) {
+    console.error('Confirm order error:', error);
+    
+    const statusCode = error.message.includes('Không tìm thấy') ? 404 :
+                      error.message.includes('không thể') || 
+                      error.message.includes('phải đã') ? 400 : 500;
+    
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Lỗi khi xác nhận đơn hàng'
+    });
+  }
+};
+
+/**
+ * Cập nhật trạng thái thanh toán (Admin only)
+ * PUT /api/orders/:id/payment
+ */
+export const updatePayment = async (req, res) => {
+  try {
+    const { paymentStatus, note, paymentDetails } = req.body;
+    
+    if (!paymentStatus) {
+      return res.status(400).json({
+        success: false,
+        message: 'Trạng thái thanh toán là bắt buộc'
+      });
+    }
+
+    const order = await orderService.updatePayment(
+      req.params.id,
+      paymentStatus,
+      req.user.id,
+      note,
+      paymentDetails
+    );
+    
+    res.json({
+      success: true,
+      message: 'Cập nhật trạng thái thanh toán thành công',
+      order
+    });
+  } catch (error) {
+    console.error('Update payment error:', error);
+    
+    const statusCode = error.message.includes('Không tìm thấy') ? 404 :
+                      error.message.includes('không hợp lệ') ? 400 : 500;
+    
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Lỗi khi cập nhật trạng thái thanh toán'
     });
   }
 };
@@ -286,36 +370,122 @@ export const getGuestOrder = async (req, res) => {
 /**
  * Tạo đơn hàng từ giỏ hàng
  * Tự động lấy items từ cart và tạo order
+ * Hỗ trợ cả authenticated users và guest users
  */
 export const createOrderFromCart = async (req, res) => {
   try {
-    const userId = req.user?.id || null;
+    // Lấy userId từ token nếu có (tương tự createOrder)
+    let userId = null;
+    
+    // Kiểm tra token trong header
+    if (req.headers.authorization) {
+      try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader.replace('Bearer ', '').trim();
+        
+        if (token && token !== 'null' && token !== 'undefined' && token.length > 10) {
+          const jwt = await import('jsonwebtoken');
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          userId = decoded.id;
+        }
+      } catch (err) {
+        // Token không hợp lệ hoặc hết hạn, tiếp tục như guest
+        console.log('Token invalid or expired, proceeding as guest:', err.message);
+      }
+    }
+    
+    // Nếu có req.user từ middleware (nếu route có protect), ưu tiên dùng
+    if (req.user?.id) {
+      userId = req.user.id;
+    }
+    
     const sessionId = req.headers['x-session-id'] || null;
     
-    // Lấy cart
-    const cart = await cartService.getCart(userId, sessionId);
-    
-    if (!cart || !cart.items || cart.items.length === 0) {
+    // Validate: Phải có userId hoặc sessionId
+    if (!userId && !sessionId) {
       return res.status(400).json({
         success: false,
-        message: 'Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng.'
+        message: 'Không thể xác định giỏ hàng. Vui lòng đăng nhập hoặc thử lại.'
       });
     }
-
-    // Chuyển đổi cart items thành order items format
-    const items = cart.items.map(item => ({
-      productId: item.productId._id || item.productId,
-      variantId: item.variantId?._id || item.variantId || null,
-      quantity: item.quantity
-    }));
+    
+    // Lấy cart
+    let cart;
+    let items = [];
+    
+    try {
+      cart = await cartService.getCart(userId, sessionId);
+      
+      if (!cart || !cart.items || cart.items.length === 0) {
+        // Nếu cart trống, kiểm tra xem có items trong request body không (fallback)
+        if (req.body.items && req.body.items.length > 0) {
+          console.log('Cart is empty, using items from request body');
+          items = req.body.items;
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng.'
+          });
+        }
+      } else {
+        // Chuyển đổi cart items thành order items format
+        items = cart.items.map(item => {
+          // Handle both populated and non-populated productId
+          const productId = item.productId?._id || item.productId;
+          const variantId = item.variantId?._id || item.variantId || null;
+          
+          if (!productId) {
+            throw new Error('Sản phẩm trong giỏ hàng không hợp lệ');
+          }
+          
+          return {
+            productId,
+            variantId,
+            quantity: item.quantity || 1
+          };
+        });
+      }
+    } catch (cartError) {
+      console.error('Get cart error:', cartError);
+      
+      // Fallback: Nếu không lấy được cart nhưng có items trong request body, dùng items đó
+      if (req.body.items && req.body.items.length > 0) {
+        console.log('Cannot get cart, using items from request body as fallback');
+        items = req.body.items;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: cartError.message || 'Không thể lấy giỏ hàng. Vui lòng thử lại.'
+        });
+      }
+    }
+    
+    // Validate items
+    if (!items || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không có sản phẩm để tạo đơn hàng. Vui lòng thêm sản phẩm vào giỏ hàng.'
+      });
+    }
 
     // Lấy thông tin từ request body (shipping address, payment method, coupon)
     const {
       shippingAddress,
       paymentMethod,
       guestEmail,
-      couponCode
+      couponCode,
+      discountAmount,
+      shippingFee,
+      note
     } = req.body;
+
+    // Validate shipping address
+    if (!shippingAddress) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng nhập địa chỉ giao hàng'
+      });
+    }
 
     // Tạo order với items từ cart
     const order = await orderService.createOrder({
@@ -323,7 +493,10 @@ export const createOrderFromCart = async (req, res) => {
       shippingAddress,
       paymentMethod,
       guestEmail,
-      couponCode
+      couponCode,
+      discountAmount,
+      shippingFee,
+      note
     }, userId);
 
     // Xóa cart sau khi tạo order thành công
@@ -341,12 +514,14 @@ export const createOrderFromCart = async (req, res) => {
     });
   } catch (error) {
     console.error('Create order from cart error:', error);
+    console.error('Error stack:', error.stack);
     
     const statusCode = error.message.includes('Vui lòng') || 
                       error.message.includes('không hợp lệ') ||
                       error.message.includes('Email') ||
                       error.message.includes('Giỏ hàng') ||
-                      error.message.includes('tồn kho') ? 400 : 500;
+                      error.message.includes('tồn kho') ||
+                      error.message.includes('Sản phẩm') ? 400 : 500;
     
     res.status(statusCode).json({
       success: false,

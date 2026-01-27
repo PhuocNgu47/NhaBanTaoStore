@@ -10,7 +10,7 @@ const categorySchema = new mongoose.Schema(
     slug: {
       type: String,
       required: true,
-      unique: true,
+      unique: true, // unique: true tự động tạo index
       lowercase: true,
     },
     description: {
@@ -93,7 +93,7 @@ categorySchema.virtual('children', {
 });
 
 // Indexes
-categorySchema.index({ slug: 1 });
+// Lưu ý: slug đã có unique: true nên không cần index riêng
 categorySchema.index({ parent: 1, order: 1 });
 categorySchema.index({ level: 1, isActive: 1 });
 categorySchema.index({ isActive: 1, showInMenu: 1 });

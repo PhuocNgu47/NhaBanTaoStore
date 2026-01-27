@@ -6,12 +6,36 @@
 import Address from '../models/Address.js';
 
 /**
+ * Helper function to ensure backward compatibility - populate addressLine1 from address if missing
+ */
+const normalizeAddress = (address) => {
+  if (!address) return address;
+  
+  // Convert to plain object if it's a Mongoose document
+  const addressObj = address.toObject ? address.toObject() : address;
+  
+  // If addressLine1 is missing but address exists, use address
+  if (!addressObj.addressLine1 && addressObj.address) {
+    addressObj.addressLine1 = addressObj.address;
+  }
+  
+  // Ensure addressLine2 exists
+  if (!addressObj.addressLine2) {
+    addressObj.addressLine2 = '';
+  }
+  
+  return addressObj;
+};
+
+/**
  * Lấy danh sách addresses của user
  */
 export const getUserAddresses = async (userId) => {
   const addresses = await Address.find({ userId })
     .sort({ isDefault: -1, createdAt: -1 });
-  return addresses;
+  
+  // Normalize addresses for backward compatibility
+  return addresses.map(normalizeAddress);
 };
 
 /**
@@ -27,17 +51,18 @@ export const getAddressById = async (addressId, userId) => {
     throw new Error('Không tìm thấy địa chỉ');
   }
 
-  return address;
+  return normalizeAddress(address);
 };
 
 /**
  * Tạo address mới
  */
 export const createAddress = async (userId, addressData) => {
-  const { name, phone, address, ward, district, city, country, zipCode, isDefault, label } = addressData;
+  const { name, phone, address, addressLine1, addressLine2, ward, district, city, country, zipCode, isDefault, label } = addressData;
 
-  // Validation
-  if (!name || !phone || !address || !city) {
+  // Validation - support both old format (address) and new format (addressLine1)
+  const addressValue = addressLine1 || address;
+  if (!name || !phone || !addressValue || !city) {
     throw new Error('Vui lòng điền đầy đủ thông tin: tên, số điện thoại, địa chỉ, thành phố');
   }
 
@@ -60,7 +85,9 @@ export const createAddress = async (userId, addressData) => {
     userId,
     name: name.trim(),
     phone: cleanPhone,
-    address: address.trim(),
+    address: addressValue.trim(), // Keep for backward compatibility
+    addressLine1: addressLine1?.trim() || addressValue.trim(),
+    addressLine2: addressLine2?.trim() || '',
     ward: ward?.trim() || '',
     district: district?.trim() || '',
     city: city.trim(),
@@ -72,14 +99,14 @@ export const createAddress = async (userId, addressData) => {
 
   await newAddress.save();
 
-  return newAddress;
+  return normalizeAddress(newAddress);
 };
 
 /**
  * Cập nhật address
  */
 export const updateAddress = async (addressId, userId, updateData) => {
-  const { name, phone, address, ward, district, city, country, zipCode, isDefault, label } = updateData;
+  const { name, phone, address, addressLine1, addressLine2, ward, district, city, country, zipCode, isDefault, label } = updateData;
 
   const addressDoc = await Address.findOne({
     _id: addressId,
@@ -109,9 +136,18 @@ export const updateAddress = async (addressId, userId, updateData) => {
     addressDoc.isDefault = true;
   }
 
-  // Update fields
+  // Update fields - support both old format (address) and new format (addressLine1)
   if (name) addressDoc.name = name.trim();
-  if (address) addressDoc.address = address.trim();
+  if (addressLine1 !== undefined) {
+    addressDoc.addressLine1 = addressLine1.trim();
+    addressDoc.address = addressLine1.trim(); // Keep for backward compatibility
+  } else if (address !== undefined) {
+    addressDoc.address = address.trim();
+    if (!addressDoc.addressLine1) {
+      addressDoc.addressLine1 = address.trim();
+    }
+  }
+  if (addressLine2 !== undefined) addressDoc.addressLine2 = addressLine2?.trim() || '';
   if (ward !== undefined) addressDoc.ward = ward?.trim() || '';
   if (district !== undefined) addressDoc.district = district?.trim() || '';
   if (city) addressDoc.city = city.trim();
@@ -121,7 +157,7 @@ export const updateAddress = async (addressId, userId, updateData) => {
 
   await addressDoc.save();
 
-  return addressDoc;
+  return normalizeAddress(addressDoc);
 };
 
 /**
@@ -163,6 +199,6 @@ export const setDefaultAddress = async (addressId, userId) => {
   address.isDefault = true;
   await address.save();
 
-  return address;
+  return normalizeAddress(address);
 };
 

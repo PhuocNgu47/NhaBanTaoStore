@@ -156,6 +156,9 @@ app.get('/api', (req, res) => {
       '/api/wishlist - Danh sách yêu thích',
       '/api/reviews - Đánh giá sản phẩm',
       '/api/vietnam-address - API địa chỉ Việt Nam',
+      '/api/banners - Quản lý banner slider',
+      '/api/track - Customer behavior tracking',
+      '/api/admin/leads - Quản lý leads (Admin)',
       '/api/health - Kiểm tra trạng thái'
     ]
   });
@@ -210,6 +213,18 @@ app.use('/api/reviews', reviewRoutes);
 // Categories: Quản lý danh mục 3 cấp
 import categoryRoutes from './routes/categories.js';
 app.use('/api/categories', categoryRoutes);
+
+// Banners: Quản lý banner slider
+import bannerRoutes from './routes/banners.js';
+app.use('/api/banners', bannerRoutes);
+
+// Tracking: Customer behavior tracking (public)
+import trackingRoutes from './routes/tracking.js';
+app.use('/api/track', trackingRoutes);
+
+// Leads: Admin leads management
+import leadsRoutes from './routes/leads.js';
+app.use('/api/admin/leads', leadsRoutes);
 
 // ============================================
 // XỬ LÝ LỖI (ERROR HANDLING)
@@ -268,7 +283,8 @@ app.use('*', (req, res) => {
       '/api/coupons',
       '/api/cart',
       '/api/wishlist',
-      '/api/reviews'
+      '/api/reviews',
+      '/api/banners'
     ]
   });
 });

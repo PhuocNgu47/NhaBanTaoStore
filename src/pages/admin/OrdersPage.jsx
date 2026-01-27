@@ -18,23 +18,32 @@ import {
 import { orderService } from '../../services/orderService';
 import { formatPrice, formatDate } from '../../utils/helpers';
 import { toast } from 'react-toastify';
+import Modal from '../../components/Modal';
 
 const STATUS_CONFIG = {
   pending: { label: 'Chờ xác nhận', color: 'bg-yellow-100 text-yellow-700', icon: FiClock },
   confirmed: { label: 'Đã xác nhận', color: 'bg-blue-100 text-blue-700', icon: FiCheck },
+  shipping_ready: { label: 'Chờ lên đơn', color: 'bg-indigo-100 text-indigo-700', icon: FiPackage },
+  shipping_created: { label: 'Đã lên đơn', color: 'bg-purple-100 text-purple-700', icon: FiTruck },
+  delivering: { label: 'Đang giao', color: 'bg-purple-100 text-purple-700', icon: FiTruck },
+  completed: { label: 'Đã giao', color: 'bg-green-100 text-green-700', icon: FiCheck },
+  cancelled: { label: 'Đã hủy', color: 'bg-red-100 text-red-700', icon: FiX },
+  returned: { label: 'Hoàn trả', color: 'bg-orange-100 text-orange-700', icon: FiRefreshCw },
+  // Backward compatibility for old statuses
   processing: { label: 'Đang xử lý', color: 'bg-indigo-100 text-indigo-700', icon: FiPackage },
   shipped: { label: 'Đang giao', color: 'bg-purple-100 text-purple-700', icon: FiTruck },
   delivered: { label: 'Đã giao', color: 'bg-green-100 text-green-700', icon: FiCheck },
-  cancelled: { label: 'Đã hủy', color: 'bg-red-100 text-red-700', icon: FiX },
-  returned: { label: 'Hoàn trả', color: 'bg-orange-100 text-orange-700', icon: FiRefreshCw },
   refunded: { label: 'Đã hoàn tiền', color: 'bg-gray-100 text-gray-700', icon: FiDollarSign },
 };
 
 const PAYMENT_STATUS_CONFIG = {
-  pending: { label: 'Chưa thanh toán', color: 'bg-yellow-100 text-yellow-700' },
+  unpaid: { label: 'Chưa thanh toán', color: 'bg-yellow-100 text-yellow-700' },
   paid: { label: 'Đã thanh toán', color: 'bg-green-100 text-green-700' },
+  cod: { label: 'Thanh toán khi nhận hàng', color: 'bg-blue-100 text-blue-700' },
   failed: { label: 'Thanh toán lỗi', color: 'bg-red-100 text-red-700' },
   refunded: { label: 'Đã hoàn tiền', color: 'bg-gray-100 text-gray-700' },
+  // Backward compatibility for old payment statuses
+  pending: { label: 'Chưa thanh toán', color: 'bg-yellow-100 text-yellow-700' },
 };
 
 const AdminOrdersPage = () => {
@@ -42,7 +51,7 @@ const AdminOrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [pagination, setPagination] = useState(null);
-  
+
   // Filters
   const [filters, setFilters] = useState({
     search: '',
@@ -51,7 +60,7 @@ const AdminOrdersPage = () => {
     page: 1,
     limit: 20,
   });
-  
+
   // Modal states
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -71,16 +80,26 @@ const AdminOrdersPage = () => {
         limit: filters.limit,
         sortBy: '-createdAt',
       };
-      
+
       if (filters.search) params.search = filters.search;
       if (filters.status !== 'all') params.status = filters.status;
       if (filters.paymentStatus !== 'all') params.paymentStatus = filters.paymentStatus;
 
       const response = await orderService.getAllOrders(params);
-      
+
       if (response.success) {
         setOrders(response.orders || []);
-        setPagination(response.pagination);
+        setPagination(response.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          pages: 1,
+          hasNext: false,
+          hasPrev: false,
+        });
+      } else {
+        toast.error(response.message || 'Lỗi khi tải danh sách đơn hàng');
+        setOrders([]);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -94,11 +113,22 @@ const AdminOrdersPage = () => {
   const fetchStats = async () => {
     try {
       const response = await orderService.getOrderStats();
-      if (response.success) {
-        setStats(response.stats);
+      if (response.success && response.stats) {
+        // Transform stats to match expected format
+        const statsData = response.stats;
+        setStats({
+          total: statsData.byStatus ? Object.values(statsData.byStatus).reduce((a, b) => a + b, 0) : 0,
+          pending: statsData.byStatus?.pending || 0,
+          processing: statsData.byStatus?.processing || 0,
+          shipped: statsData.byStatus?.shipped || 0,
+          delivered: statsData.byStatus?.delivered || 0,
+          cancelled: statsData.byStatus?.cancelled || 0,
+          revenue: statsData.revenue || {},
+        });
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+      // Don't show error toast for stats, just log it
     }
   };
 
@@ -131,7 +161,7 @@ const AdminOrdersPage = () => {
         statusForm.note,
         statusForm.trackingNumber
       );
-      
+
       toast.success('Cập nhật trạng thái thành công');
       setShowStatusModal(false);
       setSelectedOrder(null);
@@ -170,7 +200,7 @@ const AdminOrdersPage = () => {
 
   // Render payment status
   const renderPaymentStatus = (status) => {
-    const config = PAYMENT_STATUS_CONFIG[status] || PAYMENT_STATUS_CONFIG.pending;
+    const config = PAYMENT_STATUS_CONFIG[status] || PAYMENT_STATUS_CONFIG.unpaid;
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
         {config.label}
@@ -203,16 +233,16 @@ const AdminOrdersPage = () => {
             <p className="text-2xl font-bold text-yellow-600">{stats.pending || 0}</p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-indigo-500">
-            <p className="text-sm text-gray-500">Đang xử lý</p>
-            <p className="text-2xl font-bold text-indigo-600">{stats.processing || 0}</p>
+            <p className="text-sm text-gray-500">Chờ lên đơn</p>
+            <p className="text-2xl font-bold text-indigo-600">{stats.shipping_ready || 0}</p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-500">
             <p className="text-sm text-gray-500">Đang giao</p>
-            <p className="text-2xl font-bold text-purple-600">{stats.shipped || 0}</p>
+            <p className="text-2xl font-bold text-purple-600">{(stats.delivering || 0) + (stats.shipping_created || 0)}</p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-green-500">
             <p className="text-sm text-gray-500">Đã giao</p>
-            <p className="text-2xl font-bold text-green-600">{stats.delivered || 0}</p>
+            <p className="text-2xl font-bold text-green-600">{stats.completed || 0}</p>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-red-500">
             <p className="text-sm text-gray-500">Đã hủy</p>
@@ -335,7 +365,7 @@ const AdminOrdersPage = () => {
                           {order.items?.slice(0, 2).map((item, idx) => (
                             <div
                               key={idx}
-                              className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0"
+                              className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0"
                             >
                               {item.productId?.image ? (
                                 <img
@@ -359,15 +389,34 @@ const AdminOrdersPage = () => {
                         </p>
                       </td>
                       <td className="p-4">
-                        <span className="font-bold text-gray-800">
-                          {formatPrice(order.totalAmount)}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-bold text-gray-800">
+                            {formatPrice(order.totalAmount)}
+                          </span>
+                          {order.discountAmount > 0 && (
+                            <span className="text-xs text-green-600">
+                              -{formatPrice(order.discountAmount)}
+                            </span>
+                          )}
+                          {order.shippingFee > 0 && (
+                            <span className="text-xs text-gray-500">
+                              Ship: {formatPrice(order.shippingFee)}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
                         {renderPaymentStatus(order.paymentStatus)}
                         <p className="text-xs text-gray-500 mt-1">
-                          {order.paymentMethod?.toUpperCase() || 'COD'}
+                          {order.paymentMethod === 'bank_transfer' ? 'Chuyển khoản' :
+                            order.paymentMethod === 'cod' ? 'COD' :
+                              order.paymentMethod?.toUpperCase() || 'COD'}
                         </p>
+                        {order.paidAt && (
+                          <p className="text-xs text-gray-400 mt-1">
+                            {formatDate(order.paidAt, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
                       </td>
                       <td className="p-4">
                         {renderStatus(order.status)}
@@ -417,7 +466,7 @@ const AdminOrdersPage = () => {
                   >
                     <FiChevronLeft className="w-5 h-5" />
                   </button>
-                  
+
                   {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
                     let pageNum;
                     if (pagination.pages <= 5) {
@@ -433,17 +482,16 @@ const AdminOrdersPage = () => {
                       <button
                         key={pageNum}
                         onClick={() => setFilters({ ...filters, page: pageNum })}
-                        className={`px-3 py-1 rounded-lg ${
-                          pageNum === pagination.page
+                        className={`px-3 py-1 rounded-lg ${pageNum === pagination.page
                             ? 'bg-blue-600 text-white'
                             : 'border hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>
                     );
                   })}
-                  
+
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={!pagination.hasNext}
@@ -459,100 +507,91 @@ const AdminOrdersPage = () => {
       </div>
 
       {/* Status Update Modal */}
-      {showStatusModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-lg">
-            <div className="p-6 border-b">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-800">
-                  Cập nhật trạng thái đơn #{selectedOrder.orderNumber}
-                </h2>
-                <button
-                  onClick={() => setShowStatusModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
-                >
-                  <FiX className="w-5 h-5" />
-                </button>
+      <Modal
+        open={showStatusModal && !!selectedOrder}
+        onClose={() => setShowStatusModal(false)}
+        title={selectedOrder ? `Cập nhật trạng thái đơn #${selectedOrder.orderNumber}` : ''}
+        subtitle="Thay đổi trạng thái xử lý đơn hàng"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowStatusModal(false)}
+              className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 font-medium"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleStatusUpdate}
+              disabled={updating || (selectedOrder && statusForm.status === selectedOrder.status)}
+              className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 font-medium"
+            >
+              {updating && <FiLoader className="animate-spin" />}
+              Cập nhật
+            </button>
+          </div>
+        }
+      >
+        {selectedOrder && (
+          <div className="space-y-4">
+            {/* Current Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Trạng thái hiện tại
+              </label>
+              <div className="flex items-center gap-2">
+                {renderStatus(selectedOrder.status)}
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
-              {/* Current Status */}
+            {/* New Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Trạng thái mới <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={statusForm.status}
+                onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })}
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+              >
+                {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+                  <option key={key} value={key}>{val.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tracking Number (for shipped status) */}
+            {(statusForm.status === 'shipped' || statusForm.status === 'shipping_created' || statusForm.status === 'delivering') && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Trạng thái hiện tại
+                  Mã vận đơn
                 </label>
-                <div className="flex items-center gap-2">
-                  {renderStatus(selectedOrder.status)}
-                </div>
-              </div>
-
-              {/* New Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Trạng thái mới <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={statusForm.status}
-                  onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {Object.entries(STATUS_CONFIG).map(([key, val]) => (
-                    <option key={key} value={key}>{val.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Tracking Number (for shipped status) */}
-              {(statusForm.status === 'shipped' || selectedOrder.status === 'shipped') && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mã vận đơn
-                  </label>
-                  <input
-                    type="text"
-                    value={statusForm.trackingNumber}
-                    onChange={(e) => setStatusForm({ ...statusForm, trackingNumber: e.target.value })}
-                    placeholder="Nhập mã vận đơn..."
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              )}
-
-              {/* Note */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú
-                </label>
-                <textarea
-                  value={statusForm.note}
-                  onChange={(e) => setStatusForm({ ...statusForm, note: e.target.value })}
-                  placeholder="Ghi chú về việc cập nhật trạng thái..."
-                  rows={3}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <input
+                  type="text"
+                  value={statusForm.trackingNumber}
+                  onChange={(e) => setStatusForm({ ...statusForm, trackingNumber: e.target.value })}
+                  placeholder="Nhập mã vận đơn..."
+                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                 />
               </div>
-            </div>
+            )}
 
-            <div className="p-6 border-t flex justify-end gap-3">
-              <button
-                onClick={() => setShowStatusModal(false)}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleStatusUpdate}
-                disabled={updating || statusForm.status === selectedOrder.status}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-              >
-                {updating && <FiLoader className="animate-spin" />}
-                Cập nhật
-              </button>
+            {/* Note */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ghi chú
+              </label>
+              <textarea
+                value={statusForm.note}
+                onChange={(e) => setStatusForm({ ...statusForm, note: e.target.value })}
+                placeholder="Ghi chú về việc cập nhật trạng thái..."
+                rows={3}
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 resize-none"
+              />
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

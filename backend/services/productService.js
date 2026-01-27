@@ -259,19 +259,40 @@ export const getProductReviews = async (productId, options = {}) => {
  */
 const buildProductQuery = (filters) => {
   const { category, search, minPrice, maxPrice, inStock, minRating } = filters;
-  let query = {};
+  let query = {
+    status: 'active' // Chỉ lấy sản phẩm active
+  };
 
   // Filter theo category
   if (category) {
-    query.category = category;
+    // Tìm trong category, subcategory, và productLine
+    query.$or = [
+      { category: category.toLowerCase() },
+      { subcategory: category.toLowerCase() },
+      { productLine: category.toLowerCase() }
+    ];
   }
 
   // Tìm kiếm theo tên hoặc mô tả (không phân biệt hoa thường)
   if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } }
-    ];
+    // Nếu đã có $or từ category, cần kết hợp với $and
+    if (query.$or) {
+      query.$and = [
+        { $or: query.$or },
+        {
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+          ]
+        }
+      ];
+      delete query.$or;
+    } else {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
   }
 
   // Filter theo giá

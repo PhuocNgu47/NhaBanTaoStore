@@ -13,7 +13,7 @@ import {
   FiAlertCircle,
   FiPackage,
 } from 'react-icons/fi';
-import { useCart } from '../hooks';
+import { useCart, useTracking } from '../hooks';
 import { formatPrice, calculateDiscount } from '../utils/helpers';
 import { productService } from '../services/productService';
 
@@ -33,6 +33,7 @@ const ProductDetailPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { trackView } = useTracking();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -120,6 +121,10 @@ const ProductDetailPage = () => {
         if (response.success && response.product) {
           const prod = response.product;
           setProduct(prod);
+          
+          // Track product view
+          trackView(prod);
+          
           // Set default variant
           if (prod.variants && prod.variants.length > 0) {
             setSelectedVariant(prod.variants[0]);

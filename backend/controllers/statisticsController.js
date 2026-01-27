@@ -102,3 +102,46 @@ export const getRecentOrders = async (req, res) => {
   }
 };
 
+/**
+ * Báo cáo COD chưa về
+ * GET /api/reports/cod
+ */
+export const getCODReport = async (req, res) => {
+  try {
+    const { startDate, endDate, page = 1, limit = 50 } = req.query;
+    const result = await statisticsService.getCODReport({ startDate, endDate, page, limit });
+    
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    console.error('Get COD report error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lấy báo cáo COD'
+    });
+  }
+};
+
+/**
+ * Báo cáo doanh thu
+ * GET /api/reports/revenue
+ */
+export const getRevenueReport = async (req, res) => {
+  try {
+    const { startDate, endDate, groupBy = 'day' } = req.query;
+    const result = await statisticsService.getRevenueReport({ startDate, endDate, groupBy });
+    
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    console.error('Get revenue report error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lấy báo cáo doanh thu'
+    });
+  }
+};

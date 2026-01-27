@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HeroBanner, Features, ProductsByPrice, CategorySection } from '../components/home';
+import { BannerSlider, Features, ProductsByPrice, CategorySection } from '../components/home';
 import { ProductCategorySection, CategoryTabsSection, SocialGallery } from '../components/common';
 import { useCart } from '../hooks';
 import { productService } from '../services/productService';
@@ -77,7 +77,7 @@ const HomePage = () => {
 
   return (
     <div>
-      <HeroBanner />
+      <BannerSlider />
       <Features />
       <CategorySection />
       <ProductsByPrice />

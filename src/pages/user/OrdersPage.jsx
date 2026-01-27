@@ -56,6 +56,8 @@ const UserOrdersPage = () => {
       if (response.success) {
         setOrders(response.orders || []);
         setPagination(response.pagination);
+      } else {
+        toast.error(response.message || 'Lỗi khi tải danh sách đơn hàng');
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -243,18 +245,40 @@ const UserOrdersPage = () => {
 
                 {/* Footer */}
                 <div className="p-4 bg-gray-50 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <span className="text-gray-600">Tổng tiền: </span>
-                      <span className="font-bold text-blue-600 text-lg">
-                        {formatPrice(order.totalAmount)}
-                      </span>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <div>
+                        <span className="text-gray-600 text-sm">Tổng tiền: </span>
+                        <span className="font-bold text-blue-600 text-lg">
+                          {formatPrice(order.totalAmount)}
+                        </span>
+                      </div>
+                      {order.discountAmount > 0 && (
+                        <span className="text-green-600 text-sm">
+                          Đã giảm: -{formatPrice(order.discountAmount)}
+                        </span>
+                      )}
+                      {order.shippingFee > 0 && (
+                        <span className="text-gray-500 text-sm">
+                          Phí ship: {formatPrice(order.shippingFee)}
+                        </span>
+                      )}
                     </div>
-                    {order.paymentStatus === 'paid' && (
-                      <span className="text-green-600 text-sm flex items-center gap-1">
-                        <FiCheck /> Đã thanh toán
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-gray-500 text-xs">
+                        {order.paymentMethod === 'bank_transfer' ? 'Chuyển khoản' : 
+                         order.paymentMethod === 'cod' ? 'COD' : 
+                         order.paymentMethod || 'COD'}
                       </span>
-                    )}
+                      {order.paymentStatus === 'paid' && (
+                        <span className="text-green-600 text-xs flex items-center gap-1">
+                          <FiCheck /> Đã thanh toán
+                        </span>
+                      )}
+                      {order.paymentStatus === 'pending' && (
+                        <span className="text-yellow-600 text-xs">Chưa thanh toán</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Link

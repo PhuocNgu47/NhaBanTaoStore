@@ -7,29 +7,29 @@ import Product from '../models/Product.js';
 export const getCategories = async (req, res) => {
   try {
     const { flat, onlyActive = 'true', onlyMenu = 'false' } = req.query;
-    
+
     if (flat === 'true') {
       // Return flat list
       const query = {};
       if (onlyActive === 'true') query.isActive = true;
-      
+
       const categories = await Category.find(query)
         .sort({ level: 1, order: 1, name: 1 })
         .lean();
-      
+
       return res.json({
         success: true,
         categories,
         total: categories.length,
       });
     }
-    
+
     // Return tree structure
     const tree = await Category.getTree({
       onlyActive: onlyActive === 'true',
       onlyMenu: onlyMenu === 'true',
     });
-    
+
     res.json({
       success: true,
       categories: tree,
@@ -50,25 +50,25 @@ export const getCategories = async (req, res) => {
 export const getCategoryBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
-    
+
     const category = await Category.findOne({ slug, isActive: true })
       .populate('children')
       .lean();
-    
+
     if (!category) {
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy danh mục',
       });
     }
-    
+
     // Get breadcrumb
     const breadcrumb = await Category.getBreadcrumb(category._id);
-    
+
     // Get products count
     const descendantIds = (await Category.getDescendants(category._id)).map(d => d._id.toString());
     const allCategoryIds = [category._id.toString(), ...descendantIds];
-    
+
     const productCount = await Product.countDocuments({
       $or: [
         { category: { $in: allCategoryIds } },
@@ -77,7 +77,7 @@ export const getCategoryBySlug = async (req, res) => {
       ],
       status: 'active',
     });
-    
+
     res.json({
       success: true,
       category: {
@@ -102,18 +102,18 @@ export const getCategoryBySlug = async (req, res) => {
 export const getCategoryById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const category = await Category.findById(id)
       .populate('children')
       .lean();
-    
+
     if (!category) {
       return res.status(404).json({
         success: false,
         message: 'Không tìm thấy danh mục',
       });
     }
-    
+
     res.json({
       success: true,
       category,
@@ -148,7 +148,7 @@ export const createCategory = async (req, res) => {
       metaDescription,
       metaKeywords,
     } = req.body;
-    
+
     // Check if slug exists
     const existingCategory = await Category.findOne({ slug });
     if (existingCategory) {
@@ -157,7 +157,7 @@ export const createCategory = async (req, res) => {
         message: 'Slug đã tồn tại',
       });
     }
-    
+
     // Validate parent level
     if (parent) {
       const parentCategory = await Category.findById(parent);
@@ -174,7 +174,7 @@ export const createCategory = async (req, res) => {
         });
       }
     }
-    
+
     const category = new Category({
       name,
       slug,
@@ -190,9 +190,9 @@ export const createCategory = async (req, res) => {
       metaDescription,
       metaKeywords,
     });
-    
+
     await category.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Tạo danh mục thành công',
@@ -215,7 +215,7 @@ export const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const category = await Category.findById(id);
     if (!category) {
       return res.status(404).json({
@@ -223,7 +223,7 @@ export const updateCategory = async (req, res) => {
         message: 'Không tìm thấy danh mục',
       });
     }
-    
+
     // Check slug uniqueness
     if (updateData.slug && updateData.slug !== category.slug) {
       const existingCategory = await Category.findOne({ slug: updateData.slug });
@@ -234,7 +234,7 @@ export const updateCategory = async (req, res) => {
         });
       }
     }
-    
+
     // Validate parent
     if (updateData.parent !== undefined) {
       if (updateData.parent) {
@@ -245,7 +245,7 @@ export const updateCategory = async (req, res) => {
             message: 'Không thể đặt chính danh mục làm cha',
           });
         }
-        
+
         const parentCategory = await Category.findById(updateData.parent);
         if (!parentCategory) {
           return res.status(400).json({
@@ -259,7 +259,7 @@ export const updateCategory = async (req, res) => {
             message: 'Chỉ hỗ trợ tối đa 3 cấp danh mục',
           });
         }
-        
+
         // Cannot move to own descendant
         const descendants = await Category.getDescendants(id);
         if (descendants.some(d => d._id.toString() === updateData.parent.toString())) {
@@ -270,10 +270,10 @@ export const updateCategory = async (req, res) => {
         }
       }
     }
-    
+
     Object.assign(category, updateData);
     await category.save();
-    
+
     // Update descendants' ancestors if parent changed
     if (updateData.parent !== undefined) {
       const descendants = await Category.getDescendants(id);
@@ -285,7 +285,7 @@ export const updateCategory = async (req, res) => {
         }
       }
     }
-    
+
     res.json({
       success: true,
       message: 'Cập nhật danh mục thành công',
@@ -308,7 +308,7 @@ export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
     const { force } = req.query;
-    
+
     const category = await Category.findById(id);
     if (!category) {
       return res.status(404).json({
@@ -316,7 +316,7 @@ export const deleteCategory = async (req, res) => {
         message: 'Không tìm thấy danh mục',
       });
     }
-    
+
     // Check for children
     const children = await Category.find({ parent: id });
     if (children.length > 0 && force !== 'true') {
@@ -326,7 +326,7 @@ export const deleteCategory = async (req, res) => {
         childrenCount: children.length,
       });
     }
-    
+
     // Check for products
     const productCount = await Product.countDocuments({
       $or: [
@@ -335,7 +335,7 @@ export const deleteCategory = async (req, res) => {
         { productLine: category.slug },
       ],
     });
-    
+
     if (productCount > 0 && force !== 'true') {
       return res.status(400).json({
         success: false,
@@ -343,7 +343,7 @@ export const deleteCategory = async (req, res) => {
         productCount,
       });
     }
-    
+
     // Delete children if force
     if (force === 'true' && children.length > 0) {
       for (const child of children) {
@@ -355,9 +355,9 @@ export const deleteCategory = async (req, res) => {
         }
       }
     }
-    
+
     await Category.findByIdAndDelete(id);
-    
+
     res.json({
       success: true,
       message: 'Xóa danh mục thành công',
@@ -378,18 +378,18 @@ export const deleteCategory = async (req, res) => {
 export const reorderCategories = async (req, res) => {
   try {
     const { orders } = req.body; // [{ id, order }]
-    
+
     if (!Array.isArray(orders)) {
       return res.status(400).json({
         success: false,
         message: 'Dữ liệu không hợp lệ',
       });
     }
-    
+
     for (const item of orders) {
       await Category.findByIdAndUpdate(item.id, { order: item.order });
     }
-    
+
     res.json({
       success: true,
       message: 'Sắp xếp danh mục thành công',
@@ -413,7 +413,7 @@ export const getMenuCategories = async (req, res) => {
       onlyActive: true,
       onlyMenu: true,
     });
-    
+
     res.json({
       success: true,
       menu: tree,
@@ -423,6 +423,44 @@ export const getMenuCategories = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy menu',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Sync all categories productCount
+// @route   POST /api/categories/sync-counts
+// @access  Admin
+export const syncProductCounts = async (req, res) => {
+  try {
+    // Get all root level categories
+    const rootCategories = await Category.find({ level: 0 });
+
+    let updatedCount = 0;
+
+    // Update each root category (this will recursively update children via ancestors)
+    for (const category of rootCategories) {
+      await Category.updateProductCount(category._id);
+      updatedCount++;
+
+      // Also update children
+      const descendants = await Category.getDescendants(category._id);
+      for (const desc of descendants) {
+        await Category.updateProductCount(desc._id);
+        updatedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Đã đồng bộ số lượng sản phẩm cho ${updatedCount} danh mục`,
+      updatedCount,
+    });
+  } catch (error) {
+    console.error('Sync product counts error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi đồng bộ số lượng sản phẩm',
       error: error.message,
     });
   }

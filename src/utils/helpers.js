@@ -37,6 +37,50 @@ export const removeToken = () => {
   localStorage.removeItem('token');
 };
 
+// Save user to localStorage
+export const saveUser = (user) => {
+  if (user) {
+    // Extract only essential contact information for persistence
+    const userData = {
+      id: user.id || user._id,
+      email: user.email,
+      phone: user.phone,
+      name: user.name,
+      avatar: user.avatar,
+      role: user.role,
+    };
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+  }
+};
+
+// Get user from localStorage
+export const getUser = () => {
+  try {
+    const userStr = localStorage.getItem('currentUser');
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (error) {
+    console.error('Error parsing user from localStorage:', error);
+    return null;
+  }
+};
+
+// Remove user from localStorage
+export const removeUser = () => {
+  localStorage.removeItem('currentUser');
+};
+
+// Get user contact information (helper for checkout auto-fill)
+export const getUserContactInfo = () => {
+  const user = getUser();
+  if (!user) return null;
+  
+  return {
+    email: user.email || '',
+    phone: user.phone || '',
+    name: user.name || '',
+  };
+};
+
 // Check if user is authenticated
 export const isAuthenticated = () => {
   const token = getToken();

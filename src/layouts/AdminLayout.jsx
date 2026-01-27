@@ -15,6 +15,8 @@ import {
   FiGift,
   FiPackage,
   FiHeart,
+  FiImage,
+  FiTrendingUp,
 } from 'react-icons/fi';
 import { useAuth } from '../hooks';
 
@@ -22,7 +24,9 @@ const menuItems = [
   { path: '/admin', icon: FiHome, label: 'Dashboard', exact: true },
   { path: '/admin/san-pham', icon: FiBox, label: 'Sản phẩm' },
   { path: '/admin/danh-muc', icon: FiTag, label: 'Danh mục' },
+  { path: '/admin/banner', icon: FiImage, label: 'Banner' },
   { path: '/admin/don-hang', icon: FiShoppingBag, label: 'Đơn hàng' },
+  { path: '/admin/leads', icon: FiTrendingUp, label: 'Leads' },
   { path: '/admin/nguoi-dung', icon: FiUsers, label: 'Người dùng' },
   { path: '/admin/khach-hang', icon: FiHeart, label: 'Khách hàng VIP' },
   { path: '/admin/ma-giam-gia', icon: FiGift, label: 'Mã giảm giá' },

@@ -104,7 +104,7 @@ export const seedOrders = async (regularUsers, createdProducts) => {
         zipCode: addr.zipCode
       },
       paymentMethod: 'bank_transfer',
-      paymentStatus: 'pending',
+      paymentStatus: 'unpaid',
       status: 'pending',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
     });
@@ -319,7 +319,7 @@ export const seedOrders = async (regularUsers, createdProducts) => {
         zipCode: addr.zipCode
       },
       paymentMethod: 'cod',
-      paymentStatus: 'pending',
+      paymentStatus: 'cod',
       status: 'pending',
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
     });

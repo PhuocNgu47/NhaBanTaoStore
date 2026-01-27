@@ -266,3 +266,110 @@ export const getRecentOrders = async (limit = 10) => {
   return recentOrders;
 };
 
+/**
+ * Báo cáo COD chưa về
+ * Lấy danh sách đơn hàng COD đã giao nhưng chưa thu tiền
+ */
+export const getCODReport = async (options = {}) => {
+  const { startDate, endDate, page = 1, limit = 50 } = options;
+
+  let query = {
+    paymentMethod: 'cod',
+    paymentStatus: { $in: ['cod', 'unpaid'] }, // COD orders that haven't been marked as paid
+    status: { $in: ['completed', 'delivering', 'shipping_created'] } // Delivered or in delivery
+  };
+
+  // Date filter
+  if (startDate || endDate) {
+    query.createdAt = {};
+    if (startDate) query.createdAt.$gte = new Date(startDate);
+    if (endDate) query.createdAt.$lte = new Date(endDate);
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [orders, total] = await Promise.all([
+    Order.find(query)
+      .populate('userId', 'name email')
+      .populate('items.productId', 'name image')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Order.countDocuments(query)
+  ]);
+
+  // Calculate total COD amount
+  const totalCOD = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+  return {
+    orders,
+    totalCOD,
+    pagination: {
+      page: Number(page),
+      limit: Number(limit),
+      total,
+      pages: Math.ceil(total / limit),
+      hasNext: page * limit < total,
+      hasPrev: page > 1
+    }
+  };
+};
+
+/**
+ * Báo cáo doanh thu
+ * Group by day/month
+ */
+export const getRevenueReport = async (options = {}) => {
+  const { startDate, endDate, groupBy = 'day' } = options;
+
+  let dateFilter = {};
+  if (startDate || endDate) {
+    dateFilter.createdAt = {};
+    if (startDate) dateFilter.createdAt.$gte = new Date(startDate);
+    if (endDate) dateFilter.createdAt.$lte = new Date(endDate);
+  }
+
+  // Only count completed orders
+  dateFilter.status = { $in: ['completed', 'delivered'] };
+  dateFilter.paymentStatus = { $in: ['paid', 'cod'] };
+
+  let groupFormat;
+  if (groupBy === 'month') {
+    groupFormat = '%Y-%m';
+  } else {
+    groupFormat = '%Y-%m-%d';
+  }
+
+  const revenueData = await Order.aggregate([
+    { $match: dateFilter },
+    {
+      $group: {
+        _id: { $dateToString: { format: groupFormat, date: '$createdAt' } },
+        revenue: { $sum: '$totalAmount' },
+        orders: { $sum: 1 },
+        avgOrderValue: { $avg: '$totalAmount' }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  // Calculate totals
+  const totals = await Order.aggregate([
+    { $match: dateFilter },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: '$totalAmount' },
+        totalOrders: { $sum: 1 },
+        avgOrderValue: { $avg: '$totalAmount' }
+      }
+    }
+  ]);
+
+  return {
+    data: revenueData,
+    totals: totals[0] || { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0 },
+    groupBy
+  };
+};

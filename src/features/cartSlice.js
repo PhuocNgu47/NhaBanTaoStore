@@ -12,7 +12,12 @@ const getCartFromStorage = () => {
 
 // Save cart to localStorage
 const saveCartToStorage = (cart) => {
-  localStorage.setItem('cart', JSON.stringify(cart));
+  if (cart && cart.length > 0) {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  } else {
+    // Remove cart key completely when empty
+    localStorage.removeItem('cart');
+  }
 };
 
 const cartSlice = createSlice({

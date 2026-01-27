@@ -1,23 +1,65 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FiShoppingCart, FiChevronDown } from 'react-icons/fi';
-import { useCart } from '../hooks';
-import { formatPrice } from '../utils/helpers';
+import { FiShoppingCart, FiChevronDown, FiLoader } from 'react-icons/fi';
+import { useCart, useTracking, useAuth } from '../hooks';
+import { formatPrice, debounce } from '../utils/helpers';
 import { toast } from 'react-toastify';
 import Modal from '../components/Modal';
+import { orderService } from '../services/orderService';
+import { userService } from '../services/userService';
+import { addressService } from '../services/addressService';
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Vui lòng nhập họ tên'),
   phone: z.string().regex(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, 'Số điện thoại không hợp lệ'),
   email: z.string().email('Email không hợp lệ'),
   address: z.string().min(10, 'Vui lòng nhập địa chỉ đầy đủ'),
-  city: z.string().min(2, 'Vui lòng chọn tỉnh/thành'),
-  ward: z.string().min(2, 'Vui lòng chọn phường/xã'),
+  provinceId: z.string().min(1, 'Vui lòng chọn tỉnh/thành phố'),
+  districtId: z.string().min(1, 'Vui lòng chọn quận/huyện'),
+  wardId: z.string().min(1, 'Vui lòng chọn phường/xã'),
   note: z.string().optional(),
 });
+
+// Vietnam Address API Helper Functions
+const VIETNAM_ADDRESS_API = 'https://provinces.open-api.vn/api';
+
+const fetchProvinces = async () => {
+  try {
+    const response = await fetch(`${VIETNAM_ADDRESS_API}/p/`);
+    if (!response.ok) throw new Error('Failed to fetch provinces');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching provinces:', error);
+    throw error;
+  }
+};
+
+const fetchDistricts = async (provinceCode) => {
+  try {
+    const response = await fetch(`${VIETNAM_ADDRESS_API}/p/${provinceCode}?depth=2`);
+    if (!response.ok) throw new Error('Failed to fetch districts');
+    const data = await response.json();
+    return data.districts || [];
+  } catch (error) {
+    console.error('Error fetching districts:', error);
+    throw error;
+  }
+};
+
+const fetchWards = async (districtCode) => {
+  try {
+    const response = await fetch(`${VIETNAM_ADDRESS_API}/d/${districtCode}?depth=2`);
+    if (!response.ok) throw new Error('Failed to fetch wards');
+    const data = await response.json();
+    return data.wards || [];
+  } catch (error) {
+    console.error('Error fetching wards:', error);
+    throw error;
+  }
+};
 
 // Checkout steps component
 const CheckoutSteps = ({ currentStep }) => {
@@ -33,18 +75,16 @@ const CheckoutSteps = ({ currentStep }) => {
         <div key={step.id} className="flex items-center">
           <div className="flex items-center gap-2">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                step.id <= currentStep
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${step.id <= currentStep
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-400'
-              }`}
+                }`}
             >
               <step.icon className="w-5 h-5" />
             </div>
             <span
-              className={`font-medium ${
-                step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'
-              }`}
+              className={`font-medium ${step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'
+                }`}
             >
               {step.name}
             </span>
@@ -69,11 +109,25 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { items: cartItems, total: cartTotal, clearCart } = useCart();
+  const { identifyLead } = useTracking();
+  const { isAuthenticated, user: authUser } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [loadingUserData, setLoadingUserData] = useState(false);
+
+  // Vietnam Address States
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  const [loadingProvinces, setLoadingProvinces] = useState(true);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
+  const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState('');
+  const [selectedWardCode, setSelectedWardCode] = useState('');
 
   // Kiểm tra xem có phải mua ngay hay không
   const buyNowItem = location.state?.buyNowItem;
@@ -83,9 +137,77 @@ const CheckoutPage = () => {
   const items = isBuyNow ? [buyNowItem] : cartItems;
   const total = isBuyNow ? buyNowItem.price * buyNowItem.quantity : cartTotal;
 
+  // Fetch provinces on mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        setLoadingProvinces(true);
+        const data = await fetchProvinces();
+        setProvinces(data);
+      } catch (error) {
+        toast.error('Không thể tải danh sách tỉnh/thành phố');
+      } finally {
+        setLoadingProvinces(false);
+      }
+    };
+    loadProvinces();
+  }, []);
+
+  // Fetch districts when province is selected
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (!selectedProvinceCode) {
+        setDistricts([]);
+        setWards([]);
+        setSelectedDistrictCode('');
+        setSelectedWardCode('');
+        return;
+      }
+
+      try {
+        setLoadingDistricts(true);
+        const data = await fetchDistricts(selectedProvinceCode);
+        setDistricts(data);
+        setWards([]);
+        setSelectedDistrictCode('');
+        setSelectedWardCode('');
+      } catch (error) {
+        toast.error('Không thể tải danh sách quận/huyện');
+        setDistricts([]);
+      } finally {
+        setLoadingDistricts(false);
+      }
+    };
+    loadDistricts();
+  }, [selectedProvinceCode]);
+
+  // Fetch wards when district is selected
+  useEffect(() => {
+    const loadWards = async () => {
+      if (!selectedDistrictCode) {
+        setWards([]);
+        setSelectedWardCode('');
+        return;
+      }
+
+      try {
+        setLoadingWards(true);
+        const data = await fetchWards(selectedDistrictCode);
+        setWards(data);
+        setSelectedWardCode('');
+      } catch (error) {
+        toast.error('Không thể tải danh sách phường/xã');
+        setWards([]);
+      } finally {
+        setLoadingWards(false);
+      }
+    };
+    loadWards();
+  }, [selectedDistrictCode]);
+
   // Tính tổng tiền sau khi áp dụng voucher
-  const discount = selectedVoucher ? (selectedVoucher.discountType === 'percentage' 
-    ? total * (selectedVoucher.discountValue / 100) 
+  const discount = selectedVoucher ? (selectedVoucher.discountType === 'percentage'
+    ? total * (selectedVoucher.discountValue / 100)
     : selectedVoucher.discountValue) : 0;
   const finalTotal = Math.max(total - discount, 0);
 
@@ -112,45 +234,344 @@ const CheckoutPage = () => {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    setValue,
+    reset,
   } = useForm({
     resolver: zodResolver(checkoutSchema),
   });
 
+  // Watch phone and email for tracking
+  const watchPhone = watch('phone');
+  const watchEmail = watch('email');
+  const watchFullName = watch('fullName');
+
+  // Use ref to store debounced function
+  const debouncedIdentifyLeadRef = useRef(
+    debounce((phone, email, name) => {
+      if (phone || email || name) {
+        identifyLead({
+          phone: phone || null,
+          email: email || null,
+          name: name || null
+        });
+      }
+    }, 1000) // Wait 1 second after user stops typing
+  );
+
+  // Track phone/email changes
+  useEffect(() => {
+    if (watchPhone || watchEmail || watchFullName) {
+      debouncedIdentifyLeadRef.current(watchPhone, watchEmail, watchFullName);
+    }
+  }, [watchPhone, watchEmail, watchFullName]);
+
+  // Watch form values for cascading dropdowns
+  const watchProvinceId = watch('provinceId');
+  const watchDistrictId = watch('districtId');
+
+  // Handle province change
+  useEffect(() => {
+    if (watchProvinceId) {
+      setSelectedProvinceCode(watchProvinceId);
+      setValue('districtId', '');
+      setValue('wardId', '');
+    } else {
+      setSelectedProvinceCode('');
+    }
+  }, [watchProvinceId, setValue]);
+
+  // Handle district change
+  useEffect(() => {
+    if (watchDistrictId) {
+      setSelectedDistrictCode(watchDistrictId);
+      setValue('wardId', '');
+    } else {
+      setSelectedDistrictCode('');
+    }
+  }, [watchDistrictId, setValue]);
+
+  // Fetch user profile and default address when authenticated
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!isAuthenticated) return;
+
+      try {
+        setLoadingUserData(true);
+
+        // Fetch user profile
+        const profileResponse = await userService.getProfile();
+        const userProfile = profileResponse.user || profileResponse;
+
+        // Fetch user addresses
+        let defaultAddress = null;
+        try {
+          const addressesResponse = await addressService.getAddresses();
+          if (addressesResponse.success && addressesResponse.addresses) {
+            // Find default address or use first address
+            defaultAddress = addressesResponse.addresses.find(addr => addr.isDefault)
+              || addressesResponse.addresses[0];
+          }
+        } catch (error) {
+          // Address service might not be available, continue without it
+          console.log('Could not fetch addresses:', error);
+        }
+
+        // Auto-fill form with user data
+        const formData = {
+          fullName: userProfile.name || authUser?.name || '',
+          phone: userProfile.phone || authUser?.phone || '',
+          email: userProfile.email || authUser?.email || '',
+        };
+
+        // If we have a default address, fill address field
+        if (defaultAddress) {
+          formData.address = defaultAddress.addressLine1 || defaultAddress.address || '';
+
+          // Try to match province, district, ward from address
+          if (defaultAddress.city && provinces.length > 0) {
+            // Normalize city name for matching (remove common suffixes)
+            const normalizeName = (name) => name.toLowerCase()
+              .replace(/tỉnh\s*/g, '')
+              .replace(/thành phố\s*/g, '')
+              .replace(/tp\.\s*/g, '')
+              .trim();
+
+            const cityName = normalizeName(defaultAddress.city);
+            const matchedProvince = provinces.find(p => {
+              const provinceName = normalizeName(p.name);
+              return provinceName === cityName ||
+                provinceName.includes(cityName) ||
+                cityName.includes(provinceName);
+            });
+
+            if (matchedProvince) {
+              formData.provinceId = String(matchedProvince.code);
+              setSelectedProvinceCode(String(matchedProvince.code));
+
+              // Load districts for this province
+              try {
+                const districtsData = await fetchDistricts(matchedProvince.code);
+                setDistricts(districtsData);
+
+                // Try to match district
+                if (defaultAddress.district && districtsData.length > 0) {
+                  const districtName = normalizeName(defaultAddress.district);
+                  const matchedDistrict = districtsData.find(d => {
+                    const dName = normalizeName(d.name);
+                    return dName === districtName ||
+                      dName.includes(districtName) ||
+                      districtName.includes(dName);
+                  });
+
+                  if (matchedDistrict) {
+                    formData.districtId = String(matchedDistrict.code);
+                    setSelectedDistrictCode(String(matchedDistrict.code));
+
+                    // Load wards for this district
+                    try {
+                      const wardsData = await fetchWards(matchedDistrict.code);
+                      setWards(wardsData);
+
+                      // Try to match ward
+                      if (defaultAddress.ward && wardsData.length > 0) {
+                        const wardName = normalizeName(defaultAddress.ward);
+                        const matchedWard = wardsData.find(w => {
+                          const wName = normalizeName(w.name);
+                          return wName === wardName ||
+                            wName.includes(wardName) ||
+                            wardName.includes(wName);
+                        });
+
+                        if (matchedWard) {
+                          formData.wardId = String(matchedWard.code);
+                          setSelectedWardCode(String(matchedWard.code));
+                        }
+                      }
+                    } catch (error) {
+                      console.log('Could not fetch wards:', error);
+                    }
+                  }
+                }
+              } catch (error) {
+                console.log('Could not fetch districts:', error);
+              }
+            }
+          }
+        }
+
+        // Set form values
+        Object.keys(formData).forEach(key => {
+          if (formData[key]) {
+            setValue(key, formData[key]);
+          }
+        });
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        // Don't show error toast, just continue without auto-fill
+      } finally {
+        setLoadingUserData(false);
+      }
+    };
+
+    // Only load user data if authenticated and provinces are loaded
+    if (isAuthenticated && provinces.length > 0) {
+      loadUserData();
+    }
+  }, [isAuthenticated, authUser, provinces.length, setValue]);
+
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      // Create order data
-      const orderData = {
-        orderId: String(Math.floor(Math.random() * 1000000)).padStart(6, '0'),
-        customerName: data.fullName,
-        phone: data.phone.slice(0, 5) + '*****',
-        email: data.email.replace(/(.{5}).*(@.*)/, '$1***********$2'),
-        orderDate: new Date().toLocaleString('vi-VN', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        }),
-        address: data.address + ', ' + data.ward + ', ' + data.city,
-        paymentMethod: paymentMethod === 'bank_transfer' ? 'Chuyển khoản ngân hàng' : 'Thanh toán khi nhận hàng',
-        shippingMethod: shippingMethod === 'standard' ? 'Giao hàng Tiêu chuẩn' : 'Giao hàng Nhanh',
-        items: items,
-        subtotal: total,
-        shippingFee: null,
-        total: total,
+      // Prepare order items for API
+      const orderItems = items.map(item => ({
+        productId: item.id || item.productId,
+        variantId: item.variantId || null,
+        quantity: item.quantity || 1,
+      }));
+
+      // Find selected address names from codes (convert to string for comparison)
+      const selectedProvince = provinces.find(p => String(p.code) === String(data.provinceId));
+      const selectedDistrict = districts.find(d => String(d.code) === String(data.districtId));
+      const selectedWard = wards.find(w => String(w.code) === String(data.wardId));
+
+      // Prepare shipping address
+      const shippingAddress = {
+        name: data.fullName,
+        phone: data.phone,
+        addressLine1: data.address,
+        ward: selectedWard?.name || '',
+        district: selectedDistrict?.name || '',
+        city: selectedProvince?.name || '',
+        country: 'Vietnam',
       };
 
-      // Chỉ xóa giỏ hàng nếu không phải mua ngay
+      // Calculate shipping fee (free if bank transfer, otherwise to be determined)
+      const calculatedShippingFee = paymentMethod === 'bank_transfer' ? 0 : null;
+
+      // Calculate final total
+      const calculatedSubtotal = total;
+      const calculatedDiscount = discount;
+      const calculatedTotal = finalTotal + (calculatedShippingFee || 0);
+
+      // Prepare order data for API
+      const orderData = {
+        items: orderItems,
+        shippingAddress,
+        paymentMethod: paymentMethod === 'bank_transfer' ? 'bank_transfer' : 'cod',
+        guestEmail: data.email,
+        couponCode: selectedVoucher?.code || null,
+        discountAmount: calculatedDiscount,
+        shippingFee: calculatedShippingFee,
+        note: data.note || '',
+      };
+
+      // Call API to create order
+      let response;
       if (!isBuyNow) {
-        clearCart();
+        // Create order from cart
+        response = await orderService.createOrderFromCart(orderData);
+      } else {
+        // Create order directly
+        response = await orderService.createOrder(orderData);
       }
-      navigate('/dat-hang-thanh-cong', { state: { order: orderData } });
+
+      if (response.success && response.order) {
+        // Save address to user profile if authenticated
+        if (isAuthenticated) {
+          try {
+            // Find selected address names from codes
+            const selectedProvince = provinces.find(p => String(p.code) === String(data.provinceId));
+            const selectedDistrict = districts.find(d => String(d.code) === String(data.districtId));
+            const selectedWard = wards.find(w => String(w.code) === String(data.wardId));
+
+            const addressData = {
+              name: data.fullName,
+              phone: data.phone,
+              addressLine1: data.address,
+              ward: selectedWard?.name || '',
+              district: selectedDistrict?.name || '',
+              city: selectedProvince?.name || '',
+              country: 'Vietnam',
+              isDefault: true, // Set as default address
+            };
+
+            // Check if user already has addresses
+            try {
+              const addressesResponse = await addressService.getAddresses();
+              if (addressesResponse.success && addressesResponse.addresses) {
+                // Check if this address already exists (by comparing key fields)
+                const existingAddress = addressesResponse.addresses.find(addr =>
+                  addr.name === addressData.name &&
+                  addr.phone === addressData.phone &&
+                  addr.addressLine1 === addressData.addressLine1 &&
+                  addr.city === addressData.city
+                );
+
+                if (existingAddress) {
+                  // Update existing address and set as default
+                  await addressService.updateAddress(existingAddress._id, addressData);
+                } else {
+                  // Create new address
+                  await addressService.createAddress(addressData);
+                }
+              } else {
+                // No addresses yet, create first one
+                await addressService.createAddress(addressData);
+              }
+            } catch (addressError) {
+              // If address service fails, still continue with order
+              console.log('Could not save address:', addressError);
+            }
+
+            // Update user profile with latest info if needed
+            try {
+              const profileUpdate = {};
+              if (data.fullName && (!authUser?.name || authUser.name !== data.fullName)) {
+                profileUpdate.name = data.fullName;
+              }
+              if (data.phone && (!authUser?.phone || authUser.phone !== data.phone)) {
+                profileUpdate.phone = data.phone;
+              }
+              if (data.email && (!authUser?.email || authUser.email !== data.email)) {
+                profileUpdate.email = data.email;
+              }
+
+              if (Object.keys(profileUpdate).length > 0) {
+                await userService.updateProfile(profileUpdate);
+              }
+            } catch (profileError) {
+              // If profile update fails, still continue with order
+              console.log('Could not update profile:', profileError);
+            }
+          } catch (error) {
+            // Don't block order creation if address/profile save fails
+            console.error('Error saving user data:', error);
+          }
+        }
+
+        // Clear cart if order created successfully
+        if (!isBuyNow) {
+          clearCart();
+        }
+
+        // Navigate to success page with order data
+        navigate('/dat-hang-thanh-cong', {
+          state: {
+            order: response.order,
+            orderId: response.order._id || response.order.id
+          }
+        });
+        toast.success('Đơn hàng đã được tạo thành công!');
+      } else {
+        throw new Error(response.message || 'Không thể tạo đơn hàng');
+      }
     } catch (error) {
-      toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
+      console.error('Create order error:', error);
+      const errorMessage = error.response?.data?.message ||
+        error.message ||
+        'Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -231,40 +652,78 @@ const CheckoutPage = () => {
                 </h2>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* City */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Province */}
                     <div className="relative">
                       <select
-                        {...register('city')}
-                        className="w-full px-4 py-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all appearance-none cursor-pointer"
+                        {...register('provinceId')}
+                        disabled={loadingProvinces}
+                        className="w-full px-4 py-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <option value="">Tỉnh/Thành phố</option>
-                        <option value="hcm">TP. Hồ Chí Minh</option>
-                        <option value="hn">Hà Nội</option>
-                        <option value="dn">Đà Nẵng</option>
-                        <option value="hp">Hải Phòng</option>
-                        <option value="ct">Cần Thơ</option>
+                        <option value="">
+                          {loadingProvinces ? 'Đang tải...' : 'Tỉnh/Thành phố *'}
+                        </option>
+                        {provinces.map((province) => (
+                          <option key={province.code} value={province.code}>
+                            {province.name}
+                          </option>
+                        ))}
                       </select>
                       <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                      {errors.city && (
-                        <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
+                      {errors.provinceId && (
+                        <p className="text-red-500 text-sm mt-1">{errors.provinceId.message}</p>
+                      )}
+                    </div>
+
+                    {/* District */}
+                    <div className="relative">
+                      <select
+                        {...register('districtId')}
+                        disabled={!selectedProvinceCode || loadingDistricts}
+                        className="w-full px-4 py-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">
+                          {loadingDistricts
+                            ? 'Đang tải...'
+                            : !selectedProvinceCode
+                              ? 'Chọn tỉnh/thành trước'
+                              : 'Quận/Huyện *'}
+                        </option>
+                        {districts.map((district) => (
+                          <option key={district.code} value={district.code}>
+                            {district.name}
+                          </option>
+                        ))}
+                      </select>
+                      <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      {errors.districtId && (
+                        <p className="text-red-500 text-sm mt-1">{errors.districtId.message}</p>
                       )}
                     </div>
 
                     {/* Ward */}
                     <div className="relative">
                       <select
-                        {...register('ward')}
-                        className="w-full px-4 py-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all appearance-none cursor-pointer"
+                        {...register('wardId')}
+                        disabled={!selectedDistrictCode || loadingWards}
+                        className="w-full px-4 py-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <option value="">Phường/Xã</option>
-                        <option value="p1">Phường 1</option>
-                        <option value="p2">Phường 2</option>
-                        <option value="p3">Phường 3</option>
+                        <option value="">
+                          {loadingWards
+                            ? 'Đang tải...'
+                            : !selectedDistrictCode
+                              ? 'Chọn quận/huyện trước'
+                              : 'Phường/Xã *'}
+                        </option>
+                        {wards.map((ward) => (
+                          <option key={ward.code} value={ward.code}>
+                            {ward.name}
+                          </option>
+                        ))}
                       </select>
                       <FiChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                      {errors.ward && (
-                        <p className="text-red-500 text-sm mt-1">{errors.ward.message}</p>
+                      {errors.wardId && (
+                        <p className="text-red-500 text-sm mt-1">{errors.wardId.message}</p>
                       )}
                     </div>
                   </div>
@@ -285,7 +744,8 @@ const CheckoutPage = () => {
                   <div>
                     <textarea
                       {...register('note')}
-                      className="w-full px-4 py-4 bg-gray-100 rounded-xl border-0 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
+                      className="w-full px-4 py-4 bg-gray-100 rounded-xl border-0 fo
+                      cus:ring-2 focus:ring-blue-500 focus:bg-white transition-all resize-none"
                       rows={4}
                       placeholder="Ghi chú cho người giao hàng(nếu có)"
                     />
@@ -332,11 +792,10 @@ const CheckoutPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label
-                    className={`flex flex-col gap-1 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      paymentMethod === 'bank_transfer'
+                    className={`flex flex-col gap-1 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'bank_transfer'
                         ? 'border-blue-600 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <input
@@ -357,11 +816,10 @@ const CheckoutPage = () => {
                   </label>
 
                   <label
-                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      paymentMethod === 'cod'
+                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod'
                         ? 'border-blue-600 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -386,11 +844,10 @@ const CheckoutPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label
-                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      shippingMethod === 'standard'
+                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${shippingMethod === 'standard'
                         ? 'border-blue-600 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -407,11 +864,10 @@ const CheckoutPage = () => {
                   </label>
 
                   <label
-                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                      shippingMethod === 'express'
+                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${shippingMethod === 'express'
                         ? 'border-blue-600 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -541,37 +997,49 @@ const CheckoutPage = () => {
         </form>
 
         {/* Voucher Modal */}
-        <Modal open={voucherModalOpen} onClose={closeVoucherModal} title="Chọn Voucher Khuyến Mãi">
-          <div className="space-y-4">
-            <p className="text-gray-600">Chọn một voucher để áp dụng cho đơn hàng của bạn:</p>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {/* Voucher mẫu - thay bằng dữ liệu thực từ API */}
-              {[
-                { code: 'VOUCHER10', description: 'Giảm 10% cho đơn hàng từ 500k', discountType: 'percentage', discountValue: 10 },
-                { code: 'FREESHIP', description: 'Miễn phí vận chuyển', discountType: 'fixed', discountValue: 30000 },
-                { code: 'SALE50', description: 'Giảm 50k cho đơn hàng từ 1 triệu', discountType: 'fixed', discountValue: 50000 },
-              ].map((voucher) => (
-                <div
-                  key={voucher.code}
-                  className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => applyVoucher(voucher)}
-                >
-                  <div className="font-medium text-blue-600">{voucher.code}</div>
-                  <div className="text-sm text-gray-600">{voucher.description}</div>
-                  <div className="text-xs text-green-600 mt-1">
-                    Giảm: {voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : formatPrice(voucher.discountValue)}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end gap-2 pt-4 border-t">
+        <Modal
+          open={voucherModalOpen}
+          onClose={closeVoucherModal}
+          title="Chọn Voucher Khuyến Mãi"
+          subtitle="Áp dụng mã giảm giá cho đơn hàng của bạn"
+          size="md"
+          footer={
+            <div className="flex justify-end">
               <button
                 onClick={closeVoucherModal}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100"
+                className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
               >
                 Đóng
               </button>
             </div>
+          }
+        >
+          <div className="space-y-3">
+            {/* Voucher list with improved UI */}
+            {[
+              { code: 'VOUCHER10', description: 'Giảm 10% cho đơn hàng từ 500k', discountType: 'percentage', discountValue: 10, color: 'blue' },
+              { code: 'FREESHIP', description: 'Miễn phí vận chuyển', discountType: 'fixed', discountValue: 30000, color: 'green', icon: '🚚' },
+              { code: 'SALE50', description: 'Giảm 50k cho đơn hàng từ 1 triệu', discountType: 'fixed', discountValue: 50000, color: 'purple' },
+            ].map((voucher) => (
+              <div
+                key={voucher.code}
+                className={`p-4 border-2 border-dashed border-${voucher.color}-200 rounded-xl hover:border-${voucher.color}-400 hover:bg-${voucher.color}-50 cursor-pointer transition-all group`}
+                onClick={() => applyVoucher(voucher)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-16 h-16 bg-gradient-to-br from-${voucher.color}-500 to-${voucher.color}-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0`}>
+                    {voucher.icon || (voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : formatPrice(voucher.discountValue).replace('₫', ''))}
+                  </div>
+                  <div className="flex-1">
+                    <div className={`font-bold text-gray-900 group-hover:text-${voucher.color}-600 transition-colors`}>
+                      {voucher.code}
+                    </div>
+                    <div className="text-sm text-gray-600">{voucher.description}</div>
+                    <div className="text-xs text-green-600 mt-1">✓ Áp dụng được</div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </Modal>
       </div>

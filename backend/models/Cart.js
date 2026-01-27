@@ -14,8 +14,8 @@ const cartItemSchema = new mongoose.Schema({
 const cartSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    index: true 
+    ref: 'User'
+    // Index được tạo ở dưới
   }, // null nếu guest
   sessionId: String, // Cho guest cart
   items: [cartItemSchema],

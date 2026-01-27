@@ -70,4 +70,20 @@ export const orderService = {
     const response = await api.put(`/orders/${id}`, data);
     return response.data;
   },
+
+  // Admin: Confirm order
+  confirmOrder: async (id, note) => {
+    const response = await api.put(`/orders/${id}/confirm`, { note });
+    return response.data;
+  },
+
+  // Admin: Update payment status
+  updatePayment: async (id, paymentStatus, note, paymentDetails) => {
+    const response = await api.put(`/orders/${id}/payment`, { 
+      paymentStatus, 
+      note, 
+      paymentDetails 
+    });
+    return response.data;
+  },
 };

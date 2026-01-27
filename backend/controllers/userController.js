@@ -11,7 +11,10 @@ import * as userService from '../services/userService.js';
 export const getProfile = async (req, res) => {
   try {
     const user = await userService.getUserProfile(req.user.id);
-    res.json(user);
+    res.json({
+      success: true,
+      user
+    });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({

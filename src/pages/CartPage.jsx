@@ -19,27 +19,24 @@ const CheckoutSteps = ({ currentStep }) => {
         <div key={step.id} className="flex items-center">
           <div className="flex items-center gap-2">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                step.id <= currentStep
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${step.id <= currentStep
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-400'
-              }`}
+                }`}
             >
               <step.icon className="w-5 h-5" />
             </div>
             <span
-              className={`font-medium ${
-                step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'
-              }`}
+              className={`font-medium ${step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'
+                }`}
             >
               {step.name}
             </span>
           </div>
           {index < steps.length - 1 && (
             <div
-              className={`w-24 h-0.5 mx-4 ${
-                step.id < currentStep ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
+              className={`w-24 h-0.5 mx-4 ${step.id < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
               style={{ borderStyle: 'dashed', borderWidth: '1px', borderColor: step.id < currentStep ? '#2563eb' : '#e5e7eb' }}
             />
           )}
@@ -261,7 +258,7 @@ const CartPage = () => {
 
                 <div className="flex justify-between items-center py-4 border-y border-gray-200">
                   <span className="text-gray-600">Voucher khuyến mãi</span>
-                  <button 
+                  <button
                     onClick={openVoucherModal}
                     className="flex items-center gap-1 text-gray-500 hover:text-blue-600"
                   >
@@ -337,27 +334,61 @@ const CartPage = () => {
       </div>
 
       {/* Voucher Modal */}
-      <Modal open={voucherModalOpen} onClose={closeVoucherModal} title="Chọn Voucher Khuyến Mãi">
-        <div className="space-y-4">
-          <p className="text-gray-600">Chọn một voucher để áp dụng cho đơn hàng của bạn:</p>
-          <div className="space-y-2">
-            {/* Placeholder for available vouchers - you can replace with actual data */}
-            <div className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer">
-              <div className="font-medium">VOUCHER10</div>
-              <div className="text-sm text-gray-600">Giảm 10% cho đơn hàng từ 500k</div>
-            </div>
-            <div className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer">
-              <div className="font-medium">FREESHIP</div>
-              <div className="text-sm text-gray-600">Miễn phí vận chuyển</div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
+      <Modal
+        open={voucherModalOpen}
+        onClose={closeVoucherModal}
+        title="Chọn Voucher Khuyến Mãi"
+        subtitle="Áp dụng mã giảm giá cho đơn hàng của bạn"
+        size="md"
+        footer={
+          <div className="flex justify-end">
             <button
               onClick={closeVoucherModal}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100"
+              className="px-6 py-2.5 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors"
             >
               Đóng
             </button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          {/* Voucher list */}
+          <div
+            className="p-4 border-2 border-dashed border-blue-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all group"
+            onClick={() => {
+              setVoucherCode('VOUCHER10');
+              closeVoucherModal();
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0">
+                10%
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">VOUCHER10</div>
+                <div className="text-sm text-gray-600">Giảm 10% cho đơn hàng từ 500k</div>
+                <div className="text-xs text-green-600 mt-1">✓ Áp dụng được</div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="p-4 border-2 border-dashed border-green-200 rounded-xl hover:border-green-400 hover:bg-green-50 cursor-pointer transition-all group"
+            onClick={() => {
+              setVoucherCode('FREESHIP');
+              closeVoucherModal();
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white shrink-0">
+                🚚
+              </div>
+              <div className="flex-1">
+                <div className="font-bold text-gray-900 group-hover:text-green-600 transition-colors">FREESHIP</div>
+                <div className="text-sm text-gray-600">Miễn phí vận chuyển toàn quốc</div>
+                <div className="text-xs text-green-600 mt-1">✓ Áp dụng được</div>
+              </div>
+            </div>
           </div>
         </div>
       </Modal>

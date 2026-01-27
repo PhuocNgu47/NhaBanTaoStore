@@ -32,6 +32,43 @@ const STATUS_CONFIG = {
     icon: FiCheck,
     description: 'Đơn hàng đã được xác nhận, đang chuẩn bị hàng'
   },
+  shipping_ready: { 
+    label: 'Chờ lên đơn', 
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-300', 
+    icon: FiPackage,
+    description: 'Đơn hàng đã được xác nhận, chờ tạo vận đơn'
+  },
+  shipping_created: { 
+    label: 'Đã lên đơn', 
+    color: 'bg-purple-100 text-purple-700 border-purple-300', 
+    icon: FiTruck,
+    description: 'Vận đơn đã được tạo, đang chờ vận chuyển'
+  },
+  delivering: { 
+    label: 'Đang giao', 
+    color: 'bg-purple-100 text-purple-700 border-purple-300', 
+    icon: FiTruck,
+    description: 'Đơn hàng đang được vận chuyển đến bạn'
+  },
+  completed: { 
+    label: 'Đã giao', 
+    color: 'bg-green-100 text-green-700 border-green-300', 
+    icon: FiCheck,
+    description: 'Đơn hàng đã được giao thành công'
+  },
+  cancelled: { 
+    label: 'Đã hủy', 
+    color: 'bg-red-100 text-red-700 border-red-300', 
+    icon: FiX,
+    description: 'Đơn hàng đã bị hủy'
+  },
+  returned: { 
+    label: 'Hoàn trả', 
+    color: 'bg-orange-100 text-orange-700 border-orange-300', 
+    icon: FiPackage,
+    description: 'Đơn hàng đang được hoàn trả'
+  },
+  // Backward compatibility for old statuses
   processing: { 
     label: 'Đang xử lý', 
     color: 'bg-indigo-100 text-indigo-700 border-indigo-300', 
@@ -50,18 +87,6 @@ const STATUS_CONFIG = {
     icon: FiCheck,
     description: 'Đơn hàng đã được giao thành công'
   },
-  cancelled: { 
-    label: 'Đã hủy', 
-    color: 'bg-red-100 text-red-700 border-red-300', 
-    icon: FiX,
-    description: 'Đơn hàng đã bị hủy'
-  },
-  returned: { 
-    label: 'Hoàn trả', 
-    color: 'bg-orange-100 text-orange-700 border-orange-300', 
-    icon: FiPackage,
-    description: 'Đơn hàng đang được hoàn trả'
-  },
   refunded: { 
     label: 'Đã hoàn tiền', 
     color: 'bg-gray-100 text-gray-700 border-gray-300', 
@@ -79,8 +104,15 @@ const PAYMENT_METHODS = {
   stripe: 'Thẻ quốc tế',
 };
 
-// Status order for progress bar
-const STATUS_ORDER = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+// Status order for progress bar (new statuses)
+const STATUS_ORDER = ['pending', 'confirmed', 'shipping_ready', 'shipping_created', 'delivering', 'completed'];
+
+// Map old statuses to new ones for backward compatibility
+const STATUS_MAP = {
+  processing: 'shipping_ready',
+  shipped: 'delivering',
+  delivered: 'completed'
+};
 
 const UserOrderDetailPage = () => {
   const { id } = useParams();
@@ -97,13 +129,16 @@ const UserOrderDetailPage = () => {
   const fetchOrder = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await orderService.getOrderById(id);
       if (response.success) {
         setOrder(response.order);
+      } else {
+        setError(response.message || 'Không thể tải thông tin đơn hàng');
       }
     } catch (error) {
       console.error('Error fetching order:', error);
-      setError('Không thể tải thông tin đơn hàng');
+      setError(error.response?.data?.message || 'Không thể tải thông tin đơn hàng');
     } finally {
       setLoading(false);
     }
@@ -141,9 +176,11 @@ const UserOrderDetailPage = () => {
     }
   };
 
-  // Get current status index for progress bar
+  // Get current status index for progress bar (with backward compatibility)
   const getStatusIndex = (status) => {
-    const index = STATUS_ORDER.indexOf(status);
+    // Map old statuses to new ones
+    const mappedStatus = STATUS_MAP[status] || status;
+    const index = STATUS_ORDER.indexOf(mappedStatus);
     return index >= 0 ? index : 0;
   };
 
@@ -181,7 +218,7 @@ const UserOrderDetailPage = () => {
           
           {/* Status points */}
           {STATUS_ORDER.map((status, index) => {
-            const config = STATUS_CONFIG[status];
+            const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
             const Icon = config.icon;
             const isActive = index <= currentIndex;
             const isCurrent = index === currentIndex;
@@ -420,21 +457,94 @@ const UserOrderDetailPage = () => {
                 <span className={`px-2 py-1 rounded text-sm font-medium ${
                   order.paymentStatus === 'paid' 
                     ? 'bg-green-100 text-green-700'
+                    : order.paymentStatus === 'failed'
+                    ? 'bg-red-100 text-red-700'
+                    : order.paymentStatus === 'refunded'
+                    ? 'bg-gray-100 text-gray-700'
                     : 'bg-yellow-100 text-yellow-700'
                 }`}>
-                  {order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                  {order.paymentStatus === 'paid' ? 'Đã thanh toán' : 
+                   order.paymentStatus === 'failed' ? 'Thanh toán lỗi' :
+                   order.paymentStatus === 'refunded' ? 'Đã hoàn tiền' :
+                   'Chưa thanh toán'}
                 </span>
               </div>
+              {order.paidAt && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Thanh toán lúc:</span>
+                  <span className="text-sm text-gray-500">{formatDate(order.paidAt)}</span>
+                </div>
+              )}
+              {order.paymentDetails?.transactionId && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Mã giao dịch:</span>
+                  <span className="font-mono text-xs text-gray-500">
+                    {order.paymentDetails.transactionId}
+                  </span>
+                </div>
+              )}
               {order.couponCode && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Mã giảm giá:</span>
-                  <span className="font-mono bg-green-100 text-green-700 px-2 py-1 rounded">
+                  <span className="font-mono bg-green-100 text-green-700 px-2 py-1 rounded text-sm">
                     {order.couponCode}
                   </span>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Shipping Info */}
+          {order.trackingNumber && (
+            <div className="bg-white rounded-xl shadow-sm">
+              <div className="p-4 border-b">
+                <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                  <FiTruck className="w-5 h-5" />
+                  Vận chuyển
+                </h2>
+              </div>
+              <div className="p-4 space-y-3">
+                {order.shippingCompany && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Đơn vị:</span>
+                    <span className="font-medium">{order.shippingCompany}</span>
+                  </div>
+                )}
+                {order.shippedAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Gửi hàng lúc:</span>
+                    <span className="text-sm text-gray-500">{formatDate(order.shippedAt)}</span>
+                  </div>
+                )}
+                {order.deliveredAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Giao hàng lúc:</span>
+                    <span className="text-sm text-gray-500">{formatDate(order.deliveredAt)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Cancellation Info */}
+          {order.status === 'cancelled' && order.cancellationReason && (
+            <div className="bg-white rounded-xl shadow-sm">
+              <div className="p-4 border-b">
+                <h2 className="font-bold text-gray-800 flex items-center gap-2">
+                  <FiX className="w-5 h-5" />
+                  Lý do hủy đơn
+                </h2>
+              </div>
+              <div className="p-4">
+                <p className="text-gray-700">{order.cancellationReason}</p>
+                {order.cancelledAt && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Hủy lúc: {formatDate(order.cancelledAt)}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="space-y-3">
