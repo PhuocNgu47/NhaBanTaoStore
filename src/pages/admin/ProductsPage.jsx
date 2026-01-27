@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiImage, FiLoader } from 'react-icons/fi';
 import { formatPrice } from '../../utils/helpers';
 import { productService } from '../../services/productService';
-import { categoryService } from '../../services/categoryService';
 import { toast } from 'react-toastify';
 import VariantManager from '../../components/admin/VariantManager';
 import Modal, { ConfirmModal } from '../../components/Modal';
+import { categoryService } from '../../services/categoryService';
+
 
 // Initial form state
 const initialFormState = {
@@ -35,7 +36,6 @@ const AdminProductsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
-  const [categories, setCategories] = useState([]);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -350,7 +350,7 @@ const AdminProductsPage = () => {
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="border rounded-lg px-4 py-2"
           >
-            <option value="">Tất cả danh mục</option>
+            <option value="">Tất cả danh mục</option>HEAD
             {categories.map((cat) => (
               <option key={cat._id || cat.id} value={cat.slug || cat.id}>
                 {cat.name}
