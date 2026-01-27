@@ -72,18 +72,19 @@ const AdminLayout = () => {
       <div className="flex">
         {/* Sidebar - Desktop */}
         <aside
-          className={`hidden lg:flex flex-col fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 ${
-            sidebarOpen ? 'w-64' : 'w-20'
-          }`}
+          className={`hidden lg:flex flex-col fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'
+            }`}
         >
           {/* Logo */}
           <div className="p-4 border-b flex items-center justify-between">
             {sidebarOpen && (
-              <Link to="/admin" className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">🍎</span>
+              <Link to="/" className="flex items-center gap-2">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">🍎</span>
                 </div>
-                <span className="font-bold text-gray-800">Admin</span>
+                <span className="text-xl font-bold text-blue-800 hidden sm:block">
+                  NHÀ BÁN TÁO STORE
+                </span>
               </Link>
             )}
             <button
@@ -100,11 +101,10 @@ const AdminLayout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                  isActive(item.path, item.exact)
+                className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${isActive(item.path, item.exact)
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <item.icon size={20} />
                 {sidebarOpen && <span>{item.label}</span>}
@@ -129,9 +129,8 @@ const AdminLayout = () => {
             </div>
             <button
               onClick={logout}
-              className={`mt-3 flex items-center gap-2 text-red-600 hover:text-red-700 ${
-                sidebarOpen ? '' : 'justify-center w-full'
-              }`}
+              className={`mt-3 flex items-center gap-2 text-red-600 hover:text-red-700 ${sidebarOpen ? '' : 'justify-center w-full'
+                }`}
             >
               <FiLogOut size={18} />
               {sidebarOpen && <span>Đăng xuất</span>}
@@ -162,11 +161,10 @@ const AdminLayout = () => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                      isActive(item.path, item.exact)
+                    className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${isActive(item.path, item.exact)
                         ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <item.icon size={20} />
                     <span>{item.label}</span>
@@ -189,9 +187,8 @@ const AdminLayout = () => {
 
         {/* Main Content */}
         <main
-          className={`flex-1 transition-all duration-300 ${
-            sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-          }`}
+          className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+            }`}
         >
           <div className="p-6">
             <Outlet />
