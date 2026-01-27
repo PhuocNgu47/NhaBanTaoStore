@@ -64,5 +64,50 @@ export const trackingService = {
       console.error('Error fetching lead stats:', error);
       throw error;
     }
+  },
+
+  // ============================================
+  // AI-DRIVEN CUSTOMER INSIGHTS
+  // ============================================
+
+  /**
+   * Get AI insights for a specific lead
+   * @param {string} leadId - Lead ID
+   */
+  getLeadAIInsight: async (leadId) => {
+    try {
+      const response = await api.get(`/admin/ai-insights/lead/${leadId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching AI insight:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get AI insights for multiple leads (batch)
+   * @param {string[]} leadIds - Array of lead IDs (max 10)
+   */
+  batchLeadAIInsights: async (leadIds) => {
+    try {
+      const response = await api.post('/admin/ai-insights/batch', { leadIds });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching batch AI insights:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get market-level AI insights
+   */
+  getMarketInsights: async () => {
+    try {
+      const response = await api.get('/admin/ai-insights/market');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching market insights:', error);
+      throw error;
+    }
   }
 };

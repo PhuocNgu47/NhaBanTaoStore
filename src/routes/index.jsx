@@ -41,8 +41,10 @@ const AdminInventoryPage = lazy(() => import('../pages/admin/InventoryPage'));
 const AdminCustomersPage = lazy(() => import('../pages/admin/CustomersPage'));
 const AdminBannersPage = lazy(() => import('../pages/admin/BannersPage'));
 const AdminLeadsPage = lazy(() => import('../pages/admin/LeadsPage'));
+const AdminLeadDetailPage = lazy(() => import('../pages/admin/LeadDetailPage'));
 const AdminActivityLogsPage = lazy(() => import('../pages/admin/ActivityLogsPage'));
 const AdminStatisticsPage = lazy(() => import('../pages/admin/StatisticsPage'));
+const AdminChatPage = lazy(() => import('../pages/admin/ChatPage'));
 
 // Wrapper for lazy loading
 const LazyPage = ({ children }) => (
@@ -308,10 +310,26 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'leads/:id',
+        element: (
+          <LazyPage>
+            <AdminLeadDetailPage />
+          </LazyPage>
+        ),
+      },
+      {
         path: 'logs',
         element: (
           <LazyPage>
             <AdminActivityLogsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'chat',
+        element: (
+          <LazyPage>
+            <AdminChatPage />
           </LazyPage>
         ),
       },

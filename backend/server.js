@@ -230,6 +230,14 @@ app.use('/api/admin/leads', leadsRoutes);
 import activityLogRoutes from './routes/activityLogs.js';
 app.use('/api/activity-logs', activityLogRoutes);
 
+// AI Insights: AI-Driven Customer Insights (Predictive Lead Scoring)
+import aiInsightRoutes from './routes/aiInsights.js';
+app.use('/api/admin/ai-insights', aiInsightRoutes);
+
+// Chat: Customer chat with AI and Admin
+import chatRoutes from './routes/chat.js';
+app.use('/api/chat', chatRoutes);
+
 // ============================================
 // XỬ LÝ LỖI (ERROR HANDLING)
 // ============================================

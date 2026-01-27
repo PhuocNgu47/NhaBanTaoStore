@@ -59,7 +59,7 @@ export const activityLogger = async (req, res, next) => {
 
                     // Tạo log
                     await ActivityLog.create({
-                        user: req.user._id,
+                        user: req.user._id || req.user.id,
                         action: action, // e.g., PUT_PRODUCTS
                         resource: resource, // e.g., products
                         resourceId: resourceId,

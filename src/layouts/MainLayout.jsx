@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Header, Footer, FloatingContact } from '../components/common';
+import SmartNotifications from '../components/common/SmartNotifications';
+import SmartChatWidget from '../components/common/SmartChatWidget';
 
 const MainLayout = () => {
   return (
@@ -10,8 +12,12 @@ const MainLayout = () => {
       </main>
       <Footer />
       <FloatingContact />
+      <SmartNotifications />
+      <SmartChatWidget />
     </div>
   );
 };
 
 export default MainLayout;
+
+

@@ -1,11 +1,7 @@
-/**
- * Product Routes
- * Chỉ định nghĩa URL và gọi Controller tương ứng
- */
-
 import express from 'express';
 import * as productController from '../controllers/productController.js';
 import { protect, admin } from '../middleware/auth.js';
+import { activityLogger } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -49,19 +45,19 @@ router.get('/:id', productController.getProductById);
  * POST /api/products
  * Tạo sản phẩm mới (Admin only)
  */
-router.post('/', protect, admin, productController.createProduct);
+router.post('/', protect, admin, activityLogger, productController.createProduct);
 
 /**
  * PUT /api/products/:id
  * Cập nhật thông tin sản phẩm (Admin only)
  */
-router.put('/:id', protect, admin, productController.updateProduct);
+router.put('/:id', protect, admin, activityLogger, productController.updateProduct);
 
 /**
  * DELETE /api/products/:id
  * Xóa sản phẩm (Admin only)
  */
-router.delete('/:id', protect, admin, productController.deleteProduct);
+router.delete('/:id', protect, admin, activityLogger, productController.deleteProduct);
 
 /**
  * POST /api/products/:id/reviews

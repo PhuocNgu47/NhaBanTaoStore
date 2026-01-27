@@ -94,6 +94,64 @@ const ActivityLogsPage = () => {
             : 'bg-red-100 text-red-800';
     };
 
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [password, setPassword] = useState('');
+    const [authError, setAuthError] = useState('');
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        if (password === '123456') {
+            setIsAuthenticated(true);
+            setAuthError('');
+        } else {
+            setAuthError('Mật khẩu không đúng');
+            setPassword('');
+        }
+    };
+
+    if (!isAuthenticated) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+                    <div className="text-center mb-6">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FiActivity className="w-8 h-8 text-red-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800">Bảo Mật</h2>
+                        <p className="text-gray-500 mt-2">Vui lòng nhập mật khẩu để xem nhật ký</p>
+                    </div>
+
+                    <form onSubmit={handleLogin}>
+                        <div className="mb-4">
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Nhập mật khẩu..."
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                                autoFocus
+                            />
+                            {authError && (
+                                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                                    <FiX className="w-4 h-4" /> {authError}
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            type="submit"
+                            className="w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors shadow-md hover:shadow-lg transform active:scale-[0.98] transition-transform"
+                        >
+                            Xác thực
+                        </button>
+                    </form>
+                    <p className="text-xs text-center text-gray-400 mt-6">
+                        Khu vực dành riêng cho Admin
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6">
             <div className="mb-6">
