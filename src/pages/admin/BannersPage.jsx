@@ -321,7 +321,7 @@ const BannersPage = () => {
                     <td className="px-6 py-4">{banner.displayOrder}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded text-sm ${banner.isActive
+                        className={`px-2 py-1 whitespace-nowrap rounded text-sm ${banner.isActive
                           ? 'bg-green-100 text-green-800'
                           : 'bg-gray-100 text-gray-800'
                           }`}

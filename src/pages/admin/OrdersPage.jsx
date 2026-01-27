@@ -202,7 +202,7 @@ const AdminOrdersPage = () => {
   const renderPaymentStatus = (status) => {
     const config = PAYMENT_STATUS_CONFIG[status] || PAYMENT_STATUS_CONFIG.unpaid;
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span className={`inline-flex items-center text-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
         {config.label}
       </span>
     );
@@ -483,8 +483,8 @@ const AdminOrdersPage = () => {
                         key={pageNum}
                         onClick={() => setFilters({ ...filters, page: pageNum })}
                         className={`px-3 py-1 rounded-lg ${pageNum === pagination.page
-                            ? 'bg-blue-600 text-white'
-                            : 'border hover:bg-gray-50'
+                          ? 'bg-blue-600 text-white'
+                          : 'border hover:bg-gray-50'
                           }`}
                       >
                         {pageNum}
