@@ -77,10 +77,19 @@ const BannerSlider = () => {
 
   return (
     <section
-      className="relative w-full h-[200px] md:h-[260px] lg:h-[320px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden"
+      className="relative w-full h-[200px] md:h-[260px] lg:h-[320px] overflow-hidden"
+      style={{
+        background: currentBanner.backgroundImageUrl || currentBanner.backgroundImage
+          ? `url(${getImageUrl(currentBanner.backgroundImage || currentBanner.backgroundImageUrl)}) center/cover no-repeat`
+          : currentBanner.backgroundColor || 'linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a)'
+      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {/* Background Overlay if using image */}
+      {(currentBanner.backgroundImageUrl || currentBanner.backgroundImage) && (
+        <div className="absolute inset-0 bg-black/40" />
+      )}
       {/* Main Content Container */}
       <div className="relative h-full container-custom mx-auto px-4 md:px-8 lg:px-12">
         <div className="h-full grid grid-cols-5 md:grid-cols-2 gap-4 items-center">
@@ -91,13 +100,15 @@ const BannerSlider = () => {
             <div className="w-10 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mb-3" />
 
             {/* Title */}
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-white leading-tight">
+            <h1
+              className={`text-xl md:text-2xl lg:text-3xl font-bold mb-2 leading-tight ${currentBanner.textColor === 'black' ? 'text-gray-900' : 'text-white'}`}
+            >
               {currentBanner.title || 'Sản phẩm Apple'}
             </h1>
 
             {/* Subtitle */}
             {currentBanner.subtitle && (
-              <p className="text-xs md:text-sm text-gray-300 mb-3 font-normal max-w-sm line-clamp-2">
+              <p className={`text-xs md:text-sm mb-3 font-normal max-w-sm line-clamp-2 ${currentBanner.textColor === 'black' ? 'text-gray-700' : 'text-gray-300'}`}>
                 {currentBanner.subtitle}
               </p>
             )}
@@ -165,8 +176,8 @@ const BannerSlider = () => {
               key={index}
               onClick={() => goToSlide(index)}
               className={`h-1.5 rounded-full transition-all duration-300 ${index === currentIndex
-                  ? 'bg-white w-5'
-                  : 'bg-white/40 w-1.5 hover:bg-white/60'
+                ? 'bg-white w-5'
+                : 'bg-white/40 w-1.5 hover:bg-white/60'
                 }`}
               aria-label={`Slide ${index + 1}`}
             />

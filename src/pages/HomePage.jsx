@@ -18,7 +18,7 @@ const macbookFilters = [
 
 const HomePage = () => {
   const { addToCart } = useCart();
-  
+
   const [ipadProducts, setIpadProducts] = useState([]);
   const [macbookProducts, setMacbookProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ const HomePage = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch iPad and MacBook products in parallel
         const [ipadResponse, macbookResponse] = await Promise.all([
           productService.getProductsByCategory('ipad', { limit: 6 }),
@@ -37,7 +37,7 @@ const HomePage = () => {
         if (ipadResponse.success) {
           setIpadProducts(ipadResponse.products.map(transformProduct));
         }
-        
+
         if (macbookResponse.success) {
           setMacbookProducts(macbookResponse.products.map(transformProduct));
         }
@@ -79,7 +79,7 @@ const HomePage = () => {
     <div>
       <BannerSlider />
       <Features />
-      <CategorySection />
+      {/* <CategorySection /> */}
       <ProductsByPrice />
 
       {/* Product Category Sections - Near Footer */}

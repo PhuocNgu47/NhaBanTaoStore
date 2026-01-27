@@ -2,11 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiImage, FiLoader } from 'react-icons/fi';
 import { formatPrice } from '../../utils/helpers';
 import { productService } from '../../services/productService';
+import { categoryService } from '../../services/categoryService';
 import { toast } from 'react-toastify';
 import VariantManager from '../../components/admin/VariantManager';
 import Modal, { ConfirmModal } from '../../components/Modal';
-import { categoryService } from '../../services/categoryService';
-
 
 // Initial form state
 const initialFormState = {
@@ -30,6 +29,7 @@ const initialFormState = {
 const AdminProductsPage = () => {
   // State
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]); // State for dynamic categories
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -79,6 +79,24 @@ const AdminProductsPage = () => {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // Fetch categories dynamically
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoryService.getCategoriesFlat();
+        if (response.success) {
+          setCategories(response.categories || []);
+        } else {
+          // Fallback if needed, or just handle empty
+          console.error('Failed to fetch categories');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Handle search with debounce
   useEffect(() => {
@@ -158,6 +176,14 @@ const AdminProductsPage = () => {
       setImageInput('');
     }
   };
+
+  // Sync stock from variants
+  useEffect(() => {
+    if (formData.variants && formData.variants.length > 0) {
+      const totalStock = formData.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+      setFormData(prev => ({ ...prev, stock: totalStock }));
+    }
+  }, [formData.variants]);
 
   // Remove image
   const removeImage = (index) => {
@@ -282,8 +308,12 @@ const AdminProductsPage = () => {
 
   // Get category name
   const getCategoryName = (categoryId) => {
-    const category = categories.find(c => c._id === categoryId);
-    return category?.name || '—';
+    // If categories are not loaded yet, or categoryId is missing
+    if (!categories.length || !categoryId) return categoryId;
+
+    // Find category in the flat list
+    const category = categories.find(c => c.slug === categoryId || c.id === categoryId || c._id === categoryId);
+    return category?.name || categoryId;
   };
 
   return (
@@ -317,13 +347,13 @@ const AdminProductsPage = () => {
           </div>
           <select
             value={categoryFilter}
-            onChange={(e) => { setCategoryFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="border rounded-lg px-4 py-2"
           >
             <option value="">Tất cả danh mục</option>
-            {categories.map(cat => (
-              <option key={cat._id} value={cat._id}>
-                {'—'.repeat(cat.level)} {cat.name}
+            {categories.map((cat) => (
+              <option key={cat._id || cat.id} value={cat.slug || cat.id}>
+                {cat.name}
               </option>
             ))}
           </select>
@@ -527,12 +557,13 @@ const AdminProductsPage = () => {
                   name="category"
                   value={formData.category}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  className="border rounded-lg p-2 w-full"
                 >
                   <option value="">Chọn danh mục</option>
-                  {categories.map(cat => (
-                    <option key={cat._id} value={cat._id}>
-                      {'—'.repeat(cat.level)} {cat.name}
+                  {categories.map((cat) => (
+                    <option key={cat._id || cat.id} value={cat.slug || cat.id}>
+                      {cat.name}
                     </option>
                   ))}
                 </select>
@@ -588,16 +619,17 @@ const AdminProductsPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Số lượng tồn kho
+                  Số lượng tồn kho {formData.variants?.length > 0 && <span className="text-blue-500 text-xs font-normal">(Tổng từ biến thể)</span>}
                 </label>
                 <input
                   type="number"
                   name="stock"
                   value={formData.stock}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${formData.variants?.length > 0 ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                   placeholder="0"
                   min="0"
+                  disabled={formData.variants?.length > 0}
                 />
               </div>
               <div>
