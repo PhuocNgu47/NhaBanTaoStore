@@ -70,22 +70,30 @@ const settingSchema = new mongoose.Schema(
             default: 30000,
         },
 
-        // Cài đặt thanh toán
-        paymentMethods: {
+        // Cài đặt thanh toán (Toggle & Config)
+        payment: {
             cod: { type: Boolean, default: true },
             bankTransfer: { type: Boolean, default: true },
-            installment: { type: Boolean, default: true },
-            momo: { type: Boolean, default: false },
-            vnpay: { type: Boolean, default: false },
+            momo: {
+                enabled: { type: Boolean, default: false },
+                phoneNumber: String,
+                accountHolder: String,
+                qrCode: String
+            },
+            vnpay: { type: Boolean, default: false }, // Simulation mode only for now
+            zalopay: { type: Boolean, default: false }
         },
 
-        // Thông tin ngân hàng
-        bankInfo: {
-            bankName: { type: String, default: '' },
-            accountNumber: { type: String, default: '' },
-            accountHolder: { type: String, default: '' },
-            branch: { type: String, default: '' },
-        },
+        // Danh sách tài khoản ngân hàng
+        banks: [{
+            bin: String, // Mã BIN ngân hàng (ví dụ: 970436)
+            shortName: String, // Tên viết tắt (ví dụ: VCB)
+            logo: String, // Logo ngân hàng
+            bankName: String, // Tên đầy đủ
+            bankNumber: String, // Số tài khoản
+            bankHolder: String, // Chủ tài khoản
+            isDefault: { type: Boolean, default: false }
+        }],
 
         // Cài đặt SEO
         seo: {
