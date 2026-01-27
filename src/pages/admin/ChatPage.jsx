@@ -238,8 +238,8 @@ const ChatPage = () => {
                                     key={status}
                                     onClick={() => setFilter(status)}
                                     className={`flex-1 px-2 py-1 text-xs rounded-lg transition-colors ${filter === status
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
                                     {status === 'all' ? 'Tất cả' :
@@ -292,8 +292,8 @@ const ChatPage = () => {
                                             <div className="flex items-center justify-between mt-1">
                                                 <span className="text-xs text-gray-400">{formatTimeAgo(conv.lastTime)}</span>
                                                 <span className={`text-xs px-1.5 py-0.5 rounded ${conv.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                        conv.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                            'bg-gray-100 text-gray-500'
+                                                    conv.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                        'bg-gray-100 text-gray-500'
                                                     }`}>
                                                     {conv.status === 'active' ? 'Đang chat' :
                                                         conv.status === 'pending' ? 'Chờ' : 'Xong'}
@@ -357,10 +357,10 @@ const ChatPage = () => {
                                         >
                                             <div
                                                 className={`max-w-[70%] rounded-2xl px-4 py-3 ${msg.sender === 'customer'
-                                                        ? 'bg-white border rounded-bl-none'
-                                                        : msg.sender === 'ai'
-                                                            ? 'bg-purple-100 text-purple-900 rounded-br-none'
-                                                            : 'bg-blue-500 text-white rounded-br-none'
+                                                    ? 'bg-white border rounded-bl-none'
+                                                    : msg.sender === 'ai'
+                                                        ? 'bg-purple-100 text-purple-900 rounded-br-none'
+                                                        : 'bg-blue-500 text-white rounded-br-none'
                                                     }`}
                                             >
                                                 {msg.sender !== 'customer' && (

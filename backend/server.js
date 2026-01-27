@@ -9,10 +9,12 @@
  */
 
 
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
@@ -30,13 +32,6 @@ import statisticsRoutes from './routes/statistics.js';
 import addressRoutes from './routes/addresses.js';
 import couponRoutes from './routes/coupons.js';
 
-// ============================================
-// CẤU HÌNH MÔI TRƯỜNG
-// ============================================
-
-// Load biến môi trường từ file .env
-// File .env chứa: MONGODB_URI, JWT_SECRET, PORT, ...
-dotenv.config();
 
 // ============================================
 // KHỞI TẠO EXPRESS APP

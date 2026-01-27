@@ -14,6 +14,7 @@ import {
     FiChevronLeft,
     FiLoader,
 } from 'react-icons/fi';
+import { useAuth } from '../../hooks';
 import api from '../../services/api';
 
 // AI-generated suggested questions based on common customer inquiries
@@ -143,6 +144,7 @@ const SmartChatWidget = () => {
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(true);
+    const { user, isAuthenticated } = useAuth();
     const [sessionId] = useState(() => {
         // Get or create unique session ID for this chat
         let id = sessionStorage.getItem('chatSessionId');
@@ -180,8 +182,9 @@ const SmartChatWidget = () => {
                 guestId: localStorage.getItem('guestId'),
                 message: question,
                 customerInfo: {
-                    name: localStorage.getItem('customerName') || null,
-                    phone: localStorage.getItem('customerPhone') || null,
+                    name: user?.name || localStorage.getItem('customerName') || null,
+                    phone: user?.phone || localStorage.getItem('customerPhone') || null,
+                    email: user?.email || null
                 }
             });
 
@@ -216,8 +219,9 @@ const SmartChatWidget = () => {
                 guestId: localStorage.getItem('guestId'),
                 message: userMessage,
                 customerInfo: {
-                    name: localStorage.getItem('customerName') || null,
-                    phone: localStorage.getItem('customerPhone') || null,
+                    name: user?.name || localStorage.getItem('customerName') || null,
+                    phone: user?.phone || localStorage.getItem('customerPhone') || null,
+                    email: user?.email || null
                 },
                 metadata: {
                     page: window.location.pathname

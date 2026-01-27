@@ -34,7 +34,7 @@ export const sendMessage = async (req, res) => {
         // Generate AI response
         let aiReply;
         try {
-            aiReply = await aiInsightService.generateChatResponse(message);
+            aiReply = await aiInsightService.generateChatResponse(message, { customerInfo, metadata });
         } catch (err) {
             aiReply = 'Xin lỗi, tôi không thể trả lời ngay. Nhân viên sẽ hỗ trợ bạn sớm nhất!';
         }

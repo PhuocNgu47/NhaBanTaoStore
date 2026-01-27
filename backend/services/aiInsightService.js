@@ -6,9 +6,19 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Lead from '../models/Lead.js';
+import Product from '../models/Product.js';
 
-// Initialize Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Lazy client initialization to ensure dotenv has loaded
+let genAI = null;
+const getAIClient = () => {
+    if (!genAI) {
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error('GEMINI_API_KEY is not defined in environment variables');
+        }
+        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+    return genAI;
+};
 
 /**
  * Analyze a single lead and generate AI insights
@@ -17,7 +27,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  */
 export const analyzeLeadBehavior = async (lead) => {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = getAIClient().getGenerativeModel({ model: 'gemini-flash-latest' });
 
         // Prepare lead data summary for AI
         const leadSummary = {
@@ -110,7 +120,7 @@ export const batchAnalyzeLeads = async (leadIds) => {
  */
 export const generateMarketInsights = async () => {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = getAIClient().getGenerativeModel({ model: 'gemini-flash-latest' });
 
         // Aggregate lead statistics
         const stats = await Lead.aggregate([
@@ -194,37 +204,59 @@ Hãy phân tích và trả về JSON (chỉ trả về JSON):
 /**
  * Generate AI chat response for customer questions
  * @param {string} message - Customer's message
+ * @param {Object} context - Additional context (customerInfo, metadata, history)
  * @returns {string} AI-generated response
  */
-export const generateChatResponse = async (message) => {
+export const generateChatResponse = async (message, context = {}) => {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = getAIClient().getGenerativeModel({ model: 'gemini-flash-latest' });
 
-        const prompt = `Bạn là trợ lý AI của cửa hàng "Nhà Bán Táo" - chuyên sản phẩm Apple chính hãng tại Việt Nam.
+        // Fetch some products for context (featured or random active)
+        const products = await Product.find({ status: 'active' })
+            .select('name price featured category')
+            .limit(10)
+            .lean();
+
+        const productList = products.map(p =>
+            `- ${p.name}: ${p.price.toLocaleString('vi-VN')} VND ${p.featured ? '(🔥 Hot Sale)' : ''}`
+        ).join('\n');
+
+        const customerName = context.customerInfo?.name || 'khách hữu duyên';
+
+        const prompt = `Bạn là "Nhà Bán Táo" - trợ lý AI cực kỳ thông minh, hài hước nhưng cực kỳ chuyên nghiệp của cửa hàng "Nhà Bán Táo".
+
+Nhiệm vụ: Tư vấn Apple, chốt đơn khéo léo và mang lời chào vui vẻ.
 
 Thông tin cửa hàng:
-- Tên: Hộ kinh doanh Nhà Bán Táo
-- Địa chỉ: 123 Nguyễn Huệ, Q.1, TP.HCM
-- Hotline: 0935 771 670
-- Giờ mở cửa: Thứ 2-6: 8:00-21:00, Thứ 7-CN: 9:00-20:00
-- Bảo hành: iPhone Openbox/CPO 12 tháng, Nguyên Seal 24 tháng
-- Hỗ trợ trả góp 0% qua thẻ tín dụng
-- Freeship toàn quốc đơn từ 2 triệu
-- Đổi trả miễn phí 7 ngày
+- Địa chỉ: 123 Nguyễn Huệ, Q.1, TP.HCM (Trụ sở sầm uất nhất)
+- Hotline: 0935 771 670 (Gọi là có mặt)
+- Bảo hành: iPhone bóc seal 24 tháng, Openbox 12 tháng. Đổi trả 7 ngày "không cần lý do" (nếu hàng lỗi).
+- Ưu đãi: Trả góp 0%, Freeship đơn trên 2 triệu.
 
-Câu hỏi của khách hàng: "${message}"
+Sản phẩm đang có tại shop:
+${productList}
 
-Hãy trả lời ngắn gọn, thân thiện, dễ hiểu. Dùng emoji phù hợp. Nếu không biết câu trả lời, hướng khách liên hệ hotline.`;
+Bối cảnh:
+- Tên khách: ${customerName}
+- Câu hỏi khách: "${message}"
+
+Quy tắc ứng xử:
+1. Hài hước & Gần gũi: Dùng ngôn ngữ "Gen Z" một cách tinh tế hoặc ví von vui vẻ.
+2. Ngắn gọn, chuyên nghiệp: Không giải thích dài dòng, đi thẳng vào vấn đề. 
+3. Hội thoại: Trả lời như đang chat 1-1, không viết sớ.
+4. Thu thập thông tin: Nếu khách quan tâm sản phẩm cụ thể, hãy mời khách để lại SĐT để "team Nhà Bán Táo" tư vấn kỹ hơn hoặc gửi link khuyến mãi.
+5. Luôn dùng emoji.
+
+Trả lời ngay (không quá 3-4 câu):`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        return response.text();
+        return response.text().trim();
     } catch (error) {
         console.error('Chat response error:', error);
-        return `Xin lỗi, hiện tại tôi không thể xử lý câu hỏi này. 
-
-📞 Vui lòng liên hệ hotline: **0935 771 670**
-💬 Hoặc chat Zalo để được hỗ trợ nhanh nhất!`;
+        return `U là trời, "Táo Quân" đang bận đi ship hàng tí xíu! 🍎
+        
+📞 Cần gấp thì alo: **0935 771 670** nha ${context.customerInfo?.name || ''}!`;
     }
 };
 

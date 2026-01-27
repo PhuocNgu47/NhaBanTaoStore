@@ -42,7 +42,7 @@ const variantSchema = new mongoose.Schema({
 const productSchema = new mongoose.Schema({
   // Basic info
   product_id: String,        // optional external id
-  sku: { type: String, unique: true }, // unique: true tự động tạo index
+  sku: { type: String, sparse: true }, // sparse: true allows multiple null/undefined values
   name: { type: String, required: true },
   slug: { type: String, unique: true }, // unique: true tự động tạo index
   brand: String,
@@ -107,7 +107,8 @@ const productSchema = new mongoose.Schema({
 });
 
 // Indexes
-// Lưu ý: sku và slug đã có unique: true nên không cần index riêng
+// SKU: sparse unique index (allows multiple null but unique for actual values)
+productSchema.index({ sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ category: 1, status: 1 });
 productSchema.index({ 'variants.sku': 1 });
 productSchema.index({ rating: -1, reviewCount: -1 });
@@ -129,6 +130,14 @@ function slugify(text) {
 // Auto update updatedAt and calculate price from variants
 productSchema.pre('save', async function (next) {
   this.updatedAt = new Date();
+
+  // Auto-generate SKU if not provided
+  if (!this.sku || this.sku.trim() === '') {
+    // Format: SKU-{timestamp}-{random}
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    this.sku = `SKU-${timestamp}-${random}`;
+  }
 
   // Generate slug if not exists or if name changed
   if (!this.slug || (this.isModified('name') && !this.slug)) {
