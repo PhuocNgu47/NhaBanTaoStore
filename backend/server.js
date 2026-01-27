@@ -238,6 +238,10 @@ app.use('/api/admin/ai-insights', aiInsightRoutes);
 import chatRoutes from './routes/chat.js';
 app.use('/api/chat', chatRoutes);
 
+// Settings: Cài đặt hệ thống
+import settingsRoutes from './routes/settings.js';
+app.use('/api/settings', settingsRoutes);
+
 // ============================================
 // XỬ LÝ LỖI (ERROR HANDLING)
 // ============================================
