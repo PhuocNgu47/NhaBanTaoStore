@@ -5,6 +5,8 @@ import { useAuth, useCart } from '../../hooks';
 import { NAV_LINKS } from '../../constants';
 import { categoryService } from '../../services/categoryService';
 
+import { useSettings } from '../../contexts/SettingsContext';
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,6 +14,7 @@ const Header = () => {
   const [categories, setCategories] = useState([]);
   const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const { itemCount } = useCart();
+  const { settings } = useSettings();
 
   // Fetch categories from API
   useEffect(() => {
@@ -48,8 +51,8 @@ const Header = () => {
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-lg">🍎</span>
             </div>
-            <span className="text-xl font-bold text-blue-800 hidden sm:block">
-              NHÀ BÁN TÁO STORE
+            <span className="text-xl font-bold text-blue-800 hidden sm:block uppercase">
+              {settings.siteName || 'NHÀ BÁN TÁO STORE'}
             </span>
           </Link>
 

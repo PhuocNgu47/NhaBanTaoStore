@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
 import { FiFacebook, FiInstagram, FiYoutube, FiPhone, FiMail, FiMapPin } from 'react-icons/fi';
-import { SiZalo } from 'react-icons/si';
+import { SiZalo, SiTiktok } from 'react-icons/si';
+import { useSettings } from '../../contexts/SettingsContext';
 
 const Footer = () => {
+  const { settings } = useSettings();
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container-custom py-12">
@@ -13,24 +16,37 @@ const Footer = () => {
               <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-lg">🍎</span>
               </div>
-              <span className="text-xl font-bold">NHÀ BÁN TÁO STORE</span>
+              <span className="text-xl font-bold uppercase">{settings.siteName || 'NHÀ BÁN TÁO STORE'}</span>
             </div>
             <p className="text-gray-400 mb-4">
-              Chuyên cung cấp các sản phẩm Apple chính hãng với giá tốt nhất thị trường.
+              {settings.siteDescription || 'Chuyên cung cấp các sản phẩm Apple chính hãng với giá tốt nhất thị trường.'}
             </p>
             <div className="flex gap-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <FiFacebook size={24} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <FiInstagram size={24} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <FiYoutube size={24} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <SiZalo size={24} />
-              </a>
+              {settings.facebook && (
+                <a href={settings.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <FiFacebook size={24} />
+                </a>
+              )}
+              {settings.instagram && (
+                <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <FiInstagram size={24} />
+                </a>
+              )}
+              {settings.youtube && (
+                <a href={settings.youtube} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <FiYoutube size={24} />
+                </a>
+              )}
+              {settings.tiktok && (
+                <a href={settings.tiktok} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <SiTiktok size={24} />
+                </a>
+              )}
+              {settings.zalo && (
+                <a href={`https://zalo.me/${settings.zalo}`} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <SiZalo size={24} />
+                </a>
+              )}
             </div>
           </div>
 
@@ -95,19 +111,28 @@ const Footer = () => {
               <li className="flex items-start gap-3">
                 <FiMapPin className="text-blue-500 mt-1 flex-shrink-0" size={20} />
                 <span className="text-gray-400">
-                  123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh
+                  {settings.address}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <FiPhone className="text-blue-500 flex-shrink-0" size={20} />
-                <a href="tel:0123456789" className="text-gray-400 hover:text-white transition-colors">
-                  0123 456 789
+                <a href={`tel:${settings.phone}`} className="text-gray-400 hover:text-white transition-colors">
+                  {settings.phone}
                 </a>
               </li>
+              {settings.hotline && (
+                <li className="flex items-center gap-3">
+                  <FiPhone className="text-red-500 flex-shrink-0" size={20} />
+                  <span className="text-gray-400">Hotline: </span>
+                  <a href={`tel:${settings.hotline}`} className="text-gray-400 hover:text-white transition-colors">
+                    {settings.hotline}
+                  </a>
+                </li>
+              )}
               <li className="flex items-center gap-3">
                 <FiMail className="text-blue-500 flex-shrink-0" size={20} />
-                <a href="mailto:info@anhphibantao.com" className="text-gray-400 hover:text-white transition-colors">
-                  info@anhphibantao.com
+                <a href={`mailto:${settings.email}`} className="text-gray-400 hover:text-white transition-colors">
+                  {settings.email}
                 </a>
               </li>
             </ul>
@@ -119,7 +144,7 @@ const Footer = () => {
       <div className="border-t border-gray-800">
         <div className="container-custom py-4">
           <p className="text-center text-gray-400 text-sm">
-            © 2026 Nhà Bán Táo Store. All rights reserved.
+            © {new Date().getFullYear()} {settings.siteName}. All rights reserved.
           </p>
         </div>
       </div>
