@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiImage, FiLoader } from 'react-icons/fi';
 import { formatPrice } from '../../utils/helpers';
 import { productService } from '../../services/productService';
-import { CATEGORIES } from '../../constants';
 import { toast } from 'react-toastify';
 import VariantManager from '../../components/admin/VariantManager';
 import Modal, { ConfirmModal } from '../../components/Modal';
+import { categoryService } from '../../services/categoryService';
+
 
 // Initial form state
 const initialFormState = {
@@ -34,6 +35,7 @@ const AdminProductsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+  const [categories, setCategories] = useState([]);
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
@@ -85,6 +87,16 @@ const AdminProductsPage = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  useEffect(() => {
+  const fetchCategories = async () => {
+    const res = await categoryService.getCategoriesFlat({ onlyActive: 'true' });
+    if (res.success) {
+      setCategories(res.categories);
+    }
+  };
+  fetchCategories();
+}, []);
 
   // Open modal for add/edit
   const openModal = (product = null) => {
@@ -270,8 +282,8 @@ const AdminProductsPage = () => {
 
   // Get category name
   const getCategoryName = (categoryId) => {
-    const category = CATEGORIES.find(c => c.id === categoryId);
-    return category?.name || categoryId;
+    const category = categories.find(c => c._id === categoryId);
+    return category?.name || '—';
   };
 
   return (
@@ -309,8 +321,10 @@ const AdminProductsPage = () => {
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Tất cả danh mục</option>
-            {CATEGORIES.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            {categories.map(cat => (
+              <option key={cat._id} value={cat._id}>
+                {'—'.repeat(cat.level)} {cat.name}
+              </option>
             ))}
           </select>
           <select
@@ -516,8 +530,10 @@ const AdminProductsPage = () => {
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Chọn danh mục</option>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  {categories.map(cat => (
+                    <option key={cat._id} value={cat._id}>
+                      {'—'.repeat(cat.level)} {cat.name}
+                    </option>
                   ))}
                 </select>
               </div>
