@@ -8,16 +8,16 @@ const stores = [
         image: "https://anhphibantao.com/_next/image?url=https%3A%2F%2Fanhphibantao.com%2Fbe%2Fuploads%2Fstore%2F1753867535592-871004833.webp&w=1920&q=75",
         address: "256 Đ. Nghi Tàm, Yên Phụ, Tây Hồ, Hà Nội",
         time: "8:30 - 21:30",
-        hotline: "0815242433",
+        hotline: "1800 3899",
         mapLink: "https://www.google.com/maps/search/?api=1&query=256+Đ.+Nghi+Tàm,+Yên+Phụ,+Tây+Hồ,+Hà+Nội"
     },
     {
         id: 2,
         city: "Hồ Chí Minh",
-        image: "https://anhphibantao.com/_next/image?url=https%3A%2F%2Fanhphibantao.com%2Fbe%2Fuploads%2Fstore%2F1753867535593-530594898.webp&w=1920&q=75",
+        image: "https://images2.thanhnien.vn/528068263637045248/2023/8/19/img8600-16924161152941802051064.jpeg",
         address: "214/8 Nguyễn Oanh, Phường 17, Gò Vấp, Hồ Chí Minh",
         time: "8:30 - 21:30",
-        hotline: "0886815969",
+        hotline: "1800 1234",
         mapLink: "https://www.google.com/maps/search/?api=1&query=214/8+Nguyễn+Oanh,+Phường+17,+Gò+Vấp,+Hồ+Chí+Minh"
     },
 ];
