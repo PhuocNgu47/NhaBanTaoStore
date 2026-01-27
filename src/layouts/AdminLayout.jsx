@@ -80,11 +80,13 @@ const AdminLayout = () => {
           {/* Logo */}
           <div className="p-4 border-b flex items-center justify-between">
             {sidebarOpen && (
-              <Link to="/admin" className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">🍎</span>
+              <Link to="/" className="flex items-center gap-2">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">🍎</span>
                 </div>
-                <span className="font-bold text-gray-800">Admin</span>
+                <span className="text-xl font-bold text-blue-800 hidden sm:block">
+                  NHÀ BÁN TÁO STORE
+                </span>
               </Link>
             )}
             <button

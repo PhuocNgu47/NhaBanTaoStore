@@ -293,7 +293,7 @@ const AdminProductsPage = () => {
   // Render status badge
   const renderStatus = (status, stock) => {
     if (stock === 0) {
-      return <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">Hết hàng</span>;
+      return <span className="px-2 py-1 rounded-full whitespace-nowrap text-xs font-medium bg-red-100 text-red-600">Hết hàng</span>;
     }
 
     const statusConfig = {
@@ -303,7 +303,7 @@ const AdminProductsPage = () => {
     };
 
     const config = statusConfig[status] || statusConfig.active;
-    return <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>{config.label}</span>;
+    return <span className={`px-2 py-1 rounded-full whitespace-nowrap text-xs font-medium ${config.bg} ${config.text}`}>{config.label}</span>;
   };
 
   // Get category name

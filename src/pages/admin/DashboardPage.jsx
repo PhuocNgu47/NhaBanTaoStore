@@ -43,32 +43,33 @@ const SimpleBarChart = ({ data, height = 200 }) => {
   }
 
   const maxValue = Math.max(...data.map(d => d.revenue));
-  
+
   return (
-    <div className="flex items-end justify-between gap-1" style={{ height }}>
-      {data.slice(-14).map((item, index) => {
-        const barHeight = maxValue > 0 ? (item.revenue / maxValue) * 100 : 0;
+    <div className="flex items-end justify-between gap-2" style={{ height }}>
+      {data.map((item, index) => {
+        const barHeight =
+          maxValue > 0 ? (item.revenue / maxValue) * (height - 30) : 0;
+
         const date = new Date(item._id);
-        const dayLabel = date.getDate();
-        
+
         return (
-          <div key={index} className="flex-1 flex flex-col items-center gap-1">
-            <div 
+          <div key={index} className="flex-1 flex flex-col items-center">
+            <div
               className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-sm hover:from-blue-600 hover:to-blue-500 transition-all cursor-pointer group relative"
-              style={{ height: `${Math.max(barHeight, 2)}%` }}
-              title={`${item._id}: ${formatPrice(item.revenue)}`}
-            >
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 pointer-events-none">
-                {formatPrice(item.revenue)}
-              </div>
-            </div>
-            <span className="text-xs text-gray-400">{dayLabel}</span>
+              style={{ height: `${Math.max(barHeight, 6)}px` }}
+              title={formatPrice(item.revenue)}
+            />
+            <span className="text-xs text-gray-400">
+              {date.getDate()}
+            </span>
           </div>
         );
       })}
     </div>
   );
 };
+
+
 
 // Donut Chart Component  
 const SimpleDonutChart = ({ data, size = 160 }) => {
@@ -154,8 +155,8 @@ const SimpleDonutChart = ({ data, size = 160 }) => {
       <div className="flex-1 space-y-2">
         {segments.slice(0, 5).map((segment, index) => (
           <div key={index} className="flex items-center gap-2 text-sm">
-            <div 
-              className="w-3 h-3 rounded-full flex-shrink-0" 
+            <div
+              className="w-3 h-3 rounded-full flex-shrink-0"
               style={{ backgroundColor: segment.color }}
             />
             <span className="flex-1 truncate text-gray-600">{segment.label}</span>
@@ -230,7 +231,7 @@ const DashboardPage = () => {
   // Stats cards data
   const statsCards = useMemo(() => {
     if (!overview) return [];
-    
+
     return [
       {
         title: 'Doanh thu hôm nay',
@@ -271,7 +272,7 @@ const DashboardPage = () => {
   // Quick stats
   const quickStats = useMemo(() => {
     if (!overview) return [];
-    
+
     return [
       { label: 'Chờ xác nhận', value: overview.pendingOrders, color: 'text-yellow-600', bg: 'bg-yellow-50' },
       { label: 'Đang xử lý', value: overview.processingOrders, color: 'text-indigo-600', bg: 'bg-indigo-50' },
@@ -315,7 +316,7 @@ const DashboardPage = () => {
                 <div className="flex-1">
                   <p className="text-sm text-gray-500 mb-1">{stat.title}</p>
                   <p className="text-2xl font-bold text-gray-800">
-                    {stat.format === 'price' 
+                    {stat.format === 'price'
                       ? formatPrice(stat.value || 0)
                       : (stat.value || 0).toLocaleString('vi-VN')
                     }
@@ -342,7 +343,7 @@ const DashboardPage = () => {
               </div>
             </div>
             {stat.link && (
-              <Link 
+              <Link
                 to={stat.link}
                 className="block px-6 py-3 bg-gray-50 text-sm text-blue-600 hover:bg-gray-100 border-t flex items-center justify-between"
               >
@@ -367,8 +368,8 @@ const DashboardPage = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm">
-          <div className="p-6 border-b flex items-center justify-between">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-[#5CDB95]/20">
+          <div className="p-6 border-b border-[#5CDB95]/10 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                 <FiBarChart2 className="w-5 h-5" />
@@ -403,7 +404,7 @@ const DashboardPage = () => {
             <h2 className="text-lg font-bold text-gray-800">Đơn hàng theo trạng thái</h2>
           </div>
           <div className="p-6">
-            <SimpleDonutChart data={orderStats} size={140} />
+            <SimpleDonutChart data={orderStats} size={100} />
           </div>
         </div>
       </div>
@@ -414,8 +415,8 @@ const DashboardPage = () => {
         <div className="bg-white rounded-xl shadow-sm">
           <div className="p-6 border-b flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-800">Đơn hàng gần đây</h2>
-            <Link 
-              to="/admin/don-hang" 
+            <Link
+              to="/admin/don-hang"
               className="text-sm text-blue-600 hover:underline flex items-center gap-1"
             >
               Xem tất cả <FiArrowRight className="w-4 h-4" />
@@ -459,8 +460,8 @@ const DashboardPage = () => {
         <div className="bg-white rounded-xl shadow-sm">
           <div className="p-6 border-b flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-800">Sản phẩm bán chạy</h2>
-            <Link 
-              to="/admin/san-pham" 
+            <Link
+              to="/admin/san-pham"
               className="text-sm text-blue-600 hover:underline flex items-center gap-1"
             >
               Xem tất cả <FiArrowRight className="w-4 h-4" />
@@ -476,8 +477,8 @@ const DashboardPage = () => {
                 <div key={product.productId || index} className="p-4 flex items-center gap-4">
                   <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     {product.productImage ? (
-                      <img 
-                        src={product.productImage} 
+                      <img
+                        src={product.productImage}
                         alt={product.productName}
                         className="w-full h-full object-contain p-1"
                       />
@@ -512,8 +513,8 @@ const DashboardPage = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gray-100 rounded overflow-hidden">
                         {product.image ? (
-                          <img 
-                            src={product.image} 
+                          <img
+                            src={product.image}
                             alt={product.name}
                             className="w-full h-full object-contain"
                           />
@@ -525,9 +526,8 @@ const DashboardPage = () => {
                         {product.name}
                       </span>
                     </div>
-                    <span className={`text-sm font-medium ${
-                      product.stock === 0 ? 'text-red-600' : 'text-orange-600'
-                    }`}>
+                    <span className={`text-sm font-medium ${product.stock === 0 ? 'text-red-600' : 'text-orange-600'
+                      }`}>
                       {product.stock === 0 ? 'Hết hàng' : `Còn ${product.stock}`}
                     </span>
                   </div>
@@ -548,8 +548,8 @@ const DashboardPage = () => {
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white">
           <h3 className="text-lg font-semibold opacity-90">Trung bình/đơn</h3>
           <p className="text-3xl font-bold mt-2">
-            {formatPrice(overview?.totalOrders > 0 
-              ? Math.round(overview.totalRevenue / overview.totalOrders) 
+            {formatPrice(overview?.totalOrders > 0
+              ? Math.round(overview.totalRevenue / overview.totalOrders)
               : 0
             )}
           </p>
