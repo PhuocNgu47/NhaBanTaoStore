@@ -50,7 +50,7 @@ const orderSchema = new mongoose.Schema({
   // Payment
   paymentMethod: {
     type: String,
-    enum: ['cod', 'bank_transfer', 'momo', 'zalopay', 'vnpay', 'stripe'],
+    enum: ['cod', 'bank_transfer', 'momo', 'zalopay', 'vnpay', 'stripe', 'qr_code'],
     default: 'cod'
   },
   paymentStatus: {
@@ -77,7 +77,7 @@ const orderSchema = new mongoose.Schema({
   // Coupon
   couponCode: String,
   couponId: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
-  
+
   // Order Status - Updated per spec
   status: {
     type: String,
@@ -88,7 +88,7 @@ const orderSchema = new mongoose.Schema({
     ],
     default: 'pending'
   },
-  
+
   // Status History
   statusHistory: [{
     status: String,
@@ -97,24 +97,24 @@ const orderSchema = new mongoose.Schema({
     note: String,
     trackingNumber: String // Khi shipped
   }],
-  
+
   // Cancellation
   cancellationReason: String,
   cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   cancelledAt: Date,
-  
+
   // Shipping
   trackingNumber: String,
   shippingCompany: String,
   shippedAt: Date,
   deliveredAt: Date,
-  
+
   // Return/Refund
   returnReason: String,
   returnRequestedAt: Date,
   refundAmount: Number,
   refundedAt: Date,
-  
+
   // Notes
   notes: [{
     note: String,
@@ -130,23 +130,23 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Auto-generate order number (số dễ nhớ cho chuyển khoản)
-orderSchema.pre('save', async function(next) {
+orderSchema.pre('save', async function (next) {
   if (!this.orderNumber) {
     // Format: timestamp cuối (dễ copy vào nội dung chuyển khoản)
     this.orderNumber = `${Date.now()}`;
   }
-  
+
   // Track status changes
   // Note: Only auto-add to statusHistory if not already added by service layer
   // Service layer will handle statusHistory updates with proper adminId
   if (this.isModified('status')) {
     // Only auto-add if statusHistory is empty or last entry is different status
     // This prevents duplicate entries when service layer handles it
-    const shouldAutoAdd = !this.statusHistory || 
-                         this.statusHistory.length === 0 ||
-                         (this.statusHistory.length > 0 && 
-                          this.statusHistory[this.statusHistory.length - 1].status !== this.status);
-    
+    const shouldAutoAdd = !this.statusHistory ||
+      this.statusHistory.length === 0 ||
+      (this.statusHistory.length > 0 &&
+        this.statusHistory[this.statusHistory.length - 1].status !== this.status);
+
     if (shouldAutoAdd) {
       if (!this.statusHistory) {
         this.statusHistory = [];
@@ -157,7 +157,7 @@ orderSchema.pre('save', async function(next) {
         updatedBy: this.userId || null
       });
     }
-    
+
     // Set timestamps based on status
     const now = new Date();
     if (this.status === 'confirmed' && !this.confirmedAt) {
@@ -189,7 +189,7 @@ orderSchema.pre('save', async function(next) {
       this.deliveredAt = now;
     }
   }
-  
+
   this.updatedAt = new Date();
   next();
 });

@@ -12,6 +12,7 @@ import { orderService } from '../services/orderService';
 import { userService } from '../services/userService';
 import { addressService } from '../services/addressService';
 import { couponService } from '../services/couponService';
+import { useSettings } from '../contexts/SettingsContext';
 
 
 const checkoutSchema = z.object({
@@ -78,8 +79,8 @@ const CheckoutSteps = ({ currentStep }) => {
           <div className="flex items-center gap-2">
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center ${step.id <= currentStep
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-400'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-400'
                 }`}
             >
               <step.icon className="w-5 h-5" />
@@ -113,7 +114,8 @@ const CheckoutPage = () => {
   const { items: cartItems, total: cartTotal, clearCart } = useCart();
   const { identifyLead } = useTracking();
   const { isAuthenticated, user: authUser } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+  const { settings } = useSettings();
+  const [paymentMethod, setPaymentMethod] = useState('cod');
   const [shippingMethod, setShippingMethod] = useState('standard');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
@@ -209,26 +211,26 @@ const CheckoutPage = () => {
   }, [selectedDistrictCode]);
 
   useEffect(() => {
-  const fetchCoupons = async () => {
-    try {
-      const res = await couponService.getCoupons();
-      if (res.success && res.coupons) {
-        setCoupons(
-          res.coupons.filter(c =>
-            c.isActive &&
-            total >= (c.minPurchaseAmount || 0) &&
-            (!c.validFrom || new Date(c.validFrom) <= new Date()) &&
-            (!c.validUntil || new Date(c.validUntil) >= new Date()) &&
-            (c.usageLimit === null || c.usedCount < c.usageLimit)
-          )
-        );
+    const fetchCoupons = async () => {
+      try {
+        const res = await couponService.getCoupons();
+        if (res.success && res.coupons) {
+          setCoupons(
+            res.coupons.filter(c =>
+              c.isActive &&
+              total >= (c.minPurchaseAmount || 0) &&
+              (!c.validFrom || new Date(c.validFrom) <= new Date()) &&
+              (!c.validUntil || new Date(c.validUntil) >= new Date()) &&
+              (c.usageLimit === null || c.usedCount < c.usageLimit)
+            )
+          );
+        }
+      } catch (e) {
+        toast.error('Không thể tải voucher');
       }
-    } catch (e) {
-      toast.error('Không thể tải voucher');
-    }
-  };
-  fetchCoupons();
-}, []);
+    };
+    fetchCoupons();
+  }, []);
 
 
   // Tính tổng tiền sau khi áp dụng voucher
@@ -484,7 +486,7 @@ const CheckoutPage = () => {
       const orderData = {
         items: orderItems,
         shippingAddress,
-        paymentMethod: paymentMethod === 'bank_transfer' ? 'bank_transfer' : 'cod',
+        paymentMethod: paymentMethod,
         guestEmail: data.email,
         couponCode: selectedVoucher?.code || null,
         discountAmount: calculatedDiscount,
@@ -816,35 +818,12 @@ const CheckoutPage = () => {
                   Hình thức thanh toán
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  {/* COD */}
                   <label
-                    className={`flex flex-col gap-1 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'bank_transfer'
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="bank_transfer"
-                        checked={paymentMethod === 'bank_transfer'}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="w-5 h-5 text-blue-600"
-                      />
-                      <span className="font-semibold text-blue-700 uppercase">
-                        Chuyển khoản ngân hàng
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500 ml-8">
-                      (FREESHIP khi chuyển khoản trước)
-                    </p>
-                  </label>
-
-                  <label
-                    className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod'
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                    className={`flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'cod'
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
                       }`}
                   >
                     <input
@@ -853,11 +832,125 @@ const CheckoutPage = () => {
                       value="cod"
                       checked={paymentMethod === 'cod'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-5 h-5 text-blue-600"
+                      className="w-5 h-5 text-blue-600 mt-1"
                     />
-                    <span className="font-medium text-gray-700 uppercase">
-                      Thanh toán khi nhận hàng
-                    </span>
+                    <div className="flex-1">
+                      <span className="font-bold text-gray-800 block mb-1">
+                        Thanh toán khi nhận hàng (COD)
+                      </span>
+                      <p className="text-sm text-gray-600">
+                        Thanh toán tiền mặt cho nhân viên giao hàng khi nhận được sản phẩm.
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Bank Transfer */}
+                  <label
+                    className={`flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'bank_transfer'
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="bank_transfer"
+                      checked={paymentMethod === 'bank_transfer'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-5 h-5 text-blue-600 mt-1"
+                    />
+                    <div className="flex-1">
+                      <span className="font-bold text-gray-800 block mb-1">
+                        Chuyển khoản ngân hàng
+                      </span>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Chuyển khoản qua Internet Banking hoặc Mobile Banking.
+                        <span className="text-green-600 font-bold ml-1">(Miễn phí vận chuyển)</span>
+                      </p>
+
+                      {paymentMethod === 'bank_transfer' && settings?.bank && (
+                        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
+                          <p className="font-medium text-blue-700">{settings.bank.bankName}</p>
+                          <p className="text-gray-800">Số TK: <span className="font-mono font-bold text-lg">{settings.bank.bankNumber}</span></p>
+                          <p className="text-gray-600">Chủ TK: {settings.bank.bankHolder}</p>
+                          <p className="text-sm text-gray-500 mt-1 italic">Nội dung: SĐT hoặc Tên của bạn</p>
+                        </div>
+                      )}
+                    </div>
+                  </label>
+
+                  {/* VietQR */}
+                  <label
+                    className={`flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'qr_code'
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="qr_code"
+                      checked={paymentMethod === 'qr_code'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-5 h-5 text-blue-600 mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-gray-800">Quét mã VietQR</span>
+                        <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold">Recommended</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Quét mã QR bằng ứng dụng ngân hàng để thanh toán nhanh chóng, chính xác.
+                      </p>
+
+                      {paymentMethod === 'qr_code' && settings?.bank && (
+                        <div className="mt-3 bg-white p-4 rounded-lg border border-gray-200 flex flex-col items-center">
+                          <img
+                            src={`https://img.vietqr.io/image/${settings.bank.bankName}-${settings.bank.bankNumber}-compact2.png?amount=${finalTotal}&addInfo=THANHTOAN DONHANG`}
+                            alt="VietQR"
+                            className="w-48 h-48 object-contain mb-2"
+                          />
+                          <p className="text-center text-sm text-gray-500">
+                            Mở App Ngân hàng &gt; Quét mã QR <br />
+                            <span className="text-xs">(Số tiền đã được điền tự động)</span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </label>
+
+                  {/* MoMo */}
+                  <label
+                    className={`flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${paymentMethod === 'momo'
+                      ? 'border-pink-600 bg-pink-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="momo"
+                      checked={paymentMethod === 'momo'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-5 h-5 text-pink-600 mt-1"
+                    />
+                    <div className="flex-1">
+                      <span className="font-bold text-gray-800 block mb-1">
+                        Ví MoMo
+                      </span>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Chuyển tiền qua ví MoMo.
+                      </p>
+
+                      {paymentMethod === 'momo' && settings?.payment?.momoNumber && (
+                        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
+                          <p className="text-gray-800">SĐT Ví: <span className="font-bold text-lg">{settings.payment.momoNumber}</span></p>
+                          <p className="text-gray-600">Chủ Ví: {settings.payment.momoHolder}</p>
+                          <p className="text-sm text-gray-500 mt-1 italic">Nội dung: SĐT hoặc Tên của bạn</p>
+                          {/* Nếu có ảnh QR MoMo thì hiện ở đây */}
+                        </div>
+                      )}
+                    </div>
                   </label>
                 </div>
               </div>
@@ -871,8 +964,8 @@ const CheckoutPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label
                     className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${shippingMethod === 'standard'
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
                       }`}
                   >
                     <input
@@ -891,8 +984,8 @@ const CheckoutPage = () => {
 
                   <label
                     className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all ${shippingMethod === 'express'
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
                       }`}
                   >
                     <input
@@ -972,9 +1065,10 @@ const CheckoutPage = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Hình thức thanh toán</span>
                     <span className="text-blue-700 font-medium text-right">
-                      {paymentMethod === 'bank_transfer'
-                        ? 'Chuyển khoản ngân hàng'
-                        : 'Thanh toán khi nhận hàng'}
+                      {paymentMethod === 'bank_transfer' && 'Chuyển khoản ngân hàng'}
+                      {paymentMethod === 'cod' && 'Thanh toán khi nhận hàng'}
+                      {paymentMethod === 'qr_code' && 'Quét mã VietQR'}
+                      {paymentMethod === 'momo' && 'Ví MoMo'}
                     </span>
                   </div>
 
@@ -1000,7 +1094,7 @@ const CheckoutPage = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Phí vận chuyển</span>
                     <span className="text-blue-700 font-medium text-right">
-                      {paymentMethod === 'bank_transfer' ? 'Miễn phí' : 'Nhân viên gọi trao đổi'}
+                      {paymentMethod !== 'cod' ? 'Miễn phí' : 'Nhân viên gọi trao đổi'}
                     </span>
                   </div>
                 </div>
