@@ -15,6 +15,7 @@ const CartPage = lazy(() => import('../pages/CartPage'));
 const CheckoutPage = lazy(() => import('../pages/CheckoutPage'));
 const SearchPage = lazy(() => import('../pages/SearchPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
+const StoresPage = lazy(() => import('../pages/StoresPage')); // Added StoresPage
 const TrackOrderPage = lazy(() => import('../pages/TrackOrderPage'));
 const OrderSuccessPage = lazy(() => import('../pages/OrderSuccessPage'));
 
@@ -116,6 +117,14 @@ const router = createBrowserRouter([
         element: (
           <LazyPage>
             <ContactPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'cua-hang',
+        element: (
+          <LazyPage>
+            <StoresPage />
           </LazyPage>
         ),
       },
