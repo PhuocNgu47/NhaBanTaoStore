@@ -6,3 +6,4 @@ export { default as ProductCategorySection, ProductCard as ProductSliderCard } f
 export { default as CategoryTabsSection } from './CategoryTabsSection';
 export { default as SocialGallery } from './SocialGallery';
 export { default as CategorySidebar } from './CategorySidebar';
+export { default as FloatingContact } from './FloatingContact';

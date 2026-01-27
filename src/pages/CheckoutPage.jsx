@@ -11,6 +11,8 @@ import Modal from '../components/Modal';
 import { orderService } from '../services/orderService';
 import { userService } from '../services/userService';
 import { addressService } from '../services/addressService';
+import { couponService } from '../services/couponService';
+
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'Vui lòng nhập họ tên'),
@@ -117,6 +119,7 @@ const CheckoutPage = () => {
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [loadingUserData, setLoadingUserData] = useState(false);
+  const [coupons, setCoupons] = useState([]);
 
   // Vietnam Address States
   const [provinces, setProvinces] = useState([]);
@@ -204,6 +207,29 @@ const CheckoutPage = () => {
     };
     loadWards();
   }, [selectedDistrictCode]);
+
+  useEffect(() => {
+  const fetchCoupons = async () => {
+    try {
+      const res = await couponService.getCoupons();
+      if (res.success && res.coupons) {
+        setCoupons(
+          res.coupons.filter(c =>
+            c.isActive &&
+            total >= (c.minPurchaseAmount || 0) &&
+            (!c.validFrom || new Date(c.validFrom) <= new Date()) &&
+            (!c.validUntil || new Date(c.validUntil) >= new Date()) &&
+            (c.usageLimit === null || c.usedCount < c.usageLimit)
+          )
+        );
+      }
+    } catch (e) {
+      toast.error('Không thể tải voucher');
+    }
+  };
+  fetchCoupons();
+}, []);
+
 
   // Tính tổng tiền sau khi áp dụng voucher
   const discount = selectedVoucher ? (selectedVoucher.discountType === 'percentage'
@@ -1016,26 +1042,21 @@ const CheckoutPage = () => {
         >
           <div className="space-y-3">
             {/* Voucher list with improved UI */}
-            {[
-              { code: 'VOUCHER10', description: 'Giảm 10% cho đơn hàng từ 500k', discountType: 'percentage', discountValue: 10, color: 'blue' },
-              { code: 'FREESHIP', description: 'Miễn phí vận chuyển', discountType: 'fixed', discountValue: 30000, color: 'green', icon: '🚚' },
-              { code: 'SALE50', description: 'Giảm 50k cho đơn hàng từ 1 triệu', discountType: 'fixed', discountValue: 50000, color: 'purple' },
-            ].map((voucher) => (
+            {coupons.map((voucher) => (
               <div
-                key={voucher.code}
-                className={`p-4 border-2 border-dashed border-${voucher.color}-200 rounded-xl hover:border-${voucher.color}-400 hover:bg-${voucher.color}-50 cursor-pointer transition-all group`}
+                key={voucher._id}
+                className="p-4 border-2 border-dashed rounded-xl hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all"
                 onClick={() => applyVoucher(voucher)}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-16 h-16 bg-gradient-to-br from-${voucher.color}-500 to-${voucher.color}-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0`}>
-                    {voucher.icon || (voucher.discountType === 'percentage' ? `${voucher.discountValue}%` : formatPrice(voucher.discountValue).replace('₫', ''))}
+                  <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                    {voucher.discountType === 'percentage'
+                      ? `${voucher.discountValue}%`
+                      : formatPrice(voucher.discountValue).replace('₫', '')}
                   </div>
                   <div className="flex-1">
-                    <div className={`font-bold text-gray-900 group-hover:text-${voucher.color}-600 transition-colors`}>
-                      {voucher.code}
-                    </div>
+                    <div className="font-bold text-gray-900">{voucher.code}</div>
                     <div className="text-sm text-gray-600">{voucher.description}</div>
-                    <div className="text-xs text-green-600 mt-1">✓ Áp dụng được</div>
                   </div>
                 </div>
               </div>

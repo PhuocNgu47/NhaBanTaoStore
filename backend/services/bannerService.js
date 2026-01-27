@@ -10,7 +10,12 @@ import Banner from '../models/Banner.js';
  */
 export const getActiveBanners = async () => {
   const now = new Date();
-  
+
+  // Create start of today (00:00:00) for inclusive endDate check
+  // This allows banners ending "today" to still be shown throughout the day
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+
   const banners = await Banner.find({
     isActive: true,
     $and: [
@@ -22,14 +27,14 @@ export const getActiveBanners = async () => {
       },
       {
         $or: [
-          { endDate: { $gte: now } },
+          { endDate: { $gte: startOfToday } }, // Changed from 'now' to 'startOfToday'
           { endDate: { $exists: false } }
         ]
       }
     ]
   })
-  .sort({ displayOrder: 1, createdAt: -1 })
-  .lean();
+    .sort({ displayOrder: 1, createdAt: -1 })
+    .lean();
 
   return {
     success: true,
@@ -43,20 +48,20 @@ export const getActiveBanners = async () => {
  */
 export const getAllBanners = async (filters = {}) => {
   const { isActive, search } = filters;
-  
+
   const query = {};
-  
+
   if (isActive !== undefined) {
     query.isActive = isActive === 'true' || isActive === true;
   }
-  
+
   if (search) {
     query.$or = [
       { title: { $regex: search, $options: 'i' } },
       { subtitle: { $regex: search, $options: 'i' } }
     ];
   }
-  
+
   const banners = await Banner.find(query)
     .sort({ displayOrder: 1, createdAt: -1 })
     .lean();
@@ -73,11 +78,11 @@ export const getAllBanners = async (filters = {}) => {
  */
 export const getBannerById = async (id) => {
   const banner = await Banner.findById(id);
-  
+
   if (!banner) {
     throw new Error('Không tìm thấy banner');
   }
-  
+
   return {
     success: true,
     banner
@@ -93,9 +98,9 @@ export const createBanner = async (bannerData) => {
     const maxOrder = await Banner.findOne().sort({ displayOrder: -1 });
     bannerData.displayOrder = maxOrder ? maxOrder.displayOrder + 1 : 0;
   }
-  
+
   const banner = await Banner.create(bannerData);
-  
+
   return {
     success: true,
     banner
@@ -111,11 +116,11 @@ export const updateBanner = async (id, updateData) => {
     updateData,
     { new: true, runValidators: true }
   );
-  
+
   if (!banner) {
     throw new Error('Không tìm thấy banner');
   }
-  
+
   return {
     success: true,
     banner
@@ -127,11 +132,11 @@ export const updateBanner = async (id, updateData) => {
  */
 export const deleteBanner = async (id) => {
   const banner = await Banner.findByIdAndDelete(id);
-  
+
   if (!banner) {
     throw new Error('Không tìm thấy banner');
   }
-  
+
   return {
     success: true,
     message: 'Xóa banner thành công'
@@ -142,12 +147,12 @@ export const deleteBanner = async (id) => {
  * Cập nhật displayOrder (reorder)
  */
 export const updateDisplayOrder = async (bannerOrders) => {
-  const updates = bannerOrders.map(({ id, displayOrder }) => 
+  const updates = bannerOrders.map(({ id, displayOrder }) =>
     Banner.findByIdAndUpdate(id, { displayOrder }, { new: true })
   );
-  
+
   await Promise.all(updates);
-  
+
   return {
     success: true,
     message: 'Cập nhật thứ tự thành công'

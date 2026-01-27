@@ -8,14 +8,14 @@ const CategoryTabsSection = ({
   tabs = [],
   showViewAll = true,
   viewAllLink = '/san-pham',
+  className = '',
 }) => {
   return (
-    <div className={`${bgColor} rounded-2xl px-6 py-4`}>
+    <div className={`${bgColor} rounded-2xl px-6 py-4 ${className}`}>
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2
-          className={`text-xl font-bold uppercase ${
-            titleColor === 'white' ? 'text-white' : 'text-gray-900'
-          }`}
+          className={`text-xl font-bold uppercase ${titleColor === 'white' ? 'text-white' : 'text-gray-900'
+            }`}
         >
           {title}
         </h2>

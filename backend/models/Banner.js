@@ -63,6 +63,22 @@ const bannerSchema = new mongoose.Schema(
       min: 0,
       max: 100,
       default: 0
+    },
+    backgroundImage: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    backgroundColor: {
+      type: String,
+      trim: true,
+      default: '' // e.g., 'bg-slate-900' or hex '#000000'
+    },
+    textColor: {
+      type: String,
+      trim: true,
+      default: 'white', // 'white' or 'black'
+      enum: ['white', 'black']
     }
   },
   {
@@ -75,18 +91,18 @@ bannerSchema.index({ isActive: 1, displayOrder: 1 });
 bannerSchema.index({ startDate: 1, endDate: 1 });
 
 // Virtual: Kiểm tra banner có đang active không (dựa trên date range)
-bannerSchema.virtual('isCurrentlyActive').get(function() {
+bannerSchema.virtual('isCurrentlyActive').get(function () {
   if (!this.isActive) return false;
-  
+
   const now = new Date();
   if (this.startDate && now < this.startDate) return false;
   if (this.endDate && now > this.endDate) return false;
-  
+
   return true;
 });
 
 // Method: Lấy banner active (dùng trong query)
-bannerSchema.statics.getActiveBanners = function() {
+bannerSchema.statics.getActiveBanners = function () {
   const now = new Date();
   return this.find({
     isActive: true,
@@ -99,7 +115,7 @@ bannerSchema.statics.getActiveBanners = function() {
       { endDate: { $exists: false } }
     ]
   })
-  .sort({ displayOrder: 1, createdAt: -1 });
+    .sort({ displayOrder: 1, createdAt: -1 });
 };
 
 const Banner = mongoose.model('Banner', bannerSchema);

@@ -25,7 +25,7 @@ const categorySchema = new mongoose.Schema(
       type: String, // Icon class name (e.g., 'FiSmartphone', 'FiTablet')
       default: '',
     },
-    
+
     // Hierarchy - 3 levels
     // Level 0: Root category (parent = null)
     // Level 1: Subcategory (parent = root category)
@@ -47,7 +47,7 @@ const categorySchema = new mongoose.Schema(
       slug: String,
       level: Number,
     }],
-    
+
     // Display settings
     order: {
       type: Number,
@@ -65,12 +65,12 @@ const categorySchema = new mongoose.Schema(
       type: Boolean,
       default: true, // Show in sidebar menu
     },
-    
+
     // SEO
     metaTitle: String,
     metaDescription: String,
     metaKeywords: [String],
-    
+
     // Stats (auto-calculated)
     productCount: {
       type: Number,
@@ -126,15 +126,15 @@ categorySchema.pre('save', async function (next) {
 // Static: get category tree
 categorySchema.statics.getTree = async function (options = {}) {
   const { onlyActive = true, onlyMenu = false } = options;
-  
+
   const query = {};
   if (onlyActive) query.isActive = true;
   if (onlyMenu) query.showInMenu = true;
-  
+
   const categories = await this.find(query)
     .sort({ level: 1, order: 1, name: 1 })
     .lean();
-  
+
   // Build tree structure
   const buildTree = (items, parentId = null) => {
     return items
@@ -148,7 +148,7 @@ categorySchema.statics.getTree = async function (options = {}) {
         children: buildTree(items, item._id),
       }));
   };
-  
+
   return buildTree(categories);
 };
 
@@ -156,7 +156,7 @@ categorySchema.statics.getTree = async function (options = {}) {
 categorySchema.statics.getBreadcrumb = async function (categoryId) {
   const category = await this.findById(categoryId).lean();
   if (!category) return [];
-  
+
   return [
     ...category.ancestors,
     { _id: category._id, name: category.name, slug: category.slug, level: category.level },
@@ -167,34 +167,41 @@ categorySchema.statics.getBreadcrumb = async function (categoryId) {
 categorySchema.statics.getDescendants = async function (categoryId) {
   const category = await this.findById(categoryId);
   if (!category) return [];
-  
+
   const descendants = await this.find({
     'ancestors._id': categoryId,
   }).lean();
-  
+
   return descendants;
 };
 
 // Static: update product count
 categorySchema.statics.updateProductCount = async function (categoryId) {
   const Product = mongoose.model('Product');
-  
+
   // Get this category and all descendants
   const category = await this.findById(categoryId);
   if (!category) return;
-  
-  const descendantIds = (await this.getDescendants(categoryId)).map(d => d._id);
-  const allCategoryIds = [categoryId, ...descendantIds];
-  
-  // Count products in this category and descendants
+
+  // Get all descendants to include their products in the count
+  const descendants = await this.getDescendants(categoryId);
+
+  // Collect all slugs (current category + descendants)
+  const allCategorySlugs = [category.slug, ...descendants.map(d => d.slug)];
+
+  // Count products where any category field matches any of the slugs
   const count = await Product.countDocuments({
-    category: { $in: allCategoryIds.map(id => id.toString()) },
+    $or: [
+      { category: { $in: allCategorySlugs } },
+      { subcategory: { $in: allCategorySlugs } },
+      { productLine: { $in: allCategorySlugs } }
+    ],
     status: 'active',
   });
-  
+
   await this.findByIdAndUpdate(categoryId, { productCount: count });
-  
-  // Update parent counts
+
+  // Update parent counts (recursive)
   for (const ancestor of category.ancestors) {
     await this.updateProductCount(ancestor._id);
   }

@@ -7,6 +7,7 @@ import express from 'express';
 import * as bannerController from '../controllers/bannerController.js';
 import { protect, admin } from '../middleware/auth.js';
 import { uploadBanner } from '../middleware/upload.js';
+import { activityLogger } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -29,7 +30,7 @@ router.get('/admin', protect, admin, bannerController.getAllBanners);
  * Body: { bannerOrders: [{ id, displayOrder }, ...] }
  * PHẢI ĐẶT TRƯỚC /:id để tránh conflict
  */
-router.put('/reorder', protect, admin, bannerController.reorderBanners);
+router.put('/reorder', protect, admin, activityLogger, bannerController.reorderBanners);
 
 /**
  * GET /api/banners/:id
@@ -46,6 +47,7 @@ router.post(
   '/',
   protect,
   admin,
+  activityLogger,
   uploadBanner.single('image'),
   bannerController.createBanner
 );
@@ -59,6 +61,7 @@ router.put(
   '/:id',
   protect,
   admin,
+  activityLogger,
   uploadBanner.single('image'),
   bannerController.updateBanner
 );
@@ -67,6 +70,6 @@ router.put(
  * DELETE /api/banners/:id
  * Xóa banner (Admin only)
  */
-router.delete('/:id', protect, admin, bannerController.deleteBanner);
+router.delete('/:id', protect, admin, activityLogger, bannerController.deleteBanner);
 
 export default router;

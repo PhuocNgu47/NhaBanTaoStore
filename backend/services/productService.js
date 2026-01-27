@@ -3,7 +3,9 @@
  * Chứa logic nghiệp vụ cho products: CRUD, filter, search, pagination, reviews
  */
 
+import mongoose from 'mongoose';
 import Product from '../models/Product.js';
+import Category from '../models/Category.js';
 
 /**
  * Lấy danh sách products với filter, search, pagination
@@ -22,9 +24,29 @@ export const getProducts = async (filters) => {
     limit = 12
   } = filters;
 
+  // Xử lý category filter: lấy cả descendants
+  let categorySlugs = null;
+  if (category && category !== 'all') {
+    try {
+      const cat = await Category.findOne({ slug: category });
+      if (cat) {
+        const descendants = await Category.getDescendants(cat._id);
+        categorySlugs = [cat.slug, ...descendants.map(d => d.slug)];
+      } else {
+        // Nếu không tìm thấy category trong DB, vẫn giữ nguyên slug để tìm chính xác
+        // (đề phòng trường hợp query chuỗi đơn giản)
+        categorySlugs = [category.toLowerCase()];
+      }
+    } catch (err) {
+      console.error('Error fetching category descendants:', err);
+      categorySlugs = [category.toLowerCase()];
+    }
+  }
+
   // Xây dựng query filter
   const query = buildProductQuery({
     category,
+    categorySlugs, // Truyền danh sách slugs xuống
     search,
     minPrice,
     maxPrice,
@@ -49,7 +71,7 @@ export const getProducts = async (filters) => {
   // Đếm tổng số sản phẩm thỏa điều kiện
   const total = await Product.countDocuments(query);
 
-  // Lấy danh sách categories có sản phẩm
+  // Lấy danh sách categories có sản phẩm (chỉ lấy top level hoặc distinct values)
   const categories = await Product.distinct('category', query);
 
   return {
@@ -258,14 +280,21 @@ export const getProductReviews = async (productId, options = {}) => {
  * Build product query từ filters
  */
 const buildProductQuery = (filters) => {
-  const { category, search, minPrice, maxPrice, inStock, minRating } = filters;
+  const { category, categorySlugs, search, minPrice, maxPrice, inStock, minRating } = filters;
   let query = {
     status: 'active' // Chỉ lấy sản phẩm active
   };
 
   // Filter theo category
-  if (category) {
-    // Tìm trong category, subcategory, và productLine
+  if (categorySlugs && categorySlugs.length > 0) {
+    // Tìm trong category, subcategory, và productLine với danh sách slugs (bao gồm descendants)
+    query.$or = [
+      { category: { $in: categorySlugs } },
+      { subcategory: { $in: categorySlugs } },
+      { productLine: { $in: categorySlugs } }
+    ];
+  } else if (category && category !== 'all') {
+    // Fallback: Tìm chính xác nếu không có descendants list
     query.$or = [
       { category: category.toLowerCase() },
       { subcategory: category.toLowerCase() },
@@ -337,7 +366,12 @@ const buildSortOptions = (sort, order) => {
  * Lấy product theo slug
  */
 export const getProductBySlug = async (slug) => {
-  const product = await Product.findOne({ slug, status: 'active' });
+  let product = await Product.findOne({ slug, status: 'active' });
+
+  // Fallback: Tìm theo ID nếu slug không tồn tại và chuỗi là ID hợp lệ
+  if (!product && mongoose.isValidObjectId(slug)) {
+    product = await Product.findOne({ _id: slug, status: 'active' });
+  }
 
   if (!product) {
     throw new Error('Không tìm thấy sản phẩm');
@@ -357,8 +391,8 @@ export const getProductBySlug = async (slug) => {
  */
 export const getProductsByCategory = async (category, options = {}) => {
   const { page = 1, limit = 12, sort = 'newest', order = 'desc' } = options;
-  
-  const query = { 
+
+  const query = {
     category: category.toLowerCase(),
     status: 'active'
   };
@@ -434,9 +468,9 @@ export const searchProducts = async (options = {}) => {
 export const getFeaturedProducts = async (options = {}) => {
   const { limit = 8 } = options;
 
-  const products = await Product.find({ 
-    featured: true, 
-    status: 'active' 
+  const products = await Product.find({
+    featured: true,
+    status: 'active'
   })
     .limit(parseInt(limit))
     .sort({ createdAt: -1 });

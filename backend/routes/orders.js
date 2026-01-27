@@ -5,7 +5,8 @@
 
 import express from 'express';
 import * as orderController from '../controllers/orderController.js';
-import { protect, admin } from '../middleware/auth.js';
+import { protect, admin, optionalProtect } from '../middleware/auth.js';
+import { activityLogger } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -26,14 +27,14 @@ router.get('/stats', protect, admin, orderController.getOrderStats);
  * POST /api/orders
  * Tạo đơn hàng mới (authenticated or guest)
  */
-router.post('/', orderController.createOrder);
+router.post('/', optionalProtect, orderController.createOrder);
 
 /**
  * POST /api/orders/from-cart
  * Tạo đơn hàng từ giỏ hàng (tự động lấy items từ cart)
  * Phải đặt TRƯỚC route /:id để tránh conflict
  */
-router.post('/from-cart', orderController.createOrderFromCart);
+router.post('/from-cart', optionalProtect, orderController.createOrderFromCart);
 
 /**
  * GET /api/orders/guest/:email/:orderNumber
@@ -52,31 +53,31 @@ router.get('/:id', protect, orderController.getOrderById);
  * PUT /api/orders/:id/confirm
  * Xác nhận đơn hàng (Admin only)
  */
-router.put('/:id/confirm', protect, admin, orderController.confirmOrder);
+router.put('/:id/confirm', protect, admin, activityLogger, orderController.confirmOrder);
 
 /**
  * PUT /api/orders/:id/payment
  * Cập nhật trạng thái thanh toán (Admin only)
  */
-router.put('/:id/payment', protect, admin, orderController.updatePayment);
+router.put('/:id/payment', protect, admin, activityLogger, orderController.updatePayment);
 
 /**
  * PATCH /api/orders/:id/status
  * Cập nhật trạng thái đơn hàng (Admin only)
  */
-router.patch('/:id/status', protect, admin, orderController.updateOrderStatus);
+router.patch('/:id/status', protect, admin, activityLogger, orderController.updateOrderStatus);
 
 /**
  * PATCH /api/orders/:id/items
  * Cập nhật danh sách items (quantity) của đơn hàng (Admin only)
  */
-router.patch('/:id/items', protect, admin, orderController.updateOrderItems);
+router.patch('/:id/items', protect, admin, activityLogger, orderController.updateOrderItems);
 
 /**
  * PUT /api/orders/:id
  * Cập nhật đơn hàng (Admin)
  */
-router.put('/:id', protect, admin, orderController.updateOrder);
+router.put('/:id', protect, admin, activityLogger, orderController.updateOrder);
 
 /**
  * PATCH /api/orders/:id/cancel

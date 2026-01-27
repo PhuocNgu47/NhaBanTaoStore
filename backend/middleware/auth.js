@@ -21,7 +21,7 @@ export const protect = (req, res, next) => {
     // Lấy token từ header Authorization
     // Format: "Bearer <token>"
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
       return res.status(401).json({
         success: false,
@@ -102,5 +102,35 @@ export const admin = (req, res, next) => {
   }
 
   // Cho phép tiếp tục
+  next();
+};
+
+/**
+ * Middleware xác thực không bắt buộc (Optional Auth)
+ * Nếu có token hợp lệ -> gán req.user
+ * Nếu không có token hoặc lỗi -> không gán req.user, nhưng vẫn cho qua
+ */
+export const optionalProtect = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+
+      if (token && token !== 'null' && token !== 'undefined') {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          req.user = decoded;
+        } catch (err) {
+          // Token lỗi -> bỏ qua, coi như guest
+          console.log('Optional auth token error:', err.message);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Optional auth middleware error:', error);
+  }
+
+  // Luôn cho qua
   next();
 };

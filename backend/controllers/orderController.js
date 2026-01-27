@@ -24,7 +24,7 @@ export const getOrders = async (req, res) => {
     };
 
     const result = await orderService.getOrders(req.user.id, isAdmin, options);
-    
+
     res.json({
       success: true,
       ...result
@@ -49,7 +49,7 @@ export const getOrderStats = async (req, res) => {
     };
 
     const stats = await orderService.getOrderStats(options);
-    
+
     res.json({
       success: true,
       stats
@@ -73,17 +73,17 @@ export const getOrderById = async (req, res) => {
       req.user.id,
       req.user.role === 'admin'
     );
-    
+
     res.json({
       success: true,
       order
     });
   } catch (error) {
     console.error('Get order error:', error);
-    
+
     const statusCode = error.message.includes('Không tìm thấy') ? 404 :
-                      error.message.includes('Không có quyền') ? 403 : 500;
-    
+      error.message.includes('Không có quyền') ? 403 : 500;
+
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Lỗi khi lấy đơn hàng'
@@ -97,39 +97,27 @@ export const getOrderById = async (req, res) => {
  */
 export const createOrder = async (req, res) => {
   try {
-    // Lấy userId từ token nếu có
+    // Lấy userId từ token nếu có (đã xử lý bởi optionalProtect middleware)
     let userId = null;
-    
-    // Kiểm tra token trong header
-    if (req.headers.authorization) {
-      try {
-        const authHeader = req.headers.authorization;
-        const token = authHeader.replace('Bearer ', '').trim();
-        
-        if (token && token !== 'null' && token !== 'undefined' && token.length > 10) {
-          const jwt = await import('jsonwebtoken');
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          userId = decoded.id;
-          console.log('✅ Verified token, userId:', userId);
-        } else {
-          console.log('⚠️ Token invalid format:', token?.substring(0, 20));
-        }
-      } catch (err) {
-        // Token không hợp lệ hoặc hết hạn, tiếp tục như guest
-        console.log('⚠️ Token invalid or expired, proceeding as guest:', err.message);
-      }
+
+    // Nếu có req.user từ middleware, ưu tiên dùng
+    if (req.user?.id) {
+      userId = req.user.id;
+      console.log('✅ Got userId from req.user:', userId);
+    } else {
+      console.log('⚠️ No authenticated user found, proceeding as guest');
     }
-    
+
     // Nếu có req.user từ middleware (nếu route có protect), ưu tiên dùng
     if (req.user?.id) {
       userId = req.user.id;
       console.log('✅ Got userId from req.user:', userId);
     }
-    
+
     console.log('📦 Creating order - userId:', userId, 'guestEmail:', req.body.guestEmail, 'hasAuthHeader:', !!req.headers.authorization);
-    
+
     const order = await orderService.createOrder(req.body, userId);
-    
+
     res.status(201).json({
       success: true,
       message: 'Đơn hàng đã được tạo thành công! Email xác nhận đã được gửi.',
@@ -144,12 +132,12 @@ export const createOrder = async (req, res) => {
       guestEmail: req.body.guestEmail ? 'provided' : 'missing',
       shippingAddress: req.body.shippingAddress ? 'provided' : 'missing'
     });
-    
-    const statusCode = error.message.includes('Vui lòng') || 
-                      error.message.includes('không hợp lệ') ||
-                      error.message.includes('Email') ||
-                      error.message.includes('Giỏ hàng') ? 400 : 500;
-    
+
+    const statusCode = error.message.includes('Vui lòng') ||
+      error.message.includes('không hợp lệ') ||
+      error.message.includes('Email') ||
+      error.message.includes('Giỏ hàng') ? 400 : 500;
+
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Lỗi khi tạo đơn hàng. Vui lòng thử lại.',
@@ -171,7 +159,7 @@ export const updateOrderStatus = async (req, res) => {
       req.user.id,
       trackingNumber
     );
-    
+
     res.json({
       success: true,
       message: 'Cập nhật trạng thái đơn hàng thành công',
@@ -182,10 +170,10 @@ export const updateOrderStatus = async (req, res) => {
     console.error('Error stack:', error.stack);
     console.error('Request body:', req.body);
     console.error('Order ID:', req.params.id);
-    
+
     const statusCode = error.message.includes('Không tìm thấy') ? 404 :
-                      error.message.includes('không hợp lệ') ? 400 : 500;
-    
+      error.message.includes('không hợp lệ') ? 400 : 500;
+
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Lỗi khi cập nhật trạng thái đơn hàng',
@@ -212,7 +200,7 @@ export const cancelOrder = async (req, res) => {
     }
 
     const order = await orderService.cancelOrder(id, userId, reason, isAdmin);
-    
+
     res.json({
       success: true,
       message: 'Đã hủy đơn hàng',
@@ -220,11 +208,11 @@ export const cancelOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Cancel order error:', error);
-    
+
     const statusCode = error.message.includes('Không tìm thấy') ? 404 :
-                      error.message.includes('quyền') ? 403 :
-                      error.message.includes('Không thể hủy') ? 400 : 500;
-    
+      error.message.includes('quyền') ? 403 :
+        error.message.includes('Không thể hủy') ? 400 : 500;
+
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Lỗi khi hủy đơn hàng'
@@ -270,7 +258,7 @@ export const updateOrderItems = async (req, res) => {
     console.error('Update order items error:', error);
 
     const statusCode = error.message.includes('Không tìm thấy') ? 404 :
-                      error.message.includes('không hợp lệ') ? 400 : 500;
+      error.message.includes('không hợp lệ') ? 400 : 500;
 
     res.status(statusCode).json({
       success: false,
@@ -306,7 +294,7 @@ export const confirmOrder = async (req, res) => {
   try {
     const { note } = req.body;
     const order = await orderService.confirmOrder(req.params.id, req.user.id, note);
-    
+
     res.json({
       success: true,
       message: 'Xác nhận đơn hàng thành công',
@@ -314,11 +302,11 @@ export const confirmOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Confirm order error:', error);
-    
+
     const statusCode = error.message.includes('Không tìm thấy') ? 404 :
-                      error.message.includes('không thể') || 
-                      error.message.includes('phải đã') ? 400 : 500;
-    
+      error.message.includes('không thể') ||
+        error.message.includes('phải đã') ? 400 : 500;
+
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Lỗi khi xác nhận đơn hàng'
@@ -333,7 +321,7 @@ export const confirmOrder = async (req, res) => {
 export const updatePayment = async (req, res) => {
   try {
     const { paymentStatus, note, paymentDetails } = req.body;
-    
+
     if (!paymentStatus) {
       return res.status(400).json({
         success: false,
@@ -348,7 +336,7 @@ export const updatePayment = async (req, res) => {
       note,
       paymentDetails
     );
-    
+
     res.json({
       success: true,
       message: 'Cập nhật trạng thái thanh toán thành công',
@@ -356,10 +344,10 @@ export const updatePayment = async (req, res) => {
     });
   } catch (error) {
     console.error('Update payment error:', error);
-    
+
     const statusCode = error.message.includes('Không tìm thấy') ? 404 :
-                      error.message.includes('không hợp lệ') ? 400 : 500;
-    
+      error.message.includes('không hợp lệ') ? 400 : 500;
+
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Lỗi khi cập nhật trạng thái thanh toán'
@@ -374,33 +362,19 @@ export const updatePayment = async (req, res) => {
  */
 export const createOrderFromCart = async (req, res) => {
   try {
-    // Lấy userId từ token nếu có (tương tự createOrder)
+    // Lấy userId từ token nếu có (đã xử lý bởi optionalProtect middleware)
     let userId = null;
-    
-    // Kiểm tra token trong header
-    if (req.headers.authorization) {
-      try {
-        const authHeader = req.headers.authorization;
-        const token = authHeader.replace('Bearer ', '').trim();
-        
-        if (token && token !== 'null' && token !== 'undefined' && token.length > 10) {
-          const jwt = await import('jsonwebtoken');
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          userId = decoded.id;
-        }
-      } catch (err) {
-        // Token không hợp lệ hoặc hết hạn, tiếp tục như guest
-        console.log('Token invalid or expired, proceeding as guest:', err.message);
-      }
-    }
-    
-    // Nếu có req.user từ middleware (nếu route có protect), ưu tiên dùng
+
+    // Nếu có req.user từ middleware, ưu tiên dùng
     if (req.user?.id) {
       userId = req.user.id;
+      console.log('✅ Got userId from req.user:', userId);
+    } else {
+      console.log('⚠️ No authenticated user found, proceeding as guest');
     }
-    
+
     const sessionId = req.headers['x-session-id'] || null;
-    
+
     // Validate: Phải có userId hoặc sessionId
     if (!userId && !sessionId) {
       return res.status(400).json({
@@ -408,14 +382,14 @@ export const createOrderFromCart = async (req, res) => {
         message: 'Không thể xác định giỏ hàng. Vui lòng đăng nhập hoặc thử lại.'
       });
     }
-    
+
     // Lấy cart
     let cart;
     let items = [];
-    
+
     try {
       cart = await cartService.getCart(userId, sessionId);
-      
+
       if (!cart || !cart.items || cart.items.length === 0) {
         // Nếu cart trống, kiểm tra xem có items trong request body không (fallback)
         if (req.body.items && req.body.items.length > 0) {
@@ -433,11 +407,11 @@ export const createOrderFromCart = async (req, res) => {
           // Handle both populated and non-populated productId
           const productId = item.productId?._id || item.productId;
           const variantId = item.variantId?._id || item.variantId || null;
-          
+
           if (!productId) {
             throw new Error('Sản phẩm trong giỏ hàng không hợp lệ');
           }
-          
+
           return {
             productId,
             variantId,
@@ -447,7 +421,7 @@ export const createOrderFromCart = async (req, res) => {
       }
     } catch (cartError) {
       console.error('Get cart error:', cartError);
-      
+
       // Fallback: Nếu không lấy được cart nhưng có items trong request body, dùng items đó
       if (req.body.items && req.body.items.length > 0) {
         console.log('Cannot get cart, using items from request body as fallback');
@@ -459,7 +433,7 @@ export const createOrderFromCart = async (req, res) => {
         });
       }
     }
-    
+
     // Validate items
     if (!items || items.length === 0) {
       return res.status(400).json({
@@ -515,14 +489,14 @@ export const createOrderFromCart = async (req, res) => {
   } catch (error) {
     console.error('Create order from cart error:', error);
     console.error('Error stack:', error.stack);
-    
-    const statusCode = error.message.includes('Vui lòng') || 
-                      error.message.includes('không hợp lệ') ||
-                      error.message.includes('Email') ||
-                      error.message.includes('Giỏ hàng') ||
-                      error.message.includes('tồn kho') ||
-                      error.message.includes('Sản phẩm') ? 400 : 500;
-    
+
+    const statusCode = error.message.includes('Vui lòng') ||
+      error.message.includes('không hợp lệ') ||
+      error.message.includes('Email') ||
+      error.message.includes('Giỏ hàng') ||
+      error.message.includes('tồn kho') ||
+      error.message.includes('Sản phẩm') ? 400 : 500;
+
     res.status(statusCode).json({
       success: false,
       message: error.message || 'Lỗi khi tạo đơn hàng từ giỏ hàng. Vui lòng thử lại.'

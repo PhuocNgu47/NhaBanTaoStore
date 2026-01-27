@@ -17,6 +17,7 @@ import {
   FiHeart,
   FiImage,
   FiTrendingUp,
+  FiActivity,
 } from 'react-icons/fi';
 import { useAuth } from '../hooks';
 
@@ -32,6 +33,7 @@ const menuItems = [
   { path: '/admin/ma-giam-gia', icon: FiGift, label: 'Mã giảm giá' },
   { path: '/admin/ton-kho', icon: FiPackage, label: 'Tồn kho' },
   { path: '/admin/thong-ke', icon: FiBarChart2, label: 'Thống kê' },
+  { path: '/admin/logs', icon: FiActivity, label: 'Nhật ký' },
   { path: '/admin/cai-dat', icon: FiSettings, label: 'Cài đặt' },
 ];
 

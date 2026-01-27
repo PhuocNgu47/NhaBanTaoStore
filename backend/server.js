@@ -54,16 +54,16 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'API documentation for Apple E-commerce backend',
     },
-    servers:[
-  {
-    url: 'http://localhost:5000/api',
-    description: 'Local',
-  },
-  {
-    url: 'https://YOUR-BACKEND.onrender.com/api',
-    description: 'Production',
-  },
-],
+    servers: [
+      {
+        url: 'http://localhost:5000/api',
+        description: 'Local',
+      },
+      {
+        url: 'https://YOUR-BACKEND.onrender.com/api',
+        description: 'Production',
+      },
+    ],
 
   },
   // apis: ['./routes/*.js', './models/*.js'],
@@ -121,7 +121,7 @@ connectDB();
 app.get('/api/health', (req, res) => {
   // Lấy trạng thái kết nối database
   const dbStatus = getConnectionStatus();
-  
+
   // Trả về thông tin trạng thái
   res.json({
     status: 'ok',
@@ -139,7 +139,7 @@ app.get('/api/health', (req, res) => {
  * Trả về danh sách các endpoints có sẵn
  */
 app.get('/api', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'E-commerce API - Apple Store',
     version: '1.0.0',
     description: 'API cho website thương mại điện tử bán sản phẩm Apple',
@@ -226,6 +226,10 @@ app.use('/api/track', trackingRoutes);
 import leadsRoutes from './routes/leads.js';
 app.use('/api/admin/leads', leadsRoutes);
 
+// Activity Logs: Admin activity tracking
+import activityLogRoutes from './routes/activityLogs.js';
+app.use('/api/activity-logs', activityLogRoutes);
+
 // ============================================
 // XỬ LÝ LỖI (ERROR HANDLING)
 // ============================================
@@ -248,7 +252,7 @@ app.use((err, req, res, next) => {
 
   // Lấy mã lỗi (mặc định: 500 - Internal Server Error)
   const statusCode = err.statusCode || 500;
-  
+
   // Lấy thông báo lỗi (mặc định: Lỗi máy chủ)
   const message = err.message || 'Lỗi máy chủ nội bộ';
 

@@ -34,15 +34,15 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { trackView } = useTracking();
-  
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  
+
   // Variant selection states - MUST be before any early returns
   const [selectedType, setSelectedType] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
@@ -52,19 +52,19 @@ const ProductDetailPage = () => {
   // Group variants by type, model, storage, color - MUST be before any early returns
   const variantOptions = useMemo(() => {
     const variants = product?.variants || [];
-    
+
     // Get unique types
     const types = [...new Set(variants.map(v => v.type).filter(Boolean))];
-    
+
     // Get unique models (for iPad)
     const models = [...new Set(variants.map(v => v.model).filter(Boolean))];
-    
+
     // Get unique storage options
     const storages = [...new Set(variants.map(v => v.attributes?.storage).filter(Boolean))];
-    
+
     // Get unique colors
     const colors = [...new Set(variants.map(v => v.attributes?.color).filter(Boolean))];
-    
+
     return { types, models, storages, colors, variants };
   }, [product?.variants]);
 
@@ -115,16 +115,16 @@ const ProductDetailPage = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await productService.getProductBySlug(slug);
-        
+
         if (response.success && response.product) {
           const prod = response.product;
           setProduct(prod);
-          
+
           // Track product view
           trackView(prod);
-          
+
           // Set default variant
           if (prod.variants && prod.variants.length > 0) {
             setSelectedVariant(prod.variants[0]);
@@ -210,11 +210,16 @@ const ProductDetailPage = () => {
   };
 
   // Convert specifications object to array
-  const specifications = product.specifications 
+  const specifications = product.specifications
     ? Object.entries(product.specifications).map(([label, value]) => ({ label, value }))
     : [];
 
+  // Check if out of stock
+  const currentStock = selectedVariant?.stock ?? product.stock ?? 0;
+  const isOutOfStock = currentStock <= 0;
+
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     addToCart({
       id: product._id,
       name: product.name,
@@ -226,6 +231,7 @@ const ProductDetailPage = () => {
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) return;
     const buyNowItem = {
       id: product._id,
       name: product.name,
@@ -296,11 +302,10 @@ const ProductDetailPage = () => {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedImage === index
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
                           ? 'border-blue-600 ring-2 ring-blue-200'
                           : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                        }`}
                     >
                       <img
                         src={image || '/placeholder-product.jpg'}
@@ -361,13 +366,12 @@ const ProductDetailPage = () => {
                           key={type}
                           onClick={() => available && setSelectedType(type)}
                           disabled={!available}
-                          className={`relative px-4 py-2 border-2 rounded-xl font-medium transition-all ${
-                            selectedType === type
+                          className={`relative px-4 py-2 border-2 rounded-xl font-medium transition-all ${selectedType === type
                               ? `${typeConfig?.color || 'border-blue-600 bg-blue-50 text-blue-700'} border-2 shadow-sm`
                               : available
                                 ? 'border-gray-300 text-gray-700 hover:border-gray-400'
                                 : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                          }`}
+                            }`}
                         >
                           <span className="mr-1">{typeConfig?.badge}</span>
                           {typeConfig?.label || type}
@@ -400,13 +404,12 @@ const ProductDetailPage = () => {
                           key={model}
                           onClick={() => available && setSelectedModel(model)}
                           disabled={!available}
-                          className={`relative px-5 py-3 border-2 rounded-xl font-medium transition-all ${
-                            selectedModel === model
+                          className={`relative px-5 py-3 border-2 rounded-xl font-medium transition-all ${selectedModel === model
                               ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
                               : available
                                 ? 'border-gray-300 text-gray-700 hover:border-gray-400'
                                 : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                          }`}
+                            }`}
                         >
                           {modelConfig?.label || model}
                           {selectedModel === model && (
@@ -431,13 +434,12 @@ const ProductDetailPage = () => {
                           key={storage}
                           onClick={() => available && setSelectedStorage(storage)}
                           disabled={!available}
-                          className={`relative px-6 py-3 border-2 rounded-xl font-medium transition-all ${
-                            selectedStorage === storage
+                          className={`relative px-6 py-3 border-2 rounded-xl font-medium transition-all ${selectedStorage === storage
                               ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
                               : available
                                 ? 'border-gray-300 text-gray-700 hover:border-gray-400'
                                 : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50 line-through'
-                          }`}
+                            }`}
                         >
                           {storage}
                           {selectedStorage === storage && (
@@ -462,13 +464,12 @@ const ProductDetailPage = () => {
                           key={color}
                           onClick={() => available && setSelectedColor(color)}
                           disabled={!available}
-                          className={`relative px-5 py-3 border-2 rounded-xl font-medium transition-all ${
-                            selectedColor === color
+                          className={`relative px-5 py-3 border-2 rounded-xl font-medium transition-all ${selectedColor === color
                               ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
                               : available
                                 ? 'border-gray-300 text-gray-700 hover:border-gray-400'
                                 : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                          }`}
+                            }`}
                         >
                           {color}
                           {selectedColor === color && (
@@ -498,29 +499,38 @@ const ProductDetailPage = () => {
               {/* Quantity Selector */}
               <div className="mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                  <div className={`flex items-center border-2 border-gray-300 rounded-lg overflow-hidden ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}>
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-700 font-bold text-xl"
+                      disabled={isOutOfStock}
+                      className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-700 font-bold text-xl disabled:cursor-not-allowed"
                     >
                       −
                     </button>
                     <input
                       type="text"
-                      value={quantity}
+                      value={isOutOfStock ? 0 : quantity}
                       readOnly
-                      className="w-16 h-12 text-center font-semibold text-lg border-x-2 border-gray-300"
+                      className="w-16 h-12 text-center font-semibold text-lg border-x-2 border-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      disabled={isOutOfStock}
                     />
                     <button
-                      onClick={() => setQuantity(Math.min(selectedVariant?.stock || product.stock || 99, quantity + 1))}
-                      className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-700 font-bold text-xl"
+                      onClick={() => setQuantity(Math.min(currentStock || 99, quantity + 1))}
+                      disabled={isOutOfStock}
+                      className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-700 font-bold text-xl disabled:cursor-not-allowed"
                     >
                       +
                     </button>
                   </div>
-                  <span className="text-gray-500 text-sm">
-                    Còn {selectedVariant?.stock || product.stock || 0} sản phẩm
-                  </span>
+                  {isOutOfStock ? (
+                    <span className="text-red-600 font-bold text-lg flex items-center gap-2">
+                      HẾT HÀNG
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 text-sm">
+                      Còn {currentStock} sản phẩm
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -528,17 +538,31 @@ const ProductDetailPage = () => {
               <div className="space-y-3 mb-6">
                 <button
                   onClick={handleBuyNow}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl"
+                  disabled={isOutOfStock}
+                  className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl ${isOutOfStock
+                      ? 'bg-gray-400 text-white cursor-not-allowed opacity-70'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                    }`}
                 >
-                  MUA NGAY
+                  {isOutOfStock ? 'HẾT HÀNG' : 'MUA NGAY'}
                 </button>
                 <div className="grid grid-cols-2 gap-3">
-                  <button className="bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl font-semibold transition-all">
+                  <button
+                    disabled={isOutOfStock}
+                    className={`py-3 rounded-xl font-semibold transition-all ${isOutOfStock
+                        ? 'bg-gray-300 text-white cursor-not-allowed opacity-70'
+                        : 'bg-blue-700 hover:bg-blue-800 text-white'
+                      }`}
+                  >
                     MUA TRẢ GÓP
                   </button>
                   <button
                     onClick={handleAddToCart}
-                    className="border-2 border-blue-700 text-blue-700 hover:bg-blue-50 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                    disabled={isOutOfStock}
+                    className={`border-2 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${isOutOfStock
+                        ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
+                        : 'border-blue-700 text-blue-700 hover:bg-blue-50'
+                      }`}
                   >
                     <FiShoppingCart className="w-5 h-5" />
                     THÊM VÀO GIỎ HÀNG
