@@ -23,7 +23,7 @@ const AdminSettingsPage = () => {
         {/* General Settings */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Cài đặt chung</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -78,7 +78,7 @@ const AdminSettingsPage = () => {
         {/* Shipping Settings */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Cài đặt vận chuyển</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -102,7 +102,7 @@ const AdminSettingsPage = () => {
         {/* Payment Settings */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Cài đặt thanh toán</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="flex items-center gap-2">
@@ -128,7 +128,7 @@ const AdminSettingsPage = () => {
         {/* Bank Info */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-800 mb-4">Thông tin ngân hàng</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
