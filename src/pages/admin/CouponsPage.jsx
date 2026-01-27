@@ -23,13 +23,13 @@ const CouponsPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  
+
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     code: '',
@@ -67,15 +67,15 @@ const CouponsPage = () => {
 
   // Filter coupons
   const filteredCoupons = coupons.filter(coupon => {
-    const matchesSearch = 
+    const matchesSearch =
       coupon.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       coupon.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     if (statusFilter === 'all') return matchesSearch;
     if (statusFilter === 'active') return matchesSearch && coupon.isActive && new Date(coupon.validUntil) >= new Date();
     if (statusFilter === 'expired') return matchesSearch && new Date(coupon.validUntil) < new Date();
     if (statusFilter === 'inactive') return matchesSearch && !coupon.isActive;
-    
+
     return matchesSearch;
   });
 
@@ -133,7 +133,7 @@ const CouponsPage = () => {
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.code || !formData.name || !formData.discountValue) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
@@ -141,7 +141,7 @@ const CouponsPage = () => {
 
     try {
       setSubmitting(true);
-      
+
       const data = {
         ...formData,
         discountValue: Number(formData.discountValue),
@@ -157,7 +157,7 @@ const CouponsPage = () => {
         await couponService.createCoupon(data);
         toast.success('Tạo mã giảm giá thành công');
       }
-      
+
       setShowModal(false);
       fetchCoupons();
     } catch (error) {
@@ -170,7 +170,7 @@ const CouponsPage = () => {
   // Handle delete
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa mã giảm giá này?')) return;
-    
+
     try {
       setDeleting(id);
       await couponService.deleteCoupon(id);
@@ -194,7 +194,7 @@ const CouponsPage = () => {
     const now = new Date();
     const validUntil = new Date(coupon.validUntil);
     const validFrom = new Date(coupon.validFrom);
-    
+
     if (!coupon.isActive) return { label: 'Vô hiệu', color: 'bg-gray-100 text-gray-600' };
     if (validUntil < now) return { label: 'Hết hạn', color: 'bg-red-100 text-red-600' };
     if (validFrom > now) return { label: 'Chưa bắt đầu', color: 'bg-yellow-100 text-yellow-600' };
@@ -294,7 +294,7 @@ const CouponsPage = () => {
       </div>
 
       {/* Coupons List */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl whitespace-nowrap shadow-sm  overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <FiLoader className="w-8 h-8 animate-spin text-blue-500" />
