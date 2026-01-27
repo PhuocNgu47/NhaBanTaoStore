@@ -41,6 +41,7 @@ const AdminInventoryPage = lazy(() => import('../pages/admin/InventoryPage'));
 const AdminCustomersPage = lazy(() => import('../pages/admin/CustomersPage'));
 const AdminBannersPage = lazy(() => import('../pages/admin/BannersPage'));
 const AdminLeadsPage = lazy(() => import('../pages/admin/LeadsPage'));
+const AdminActivityLogsPage = lazy(() => import('../pages/admin/ActivityLogsPage'));
 
 // Wrapper for lazy loading
 const LazyPage = ({ children }) => (
@@ -167,30 +168,30 @@ const router = createBrowserRouter([
     ],
   },
 
-      {
-        path: 'dang-nhap',
-        element: (
-          <LazyPage>
-            <LoginPage />
-          </LazyPage>
-        ),
-      },
-      {
-        path: 'dang-ky',
-        element: (
-          <LazyPage>
-            <RegisterPage />
-          </LazyPage>
-        ),
-      },
-      {
-        path: 'quen-mat-khau',
-        element: (
-          <LazyPage>
-            <ForgotPasswordPage />
-          </LazyPage>
-        ),
-      },
+  {
+    path: 'dang-nhap',
+    element: (
+      <LazyPage>
+        <LoginPage />
+      </LazyPage>
+    ),
+  },
+  {
+    path: 'dang-ky',
+    element: (
+      <LazyPage>
+        <RegisterPage />
+      </LazyPage>
+    ),
+  },
+  {
+    path: 'quen-mat-khau',
+    element: (
+      <LazyPage>
+        <ForgotPasswordPage />
+      </LazyPage>
+    ),
+  },
 
   // Admin Layout Routes
   {
@@ -294,6 +295,14 @@ const router = createBrowserRouter([
         element: (
           <LazyPage>
             <AdminLeadsPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'logs',
+        element: (
+          <LazyPage>
+            <AdminActivityLogsPage />
           </LazyPage>
         ),
       },

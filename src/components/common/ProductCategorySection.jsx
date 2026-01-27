@@ -94,6 +94,8 @@ const ProductCategorySection = ({
   showViewAll = true,
   viewAllLink = '/san-pham',
   onAddToCart,
+  className = '',
+  headerClassName = '',
 }) => {
   const [activeFilter, setActiveFilter] = useState(filters[0]?.value || 'all');
   const scrollRef = useRef(null);
@@ -114,51 +116,51 @@ const ProductCategorySection = ({
       : products.filter((p) => p.condition === activeFilter);
 
   return (
-    <div className="mb-8">
+    <div className={`mb-8 ${className}`}>
       {/* Header */}
-      <div className={`${bgColor} rounded-t-2xl px-6 py-4`}>
-        <div className="flex items-center justify-between">
-          <h2
-            className={`text-xl font-bold uppercase ${
-              titleColor === 'white' ? 'text-white' : 'text-gray-900'
-            }`}
-          >
-            {title}
-          </h2>
+      {(title || filters.length > 0 || showViewAll) && (
+        <div className={`${bgColor} rounded-t-2xl px-6 py-4 ${headerClassName}`}>
+          <div className="flex items-center justify-between">
+            <h2
+              className={`text-xl font-bold uppercase ${titleColor === 'white' ? 'text-white' : 'text-gray-900'
+                }`}
+            >
+              {title}
+            </h2>
 
-          <div className="flex items-center gap-4">
-            {/* Filter Tabs */}
-            {filters.length > 0 && (
-              <div className="hidden md:flex items-center gap-2">
-                {filters.map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setActiveFilter(filter.value)}
-                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      activeFilter === filter.value
+            <div className="flex items-center gap-4">
+              {/* Filter Tabs */}
+              {/* {filters.length > 0 && (
+                <div className="hidden md:flex items-center gap-2">
+                  {filters.map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => setActiveFilter(filter.value)}
+                      className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeFilter === filter.value
                         ? 'bg-white text-blue-800'
                         : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            )}
+                        }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              )} */}
 
-            {/* View All */}
-            {showViewAll && (
-              <Link
-                to={viewAllLink}
-                className="flex items-center gap-1 bg-white text-blue-800 px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Xem tất cả
-                <FiChevronRight className="w-4 h-4" />
-              </Link>
-            )}
+              {/* View All */}
+              {showViewAll && (
+                <Link
+                  to={viewAllLink}
+                  className="flex items-center gap-1 bg-white text-blue-800 px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
+                >
+                  Xem tất cả
+                  <FiChevronRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Products Slider */}
       <div className="bg-gray-100 rounded-b-2xl p-4 relative">

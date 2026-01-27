@@ -17,6 +17,7 @@ import {
   FiHeart,
   FiImage,
   FiTrendingUp,
+  FiActivity,
 } from 'react-icons/fi';
 import { useAuth } from '../hooks';
 
@@ -32,6 +33,7 @@ const menuItems = [
   { path: '/admin/ma-giam-gia', icon: FiGift, label: 'Mã giảm giá' },
   { path: '/admin/ton-kho', icon: FiPackage, label: 'Tồn kho' },
   { path: '/admin/thong-ke', icon: FiBarChart2, label: 'Thống kê' },
+  { path: '/admin/logs', icon: FiActivity, label: 'Nhật ký' },
   { path: '/admin/cai-dat', icon: FiSettings, label: 'Cài đặt' },
 ];
 
@@ -72,9 +74,8 @@ const AdminLayout = () => {
       <div className="flex">
         {/* Sidebar - Desktop */}
         <aside
-          className={`hidden lg:flex flex-col fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 ${
-            sidebarOpen ? 'w-64' : 'w-20'
-          }`}
+          className={`hidden lg:flex flex-col fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'
+            }`}
         >
           {/* Logo */}
           <div className="p-4 border-b flex items-center justify-between">
@@ -100,11 +101,10 @@ const AdminLayout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                  isActive(item.path, item.exact)
+                className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${isActive(item.path, item.exact)
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <item.icon size={20} />
                 {sidebarOpen && <span>{item.label}</span>}
@@ -129,9 +129,8 @@ const AdminLayout = () => {
             </div>
             <button
               onClick={logout}
-              className={`mt-3 flex items-center gap-2 text-red-600 hover:text-red-700 ${
-                sidebarOpen ? '' : 'justify-center w-full'
-              }`}
+              className={`mt-3 flex items-center gap-2 text-red-600 hover:text-red-700 ${sidebarOpen ? '' : 'justify-center w-full'
+                }`}
             >
               <FiLogOut size={18} />
               {sidebarOpen && <span>Đăng xuất</span>}
@@ -162,11 +161,10 @@ const AdminLayout = () => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                      isActive(item.path, item.exact)
+                    className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${isActive(item.path, item.exact)
                         ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <item.icon size={20} />
                     <span>{item.label}</span>
@@ -189,9 +187,8 @@ const AdminLayout = () => {
 
         {/* Main Content */}
         <main
-          className={`flex-1 transition-all duration-300 ${
-            sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-          }`}
+          className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+            }`}
         >
           <div className="p-6">
             <Outlet />

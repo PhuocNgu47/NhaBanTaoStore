@@ -6,7 +6,28 @@ import Product from '../models/Product.js';
 // @access  Public
 export const getCategories = async (req, res) => {
   try {
-    const { flat, onlyActive = 'true', onlyMenu = 'false' } = req.query;
+    const { flat, onlyActive = 'true', onlyMenu = 'false', isFeatured } = req.query;
+
+    // Get Featured Categories with Children (for Home Page)
+    if (isFeatured === 'true') {
+      const categories = await Category.find({
+        isFeatured: true,
+        isActive: true,
+        parent: null // Only get root featured categories
+      })
+        .sort({ order: 1 })
+        .populate({
+          path: 'children',
+          match: { isActive: true },
+          options: { sort: { order: 1 } }
+        })
+        .lean();
+
+      return res.json({
+        success: true,
+        categories,
+      });
+    }
 
     if (flat === 'true') {
       // Return flat list

@@ -9,23 +9,23 @@ const TYPE_BADGES = {
 };
 
 const ProductCard = ({ product }) => {
-  const { 
-    id, 
+  const {
+    id,
     _id,
-    name, 
-    slug, 
-    price, 
-    originalPrice, 
+    name,
+    slug,
+    price,
+    originalPrice,
     maxPrice,
-    image, 
-    category, 
-    isNew, 
+    image,
+    category,
+    isNew,
     isBestSeller,
-    inStock, 
+    inStock,
     stock,
     variants = []
   } = product;
-  
+
   const discount = originalPrice ? calculateDiscount(originalPrice, price) : 0;
   const productId = id || _id;
   const hasVariants = variants && variants.length > 0;
@@ -45,7 +45,7 @@ const ProductCard = ({ product }) => {
             alt={name}
             className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
           />
-          
+
           {/* Badges - Top Left */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {discount > 0 && (
@@ -71,8 +71,8 @@ const ProductCard = ({ product }) => {
               {variantTypes.slice(0, 2).map(type => {
                 const badge = TYPE_BADGES[type];
                 return badge ? (
-                  <span 
-                    key={type} 
+                  <span
+                    key={type}
                     className={`${badge.color} text-white text-[10px] font-medium px-1.5 py-0.5 rounded`}
                   >
                     {badge.label}

@@ -3,6 +3,7 @@ import { BannerSlider, Features, ProductsByPrice, CategorySection } from '../com
 import { ProductCategorySection, CategoryTabsSection, SocialGallery } from '../components/common';
 import { useCart } from '../hooks';
 import { productService } from '../services/productService';
+import { categoryService } from '../services/categoryService';
 
 const ipadFilters = [
   { label: 'Nguyên Seal', value: 'seal' },
@@ -18,38 +19,61 @@ const macbookFilters = [
 
 const HomePage = () => {
   const { addToCart } = useCart();
-
-  const [ipadProducts, setIpadProducts] = useState([]);
-  const [macbookProducts, setMacbookProducts] = useState([]);
+  const [featuredSections, setFeaturedSections] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Fetch iPad and MacBook products in parallel
-        const [ipadResponse, macbookResponse] = await Promise.all([
-          productService.getProductsByCategory('ipad', { limit: 6 }),
-          productService.getProductsByCategory('macbook', { limit: 6 })
-        ]);
+        // 1. Fetch featured categories (iPad, MacBook, etc.)
+        const categoryRes = await categoryService.getFeaturedCategories();
 
-        if (ipadResponse.success) {
-          setIpadProducts(ipadResponse.products.map(transformProduct));
-        }
+        if (categoryRes.success && categoryRes.categories.length > 0) {
+          const categories = categoryRes.categories;
 
-        if (macbookResponse.success) {
-          setMacbookProducts(macbookResponse.products.map(transformProduct));
+          // 2. Fetch products for each featured category
+          const sectionsData = await Promise.all(
+            categories.map(async (cat) => {
+              const productRes = await productService.getProductsByCategory(cat.slug, { limit: 8 });
+
+              return {
+                id: cat._id,
+                title: cat.name, // Or cat.description if you prefer "iPad tối ưu..."
+                subTitle: cat.description,
+                slug: cat.slug,
+                bgColor: getCategoryColor(cat.slug), // Helper to pick color
+                tabs: cat.children?.map(child => ({
+                  label: child.name,
+                  link: `/danh-muc/${child.slug}`
+                })) || [],
+                products: productRes.success ? productRes.products.map(transformProduct) : [],
+                viewAllLink: `/danh-muc/${cat.slug}`
+              };
+            })
+          );
+
+          setFeaturedSections(sectionsData);
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching home data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
+
+  // Helper to assign colors based on category
+  const getCategoryColor = (slug) => {
+    if (slug.includes('ipad')) return 'bg-blue-800';
+    if (slug.includes('macbook')) return 'bg-gray-900';
+    if (slug.includes('watch')) return 'bg-orange-700';
+    if (slug.includes('iphone')) return 'bg-black';
+    return 'bg-blue-600'; // Default
+  };
 
   // Transform API product to component format
   const transformProduct = (product) => ({
@@ -58,7 +82,7 @@ const HomePage = () => {
     slug: product.slug,
     price: product.variants?.[0]?.price || product.price,
     originalPrice: product.variants?.[0]?.originalPrice || product.originalPrice,
-    image: product.images?.[0] || product.image || '/placeholder-product.jpg',
+    image: product.image || product.images?.[0] || '/placeholder-product.jpg',
     tags: [product.category?.name || '', product.subcategory || ''].filter(Boolean),
     inStock: product.stock > 0,
     condition: product.condition || 'seal',
@@ -82,55 +106,43 @@ const HomePage = () => {
       {/* <CategorySection /> */}
       <ProductsByPrice />
 
-      {/* Product Category Sections - Near Footer */}
-      <div className="container-custom py-8">
-        {/* iPad Section */}
-        <CategoryTabsSection
-          title="iPad tối ưu cho học sinh sinh viên"
-          bgColor="bg-blue-800"
-          tabs={[
-            { label: 'iPad Pro', link: '/danh-muc/ipad-pro' },
-            { label: 'iPad Air', link: '/danh-muc/ipad-air' },
-            { label: 'iPad Mini', link: '/danh-muc/ipad-mini' },
-          ]}
-          viewAllLink="/danh-muc/ipad"
-        />
-        <ProductCategorySection
-          bgColor="bg-gray-50"
-          products={ipadProducts}
-          filters={ipadFilters}
-          viewAllLink="/danh-muc/ipad"
-          onAddToCart={handleAddToCart}
-        />
-
-        {/* MacBook Section */}
-        <CategoryTabsSection
-          title="MacBook"
-          bgColor="bg-blue-800"
-          tabs={[
-            { label: 'MacBook Air', link: '/danh-muc/macbook-air' },
-            { label: 'MacBook Pro', link: '/danh-muc/macbook-pro' },
-          ]}
-          viewAllLink="/danh-muc/macbook"
-        />
-        <ProductCategorySection
-          bgColor="bg-gray-50"
-          products={macbookProducts}
-          filters={macbookFilters}
-          viewAllLink="/danh-muc/macbook"
-          onAddToCart={handleAddToCart}
-        />
-
-        {/* Accessories Section
-        <CategoryTabsSection
-          title="Nâng cao trải nghiệm"
-          bgColor="bg-blue-800"
-          tabs={accessoryTabs}
-          viewAllLink="/danh-muc/phu-kien"
-        /> */}
+      <div className="container-custom py-8 space-y-12">
+        {loading ? (
+          <div className="py-20 text-center">
+            <p>Đang tải sản phẩm nổi bật...</p>
+          </div>
+        ) : featuredSections.length > 0 ? (
+          featuredSections.map((section) => (
+            <div key={section.id}>
+              <CategoryTabsSection
+                title={section.subTitle || section.title}
+                bgColor={section.bgColor}
+                tabs={section.tabs}
+                viewAllLink={section.viewAllLink}
+                className="rounded-b-none"
+              />
+              <ProductCategorySection
+                bgColor="bg-gray-50"
+                products={section.products}
+                filters={[
+                  { label: 'Nguyên Seal', value: 'seal' },
+                  { label: 'Open Box', value: 'openbox' },
+                  { label: 'No Box', value: 'nobox' },
+                ]}
+                viewAllLink={section.viewAllLink}
+                showViewAll={false}
+                headerClassName="rounded-t-none border-t border-gray-200"
+                onAddToCart={handleAddToCart}
+              />
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-10 text-gray-500">
+            {/* Fallback content or empty state */}
+          </div>
+        )}
       </div>
 
-      {/* Social Gallery Section */}
       <SocialGallery />
     </div>
   );

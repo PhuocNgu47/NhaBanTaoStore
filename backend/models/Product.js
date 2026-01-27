@@ -113,9 +113,40 @@ productSchema.index({ 'variants.sku': 1 });
 productSchema.index({ rating: -1, reviewCount: -1 });
 productSchema.index({ status: 1 });
 
+// Helper function to create slug
+function slugify(text) {
+  return text.toString().toLowerCase()
+    .normalize('NFD') // Tách dấu ra khỏi ký tự (ví dụ: ẹ -> e + dấu nặng)
+    .replace(/[\u0300-\u036f]/g, '') // Xóa các dấu
+    .replace(/[đĐ]/g, 'd') // Xử lý chữ đ
+    .replace(/\s+/g, '-') // Thay khoảng trắng bằng dấu gạch ngang
+    .replace(/[^\w\-]+/g, '') // Xóa các ký tự đặc biệt
+    .replace(/\-\-+/g, '-') // Xóa dấu gạch ngang liên tiếp
+    .replace(/^-+/, '') // Xóa dấu gạch ngang ở đầu
+    .replace(/-+$/, ''); // Xóa dấu gạch ngang ở cuối
+}
+
 // Auto update updatedAt and calculate price from variants
-productSchema.pre('save', function (next) {
+productSchema.pre('save', async function (next) {
   this.updatedAt = new Date();
+
+  // Generate slug if not exists or if name changed
+  if (!this.slug || (this.isModified('name') && !this.slug)) {
+    let baseSlug = slugify(this.name);
+
+    // Check for duplicate slug
+    // Note: This is a simple check. For high concurrency, use a library or unique index error handling
+    const Product = mongoose.model('Product');
+    let slug = baseSlug;
+    let counter = 1;
+
+    while (await Product.findOne({ slug, _id: { $ne: this._id } })) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    this.slug = slug;
+  }
 
   // Track old category for post-save hook
   if (this.isModified('category') && !this.isNew) {

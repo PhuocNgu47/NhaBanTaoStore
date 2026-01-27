@@ -21,6 +21,14 @@ export const categoryService = {
     return response.data;
   },
 
+  // Get featured categories (for homepage)
+  getFeaturedCategories: async () => {
+    const response = await api.get('/categories', {
+      params: { isFeatured: 'true' }
+    });
+    return response.data;
+  },
+
   // Get category by slug
   getCategoryBySlug: async (slug) => {
     const response = await api.get(`/categories/${slug}`);
