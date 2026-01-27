@@ -42,6 +42,7 @@ const AdminCustomersPage = lazy(() => import('../pages/admin/CustomersPage'));
 const AdminBannersPage = lazy(() => import('../pages/admin/BannersPage'));
 const AdminLeadsPage = lazy(() => import('../pages/admin/LeadsPage'));
 const AdminActivityLogsPage = lazy(() => import('../pages/admin/ActivityLogsPage'));
+const AdminStatisticsPage = lazy(() => import('../pages/admin/StatisticsPage'));
 
 // Wrapper for lazy loading
 const LazyPage = ({ children }) => (
@@ -207,6 +208,14 @@ const router = createBrowserRouter([
         element: (
           <LazyPage>
             <DashboardPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'thong-ke',
+        element: (
+          <LazyPage>
+            <AdminStatisticsPage />
           </LazyPage>
         ),
       },
