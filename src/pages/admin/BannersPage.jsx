@@ -26,6 +26,10 @@ const initialFormState = {
   endDate: '',
   saleLabel: '',
   salePercent: 0,
+  backgroundImage: null,
+  backgroundImageUrl: '',
+  backgroundColor: '',
+  textColor: 'white',
 };
 
 const BannersPage = () => {
@@ -41,6 +45,7 @@ const BannersPage = () => {
   const [previewBanner, setPreviewBanner] = useState(null);
   const [formData, setFormData] = useState(initialFormState);
   const [imagePreview, setImagePreview] = useState(null);
+  const [bgImagePreview, setBgImagePreview] = useState(null);
   const [isActiveFilter, setIsActiveFilter] = useState('all');
 
   // Fetch banners
@@ -99,11 +104,32 @@ const BannersPage = () => {
     setImagePreview(url);
   };
 
+  // Handle background image upload
+  const handleBgImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, backgroundImage: file, backgroundImageUrl: '' }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBgImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle background image URL input
+  const handleBgImageUrlChange = (e) => {
+    const url = e.target.value;
+    setFormData((prev) => ({ ...prev, backgroundImageUrl: url, backgroundImage: null }));
+    setBgImagePreview(url);
+  };
+
   // Open modal for create
   const handleCreate = () => {
     setEditingBanner(null);
     setFormData(initialFormState);
     setImagePreview(null);
+    setBgImagePreview(null);
     setShowModal(true);
   };
 
@@ -123,8 +149,15 @@ const BannersPage = () => {
       endDate: banner.endDate ? new Date(banner.endDate).toISOString().split('T')[0] : '',
       saleLabel: banner.saleLabel || '',
       salePercent: banner.salePercent || 0,
+      saleLabel: banner.saleLabel || '',
+      salePercent: banner.salePercent || 0,
+      backgroundImage: null,
+      backgroundImageUrl: banner.backgroundImage || '',
+      backgroundColor: banner.backgroundColor || '',
+      textColor: banner.textColor || 'white',
     });
     setImagePreview(banner.image);
+    setBgImagePreview(banner.backgroundImage);
     setShowModal(true);
   };
 
@@ -152,7 +185,7 @@ const BannersPage = () => {
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const submitData = {
       ...formData,
       salePercent: Number(formData.salePercent) || 0,
@@ -164,6 +197,16 @@ const BannersPage = () => {
       submitData.image = formData.image;
     } else if (formData.imageUrl) {
       submitData.image = formData.imageUrl;
+    }
+
+    // Handle background image
+    if (formData.backgroundImage) {
+      submitData.backgroundImage = formData.backgroundImage;
+    } else if (formData.backgroundImageUrl) {
+      submitData.backgroundImage = formData.backgroundImageUrl;
+    } else {
+      // If we are clearing background image or keeping existing string
+      submitData.backgroundImage = formData.backgroundImageUrl;
     }
 
     if (editingBanner) {
@@ -179,6 +222,7 @@ const BannersPage = () => {
     setEditingBanner(null);
     setFormData(initialFormState);
     setImagePreview(null);
+    setBgImagePreview(null);
   };
 
   // Get image URL for display
@@ -277,11 +321,10 @@ const BannersPage = () => {
                     <td className="px-6 py-4">{banner.displayOrder}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded text-sm ${
-                          banner.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
+                        className={`px-2 py-1 rounded text-sm ${banner.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                          }`}
                       >
                         {banner.isActive ? 'Hoạt động' : 'Tắt'}
                       </span>
@@ -377,6 +420,83 @@ const BannersPage = () => {
                         />
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Custom Background */}
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="font-semibold mb-3 text-gray-700">Tùy chỉnh nền (Tùy chọn)</h3>
+
+                  {/* Background Image */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-2">Ảnh nền banner</label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBgImageChange}
+                          className="border rounded-lg p-2 w-full"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Hoặc nhập URL ảnh nền:</p>
+                        <input
+                          type="text"
+                          name="backgroundImageUrl"
+                          value={formData.backgroundImageUrl}
+                          onChange={handleBgImageUrlChange}
+                          placeholder="https://example.com/bg.jpg"
+                          className="border rounded-lg p-2 w-full mt-1"
+                        />
+                      </div>
+                      {bgImagePreview && (
+                        <div className="w-32 h-20 border rounded-lg overflow-hidden">
+                          <img
+                            src={bgImagePreview}
+                            alt="Background Preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Background Color */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Màu nền (nếu không có ảnh)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          name="backgroundColor"
+                          value={formData.backgroundColor || '#000000'}
+                          onChange={handleInputChange}
+                          className="w-10 h-10 border rounded cursor-pointer p-0.5"
+                        />
+                        <input
+                          type="text"
+                          name="backgroundColor"
+                          value={formData.backgroundColor}
+                          onChange={handleInputChange}
+                          placeholder="Mã màu (VD: #0f172a)"
+                          className="border rounded-lg p-2 flex-1"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Text Color */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Màu chữ</label>
+                      <select
+                        name="textColor"
+                        value={formData.textColor}
+                        onChange={handleInputChange}
+                        className="border rounded-lg p-2 w-full"
+                      >
+                        <option value="white">Màu trắng (White)</option>
+                        <option value="black">Màu đen (Black)</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -576,31 +696,45 @@ const BannersPage = () => {
                 <FiX size={24} />
               </button>
             </div>
-            <div className="relative min-h-[300px] rounded-lg overflow-hidden">
-              <img
-                src={getImageUrl(previewBanner.image)}
-                alt={previewBanner.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = '/placeholder-banner.jpg';
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-              <div className="absolute inset-0 flex items-center p-8 text-white">
-                <div>
+            <div
+              className="relative min-h-[300px] rounded-lg overflow-hidden flex items-center"
+              style={{
+                background: previewBanner.backgroundImageUrl || previewBanner.backgroundImage
+                  ? `url(${previewBanner.backgroundImageUrl || (typeof previewBanner.backgroundImage === 'string' ? previewBanner.backgroundImage : bgImagePreview)}) center/cover no-repeat`
+                  : previewBanner.backgroundColor || 'linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a)'
+              }}
+            >
+              <div className="absolute inset-0 bg-black/40" />
+
+              <div className="relative w-full p-8 grid grid-cols-5 gap-4 items-center">
+                <div className="col-span-3">
                   {previewBanner.saleLabel && (
-                    <div className="inline-block bg-red-500 px-4 py-2 rounded-full mb-4 text-white font-bold">
+                    <div className="inline-block bg-gradient-to-r from-orange-500 to-red-500 px-3 py-1 rounded-full mb-4 text-white text-sm font-bold shadow-lg">
                       {previewBanner.saleLabel}
                       {previewBanner.salePercent > 0 && ` - ${previewBanner.salePercent}%`}
                     </div>
                   )}
-                  <h1 className="text-4xl font-bold mb-2">{previewBanner.title}</h1>
+                  <h1 className={`text-3xl font-bold mb-2 ${previewBanner.textColor === 'black' ? 'text-gray-900' : 'text-white'}`}>
+                    {previewBanner.title}
+                  </h1>
                   {previewBanner.subtitle && (
-                    <p className="text-xl text-gray-200 mb-4">{previewBanner.subtitle}</p>
+                    <p className={`text-lg mb-4 line-clamp-2 ${previewBanner.textColor === 'black' ? 'text-gray-700' : 'text-gray-200'}`}>
+                      {previewBanner.subtitle}
+                    </p>
                   )}
-                  <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-full font-semibold">
-                    Xem chi tiết
+                  <button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2.5 rounded-lg font-semibold shadow-lg">
+                    {previewBanner.buttonText || 'Khám phá'}
                   </button>
+                </div>
+
+                <div className="col-span-2 flex justify-center">
+                  {previewBanner.image && (getImageUrl(previewBanner.image) || imagePreview) && (
+                    <img
+                      src={imagePreview || getImageUrl(previewBanner.image)}
+                      alt={previewBanner.title}
+                      className="max-h-[200px] w-auto object-contain drop-shadow-2xl"
+                    />
+                  )}
                 </div>
               </div>
             </div>
