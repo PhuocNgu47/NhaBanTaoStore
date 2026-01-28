@@ -897,25 +897,88 @@ const CheckoutPage = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-bold text-gray-800">Quét mã VietQR</span>
-                        <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold">Recommended</span>
+                        <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-bold">Khuyên dùng</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">
                         Quét mã QR bằng ứng dụng ngân hàng để thanh toán nhanh chóng, chính xác.
+                        <span className="text-green-600 font-bold ml-1">(Miễn phí vận chuyển)</span>
                       </p>
 
-                      {paymentMethod === 'qr_code' && settings?.bank && (
-                        <div className="mt-3 bg-white p-4 rounded-lg border border-gray-200 flex flex-col items-center">
-                          <img
-                            src={`https://img.vietqr.io/image/${settings.bank.bankName}-${settings.bank.bankNumber}-compact2.png?amount=${finalTotal}&addInfo=THANHTOAN DONHANG`}
-                            alt="VietQR"
-                            className="w-48 h-48 object-contain mb-2"
-                          />
-                          <p className="text-center text-sm text-gray-500">
-                            Mở App Ngân hàng &gt; Quét mã QR <br />
-                            <span className="text-xs">(Số tiền đã được điền tự động)</span>
-                          </p>
-                        </div>
-                      )}
+                      {paymentMethod === 'qr_code' && settings?.banks?.length > 0 && (() => {
+                        const bank = settings.banks.find(b => b.isDefault) || settings.banks[0];
+                        const transferContent = `THANHTOAN ${watchPhone || 'DONHANG'}`;
+                        const qrUrl = `https://img.vietqr.io/image/${bank.bin || bank.shortName}-${bank.bankNumber}-compact2.png?amount=${finalTotal}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(bank.bankHolder || '')}`;
+
+                        return (
+                          <div className="mt-3 bg-gradient-to-b from-blue-50 to-white p-4 rounded-xl border-2 border-blue-200">
+                            {/* QR Code */}
+                            <div className="flex flex-col items-center mb-4">
+                              <img
+                                src={qrUrl}
+                                alt="VietQR"
+                                className="w-52 h-52 object-contain rounded-lg shadow-md"
+                              />
+                              <p className="text-center text-sm text-gray-600 mt-2">
+                                Mở App Ngân hàng → Quét mã QR
+                              </p>
+                            </div>
+
+                            {/* Bank Info */}
+                            <div className="bg-white rounded-lg p-3 space-y-2 border border-gray-100">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-500 text-sm">Ngân hàng</span>
+                                <span className="font-semibold text-gray-800">{bank.bankName || bank.shortName}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-500 text-sm">Số tài khoản</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-blue-700">{bank.bankNumber}</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      navigator.clipboard.writeText(bank.bankNumber);
+                                      toast.success('Đã copy số tài khoản!');
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 text-xs underline"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-500 text-sm">Chủ tài khoản</span>
+                                <span className="font-semibold text-gray-800">{bank.bankHolder}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-500 text-sm">Số tiền</span>
+                                <span className="font-bold text-red-600 text-lg">{formatPrice(finalTotal)}</span>
+                              </div>
+                              <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                <span className="text-gray-500 text-sm">Nội dung CK</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-gray-800">{transferContent}</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      navigator.clipboard.writeText(transferContent);
+                                      toast.success('Đã copy nội dung CK!');
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800 text-xs underline"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <p className="text-center text-xs text-gray-500 mt-3">
+                              💡 Sau khi chuyển khoản, Admin sẽ xác nhận và xử lý đơn hàng
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </label>
 

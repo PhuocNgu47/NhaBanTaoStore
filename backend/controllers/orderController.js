@@ -11,7 +11,7 @@ import * as cartService from '../services/cartService.js';
  */
 export const getOrders = async (req, res) => {
   try {
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = ['admin', 'owner', 'staff'].includes(req.user.role);
     const options = {
       page: req.query.page || 1,
       limit: req.query.limit || 20,

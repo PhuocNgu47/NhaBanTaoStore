@@ -19,14 +19,14 @@ export const useAuth = () => {
     // CRITICAL: Complete logout sequence
     // 1. Clear cart state first (prevents cart persistence)
     dispatch(clearCart());
-    
+
     // 2. Clear auth state and localStorage
     dispatch(logout());
-    
+
     // 3. Clear any additional user-related data
     // Note: removeToken() and removeUser() are called inside logout reducer
     // Cart is already cleared by clearCart action above
-    
+
     // Optional: Clear guestId for complete reset (uncomment if needed)
     // localStorage.removeItem('guestId');
   };
@@ -36,6 +36,10 @@ export const useAuth = () => {
   };
 
   const isAdmin = user?.role === 'admin';
+  const isOwner = user?.role === 'owner';
+  const isStaff = user?.role === 'staff';
+
+  const role = user?.role || 'guest';
 
   // Helper function for checkout auto-fill
   const getUserContactInfo = () => {
@@ -47,7 +51,7 @@ export const useAuth = () => {
         name: user.name || '',
       };
     }
-    
+
     // Priority 2: Fallback to localStorage
     return getContactInfo();
   };
@@ -58,6 +62,9 @@ export const useAuth = () => {
     isLoading,
     error,
     isAdmin,
+    isOwner,
+    isStaff,
+    role,
     login: handleLogin,
     register: handleRegister,
     logout: handleLogout,

@@ -22,31 +22,47 @@ import {
 import { useAuth } from '../hooks';
 
 const menuItems = [
-  { path: '/admin', icon: FiHome, label: 'Dashboard', exact: true },
-  { path: '/admin/san-pham', icon: FiBox, label: 'Sản phẩm' },
-  { path: '/admin/danh-muc', icon: FiTag, label: 'Danh mục' },
-  { path: '/admin/banner', icon: FiImage, label: 'Banner' },
-  { path: '/admin/don-hang', icon: FiShoppingBag, label: 'Đơn hàng' },
-  { path: '/admin/leads', icon: FiTrendingUp, label: 'Leads' },
-  { path: '/admin/nguoi-dung', icon: FiUsers, label: 'Người dùng' },
-  { path: '/admin/khach-hang', icon: FiHeart, label: 'Khách hàng VIP' },
-  { path: '/admin/ma-giam-gia', icon: FiGift, label: 'Mã giảm giá' },
-  { path: '/admin/ton-kho', icon: FiPackage, label: 'Tồn kho' },
-  { path: '/admin/thong-ke', icon: FiBarChart2, label: 'Thống kê' },
-  { path: '/admin/logs', icon: FiActivity, label: 'Nhật ký' },
-  { path: '/admin/cai-dat', icon: FiSettings, label: 'Cài đặt' },
+  { path: '/admin', icon: FiHome, label: 'Dashboard', exact: true, roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/san-pham', icon: FiBox, label: 'Sản phẩm', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/danh-muc', icon: FiTag, label: 'Danh mục', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/banner', icon: FiImage, label: 'Banner', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/don-hang', icon: FiShoppingBag, label: 'Đơn hàng', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/leads', icon: FiTrendingUp, label: 'Leads', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/nguoi-dung', icon: FiUsers, label: 'Người dùng', roles: ['admin', 'owner'] },
+  { path: '/admin/khach-hang', icon: FiHeart, label: 'Khách hàng VIP', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/ma-giam-gia', icon: FiGift, label: 'Mã giảm giá', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/ton-kho', icon: FiPackage, label: 'Tồn kho', roles: ['admin', 'owner', 'staff'] },
+  { path: '/admin/thong-ke', icon: FiBarChart2, label: 'Thống kê', roles: ['admin', 'owner'] },
+  { path: '/admin/logs', icon: FiActivity, label: 'Nhật ký', roles: ['admin'] },
+  { path: '/admin/cai-dat', icon: FiSettings, label: 'Cài đặt', roles: ['admin', 'owner'] },
 ];
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const { user, isAdmin, logout } = useAuth();
+  const { user, role, logout } = useAuth();
 
-  // Redirect if not admin
-  if (!isAdmin) {
+  const allowedAdminRoles = ['admin', 'owner', 'staff'];
+  const hasAccess = allowedAdminRoles.includes(role);
+
+  // Redirect if not authorized
+  if (!hasAccess) {
     return <Navigate to="/" replace />;
   }
+
+  const filteredMenuItems = menuItems.filter(item =>
+    !item.roles || item.roles.includes(role)
+  );
+
+  const getRoleLabel = (r) => {
+    const labels = {
+      admin: 'Quản trị hệ thống',
+      owner: 'Chủ cửa hàng',
+      staff: 'Nhân viên',
+      user: 'Khách hàng'
+    };
+    return labels[r] || r;
+  };
 
   const isActive = (path, exact = false) => {
     if (exact) {
@@ -99,13 +115,13 @@ const AdminLayout = () => {
 
           {/* Navigation */}
           <nav className="flex-1 py-4 overflow-y-auto">
-            {menuItems.map((item) => (
+            {filteredMenuItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${isActive(item.path, item.exact)
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 <item.icon size={20} />
@@ -123,9 +139,9 @@ const AdminLayout = () => {
                 </span>
               </div>
               {sidebarOpen && (
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">{user?.name}</p>
-                  <p className="text-sm text-gray-500">Admin</p>
+                <div className="flex-1 overflow-hidden">
+                  <p className="font-medium text-gray-800 truncate">{user?.name}</p>
+                  <p className="text-xs text-gray-500">{getRoleLabel(role)}</p>
                 </div>
               )}
             </div>
@@ -158,14 +174,14 @@ const AdminLayout = () => {
               </div>
 
               <nav className="py-4">
-                {menuItems.map((item) => (
+                {filteredMenuItems.map((item) => (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${isActive(item.path, item.exact)
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:bg-gray-100'
                       }`}
                   >
                     <item.icon size={20} />

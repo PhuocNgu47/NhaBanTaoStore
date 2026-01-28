@@ -218,7 +218,7 @@ const router = createBrowserRouter([
   {
     path: '/admin',
     element: (
-      <ProtectedRoute adminOnly>
+      <ProtectedRoute allowedRoles={['admin', 'owner', 'staff']}>
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -234,9 +234,11 @@ const router = createBrowserRouter([
       {
         path: 'thong-ke',
         element: (
-          <LazyPage>
-            <AdminStatisticsPage />
-          </LazyPage>
+          <ProtectedRoute allowedRoles={['admin', 'owner']}>
+            <LazyPage>
+              <AdminStatisticsPage />
+            </LazyPage>
+          </ProtectedRoute>
         ),
       },
       {
@@ -274,17 +276,21 @@ const router = createBrowserRouter([
       {
         path: 'nguoi-dung',
         element: (
-          <LazyPage>
-            <AdminUsersPage />
-          </LazyPage>
+          <ProtectedRoute allowedRoles={['admin', 'owner']}>
+            <LazyPage>
+              <AdminUsersPage />
+            </LazyPage>
+          </ProtectedRoute>
         ),
       },
       {
         path: 'cai-dat',
         element: (
-          <LazyPage>
-            <AdminSettingsPage />
-          </LazyPage>
+          <ProtectedRoute allowedRoles={['admin', 'owner']}>
+            <LazyPage>
+              <AdminSettingsPage />
+            </LazyPage>
+          </ProtectedRoute>
         ),
       },
       {
@@ -338,9 +344,11 @@ const router = createBrowserRouter([
       {
         path: 'logs',
         element: (
-          <LazyPage>
-            <AdminActivityLogsPage />
-          </LazyPage>
+          <ProtectedRoute allowedRoles={['admin']}>
+            <LazyPage>
+              <AdminActivityLogsPage />
+            </LazyPage>
+          </ProtectedRoute>
         ),
       },
       {

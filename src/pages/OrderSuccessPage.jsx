@@ -4,6 +4,8 @@ import { formatPrice, formatDate } from '../utils/helpers';
 
 import { useEffect, useState } from 'react';
 import { orderService } from '../services/orderService';
+import { useSettings } from '../contexts/SettingsContext';
+import { toast } from 'react-toastify';
 
 // Checkout steps component
 const CheckoutSteps = ({ currentStep }) => {
@@ -19,18 +21,16 @@ const CheckoutSteps = ({ currentStep }) => {
         <div key={step.id} className="flex items-center">
           <div className="flex items-center gap-2">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                step.id <= currentStep
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${step.id <= currentStep
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-400'
-              }`}
+                }`}
             >
               <step.icon className="w-5 h-5" />
             </div>
             <span
-              className={`font-medium ${
-                step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'
-              }`}
+              className={`font-medium ${step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'
+                }`}
             >
               {step.name}
             </span>
@@ -57,6 +57,7 @@ const OrderSuccessPage = () => {
   const location = useLocation();
   const params = useParams();
   const [order, setOrder] = useState(location.state?.order || null);
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -65,7 +66,7 @@ const OrderSuccessPage = () => {
     if (order && order._id) {
       return;
     }
-    
+
     // Ưu tiên lấy orderId từ params, nếu không có thì thử lấy từ query hoặc location.state
     let orderId = params.orderId || location.state?.orderId || location.state?.order?._id;
     if (!orderId) {
@@ -73,17 +74,17 @@ const OrderSuccessPage = () => {
       const searchParams = new URLSearchParams(location.search);
       orderId = searchParams.get('orderId');
     }
-    
+
     // Nếu có order object từ state nhưng chưa có _id, thử lấy từ order object
     if (!orderId && location.state?.order?._id) {
       orderId = location.state.order._id;
     }
-    
+
     if (!orderId) {
       setError('Không tìm thấy mã đơn hàng.');
       return;
     }
-    
+
     setLoading(true);
     orderService.getOrderById(orderId)
       .then((response) => {
@@ -110,6 +111,7 @@ const OrderSuccessPage = () => {
       zalopay: 'ZaloPay',
       vnpay: 'VNPay',
       stripe: 'Thẻ quốc tế',
+      qr_code: 'Quét mã VietQR',
     };
     return methods[method] || method;
   };
@@ -130,12 +132,12 @@ const OrderSuccessPage = () => {
   // Transform API order to display format
   const getDisplayOrder = () => {
     if (!order) return null;
-    
+
     // If order is already in display format (from old checkout flow)
     if (order.orderId && order.customerName) {
       return order;
     }
-    
+
     // Transform API order format to display format
     return {
       orderId: order.orderNumber || order._id,
@@ -202,6 +204,93 @@ const OrderSuccessPage = () => {
         <h1 className="text-2xl md:text-3xl font-bold text-blue-900 text-center mb-8 uppercase">
           Cảm ơn bạn đã mua hàng tại Nhà Bán Táo Store
         </h1>
+
+        {/* VietQR Pay Now Section */}
+        {(order?.paymentMethod === 'bank_transfer' || order?.paymentMethod === 'qr_code') &&
+          order?.paymentStatus === 'unpaid' && settings?.banks?.length > 0 && (() => {
+            const bank = settings.banks.find(b => b.isDefault) || settings.banks[0];
+            const transferContent = `THANHTOAN ${order.orderNumber || order._id}`;
+            const qrUrl = `https://img.vietqr.io/image/${bank.bin || bank.shortName}-${bank.bankNumber}-compact2.png?amount=${order.totalAmount}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(bank.bankHolder || '')}`;
+
+            return (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden max-w-4xl mx-auto mb-8 border-2 border-green-500">
+                <div className="bg-green-500 text-white p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold">THANH TOÁN NGAY QUA VIETQR</span>
+                    <span className="bg-white text-green-600 text-xs px-2 py-0.5 rounded-full font-bold uppercase">Nhanh & Chính xác</span>
+                  </div>
+                </div>
+
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div className="flex flex-col items-center">
+                    <div className="bg-white p-2 rounded-xl border-2 border-gray-100 shadow-sm">
+                      <img
+                        src={qrUrl}
+                        alt="VietQR"
+                        className="w-64 h-64 object-contain"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-4 text-center">
+                      Mở App Ngân hàng → Quét mã QR <br />
+                      <span className="text-xs font-medium text-blue-600">(Mã QR tự động điền số tiền & nội dung)</span>
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                      <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm">Ngân hàng</span>
+                        <span className="font-bold text-gray-800">{bank.bankName || bank.shortName}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm">Số tài khoản</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-blue-700">{bank.bankNumber}</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(bank.bankNumber);
+                              toast.success('Đã copy số tài khoản!');
+                            }}
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm">Chủ tài khoản</span>
+                        <span className="font-bold text-gray-800 uppercase">{bank.bankHolder}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <span className="text-gray-500 text-sm">Số tiền</span>
+                        <span className="font-bold text-red-600 text-xl">{formatPrice(order.totalAmount)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 text-sm">Nội dung CK</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-800">{transferContent}</span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(transferContent);
+                              toast.success('Đã copy nội dung!');
+                            }}
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2 text-sm text-gray-600 italic">
+                      <FiCheck className="mt-1 text-green-500 shrink-0" />
+                      <p>Hệ thống sẽ cập nhật trạng thái "Đã thanh toán" sau khi Admin xác nhận (thường từ 2-5 phút).</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
         {/* Order Details Card */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden max-w-4xl mx-auto">

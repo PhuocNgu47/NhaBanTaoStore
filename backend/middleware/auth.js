@@ -93,16 +93,46 @@ export const admin = (req, res, next) => {
     });
   }
 
-  // Kiểm tra quyền admin
-  if (req.user.role !== 'admin') {
+  // Kiểm tra quyền admin hoặc owner
+  const allowedRoles = ['admin', 'owner'];
+  if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Bạn không có quyền truy cập. Chỉ admin mới có thể thực hiện hành động này.'
+      message: 'Bạn không có quyền truy cập. Chỉ Admin hoặc Chủ shop mới có thể thực hiện hành động này.'
     });
   }
 
   // Cho phép tiếp tục
   next();
+};
+
+/**
+ * Middleware phân quyền chuyên sâu
+ * Cho phép các roles cụ thể truy cập
+ * 
+ * Cách sử dụng:
+ * router.get('/staff-route', protect, authorize('admin', 'owner', 'staff'), handlerFunction)
+ * 
+ * @param {...String} roles - Danh sách các roles được phép
+ */
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Vui lòng đăng nhập trước.'
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Bạn không có quyền truy cập. Cần quyền: ${roles.join(', ')}`
+      });
+    }
+
+    next();
+  };
 };
 
 /**
