@@ -6,8 +6,6 @@ import { productService } from '../../services/productService';
 
 const priceRanges = [
   { label: 'Tất cả', value: 'all', minPrice: null, maxPrice: null, category: null },
-  { label: 'iPad', value: 'ipad', minPrice: null, maxPrice: null, category: 'ipad' },
-  { label: 'MacBook', value: 'macbook', minPrice: null, maxPrice: null, category: 'macbook' },
   { label: 'Dưới 10 triệu', value: 'under-10m', minPrice: 0, maxPrice: 10000000, category: null },
   { label: '10 - 20 triệu', value: '10-20m', minPrice: 10000000, maxPrice: 20000000, category: null },
   { label: '20 - 30 triệu', value: '20-30m', minPrice: 20000000, maxPrice: 30000000, category: null },
@@ -26,7 +24,7 @@ const ProductsByPrice = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      
+
       const selectedRange = priceRanges.find(r => r.value === activeFilter);
       const params = {
         limit: 8,
@@ -42,7 +40,7 @@ const ProductsByPrice = () => {
       }
 
       let response;
-      
+
       // If category filter, use category endpoint
       if (selectedRange?.category) {
         response = await productService.getProductsByCategory(selectedRange.category, params);
@@ -81,24 +79,33 @@ const ProductsByPrice = () => {
       <div className="container-custom">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
-          <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-blue-600 text-white p-4 rounded-t-xl">
-              <h2 className="font-bold text-lg">SẢN PHẨM THEO TẦM GIÁ</h2>
-            </div>
-            <div className="bg-white rounded-b-xl shadow-sm overflow-hidden">
-              {priceRanges.map((range) => (
-                <button
-                  key={range.value}
-                  onClick={() => handleFilterClick(range.value)}
-                  className={`w-full text-left px-4 py-3 border-b last:border-b-0 transition-colors ${
-                    activeFilter === range.value
-                      ? 'bg-blue-50 text-blue-600 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {range.label}
-                </button>
-              ))}
+          <div className="lg:w-64 flex-shrink-0 sticky top-24 self-start h-fit">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+              <div className="bg-blue-600 p-4">
+                <h2 className="font-bold text-lg text-white uppercase tracking-wide text-center">
+                  Sản phẩm theo tầm giá
+                </h2>
+              </div>
+              <div className="flex flex-col">
+                {priceRanges.map((range, index) => (
+                  <button
+                    key={range.value}
+                    onClick={() => handleFilterClick(range.value)}
+                    className={`w-full text-left px-5 py-4 transition-all duration-200 flex items-center justify-between group ${index !== priceRanges.length - 1 ? 'border-b border-gray-100' : ''
+                      } ${activeFilter === range.value
+                        ? 'bg-blue-50 text-blue-700 font-bold'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+                      }`}
+                  >
+                    <span className={`transform transition-transform duration-200 ${activeFilter === range.value ? 'translate-x-1' : 'group-hover:translate-x-1'}`}>
+                      {range.label}
+                    </span>
+                    {activeFilter === range.value && (
+                      <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
