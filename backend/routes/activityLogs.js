@@ -10,4 +10,22 @@ const router = express.Router();
  */
 router.get('/', protect, admin, activityLogController.getActivityLogs);
 
+/**
+ * GET /api/activity-logs/stats
+ * Thống kê hoạt động (Admin only)
+ */
+router.get('/stats', protect, admin, activityLogController.getActivityStats);
+
+/**
+ * GET /api/activity-logs/:id
+ * Xem chi tiết 1 log (Admin only)
+ */
+router.get('/:id', protect, admin, activityLogController.getActivityLogDetail);
+
+/**
+ * DELETE /api/activity-logs/cleanup
+ * Dọn dẹp logs cũ (Admin only)
+ */
+router.delete('/cleanup', protect, admin, activityLogController.cleanupOldLogs);
+
 export default router;

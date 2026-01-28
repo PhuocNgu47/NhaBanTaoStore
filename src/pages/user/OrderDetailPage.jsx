@@ -18,78 +18,79 @@ import {
 import { orderService } from '../../services/orderService';
 import { formatPrice, formatDate } from '../../utils/helpers';
 import { toast } from 'react-toastify';
+import { useSettings } from '../../contexts/SettingsContext';
 
 const STATUS_CONFIG = {
-  pending: { 
-    label: 'Chờ xác nhận', 
-    color: 'bg-yellow-100 text-yellow-700 border-yellow-300', 
+  pending: {
+    label: 'Chờ xác nhận',
+    color: 'bg-yellow-100 text-yellow-700 border-yellow-300',
     icon: FiClock,
     description: 'Đơn hàng đang chờ xác nhận từ cửa hàng'
   },
-  confirmed: { 
-    label: 'Đã xác nhận', 
-    color: 'bg-blue-100 text-blue-700 border-blue-300', 
+  confirmed: {
+    label: 'Đã xác nhận',
+    color: 'bg-blue-100 text-blue-700 border-blue-300',
     icon: FiCheck,
     description: 'Đơn hàng đã được xác nhận, đang chuẩn bị hàng'
   },
-  shipping_ready: { 
-    label: 'Chờ lên đơn', 
-    color: 'bg-indigo-100 text-indigo-700 border-indigo-300', 
+  shipping_ready: {
+    label: 'Chờ lên đơn',
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-300',
     icon: FiPackage,
     description: 'Đơn hàng đã được xác nhận, chờ tạo vận đơn'
   },
-  shipping_created: { 
-    label: 'Đã lên đơn', 
-    color: 'bg-purple-100 text-purple-700 border-purple-300', 
+  shipping_created: {
+    label: 'Đã lên đơn',
+    color: 'bg-purple-100 text-purple-700 border-purple-300',
     icon: FiTruck,
     description: 'Vận đơn đã được tạo, đang chờ vận chuyển'
   },
-  delivering: { 
-    label: 'Đang giao', 
-    color: 'bg-purple-100 text-purple-700 border-purple-300', 
+  delivering: {
+    label: 'Đang giao',
+    color: 'bg-purple-100 text-purple-700 border-purple-300',
     icon: FiTruck,
     description: 'Đơn hàng đang được vận chuyển đến bạn'
   },
-  completed: { 
-    label: 'Đã giao', 
-    color: 'bg-green-100 text-green-700 border-green-300', 
+  completed: {
+    label: 'Đã giao',
+    color: 'bg-green-100 text-green-700 border-green-300',
     icon: FiCheck,
     description: 'Đơn hàng đã được giao thành công'
   },
-  cancelled: { 
-    label: 'Đã hủy', 
-    color: 'bg-red-100 text-red-700 border-red-300', 
+  cancelled: {
+    label: 'Đã hủy',
+    color: 'bg-red-100 text-red-700 border-red-300',
     icon: FiX,
     description: 'Đơn hàng đã bị hủy'
   },
-  returned: { 
-    label: 'Hoàn trả', 
-    color: 'bg-orange-100 text-orange-700 border-orange-300', 
+  returned: {
+    label: 'Hoàn trả',
+    color: 'bg-orange-100 text-orange-700 border-orange-300',
     icon: FiPackage,
     description: 'Đơn hàng đang được hoàn trả'
   },
   // Backward compatibility for old statuses
-  processing: { 
-    label: 'Đang xử lý', 
-    color: 'bg-indigo-100 text-indigo-700 border-indigo-300', 
+  processing: {
+    label: 'Đang xử lý',
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-300',
     icon: FiPackage,
     description: 'Đơn hàng đang được đóng gói'
   },
-  shipped: { 
-    label: 'Đang giao', 
-    color: 'bg-purple-100 text-purple-700 border-purple-300', 
+  shipped: {
+    label: 'Đang giao',
+    color: 'bg-purple-100 text-purple-700 border-purple-300',
     icon: FiTruck,
     description: 'Đơn hàng đang được vận chuyển đến bạn'
   },
-  delivered: { 
-    label: 'Đã giao', 
-    color: 'bg-green-100 text-green-700 border-green-300', 
+  delivered: {
+    label: 'Đã giao',
+    color: 'bg-green-100 text-green-700 border-green-300',
     icon: FiCheck,
     description: 'Đơn hàng đã được giao thành công'
   },
-  refunded: { 
-    label: 'Đã hoàn tiền', 
-    color: 'bg-gray-100 text-gray-700 border-gray-300', 
+  refunded: {
+    label: 'Đã hoàn tiền',
+    color: 'bg-gray-100 text-gray-700 border-gray-300',
     icon: FiCreditCard,
     description: 'Đã hoàn tiền cho đơn hàng'
   },
@@ -118,9 +119,10 @@ const UserOrderDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Cancel order
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -210,29 +212,28 @@ const UserOrderDetailPage = () => {
         <div className="flex items-center justify-between relative">
           {/* Progress line */}
           <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 mx-8">
-            <div 
+            <div
               className="h-full bg-blue-500 transition-all duration-500"
               style={{ width: `${(currentIndex / (STATUS_ORDER.length - 1)) * 100}%` }}
             />
           </div>
-          
+
           {/* Status points */}
           {STATUS_ORDER.map((status, index) => {
             const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
             const Icon = config.icon;
             const isActive = index <= currentIndex;
             const isCurrent = index === currentIndex;
-            
+
             return (
               <div key={status} className="flex flex-col items-center relative z-10">
-                <div 
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                    isActive 
-                      ? isCurrent 
-                        ? 'bg-blue-500 text-white ring-4 ring-blue-100' 
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isActive
+                      ? isCurrent
+                        ? 'bg-blue-500 text-white ring-4 ring-blue-100'
                         : 'bg-blue-500 text-white'
                       : 'bg-gray-200 text-gray-400'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                 </div>
@@ -243,7 +244,7 @@ const UserOrderDetailPage = () => {
             );
           })}
         </div>
-        
+
         {/* Current status description */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg text-center">
           <p className="text-blue-700">
@@ -304,6 +305,94 @@ const UserOrderDetailPage = () => {
           {renderStatus(order.status)}
         </div>
       </div>
+
+      {/* VietQR Pay Now Section */}
+      {(order?.paymentMethod === 'bank_transfer' || order?.paymentMethod === 'qr_code') &&
+        order?.paymentStatus === 'unpaid' && settings?.banks?.length > 0 && (() => {
+          const bank = settings.banks.find(b => b.isDefault) || settings.banks[0];
+          const transferContent = `THANHTOAN ${order.orderNumber}`;
+          const qrUrl = `https://img.vietqr.io/image/${bank.bin || bank.shortName}-${bank.bankNumber}-compact2.png?amount=${order.totalAmount}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(bank.bankHolder || '')}`;
+
+          return (
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-green-500">
+              <div className="bg-green-500 text-white p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FiCreditCard className="w-5 h-5" />
+                  <span className="font-bold">THANH TOÁN QUA VIETQR</span>
+                </div>
+                <span className="bg-white text-green-600 text-xs px-2 py-0.5 rounded-full font-bold uppercase">Tự động & Chính xác</span>
+              </div>
+
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="flex flex-col items-center">
+                  <div className="bg-white p-2 rounded-xl border-2 border-gray-100 shadow-sm">
+                    <img
+                      src={qrUrl}
+                      alt="VietQR"
+                      className="w-56 h-56 object-contain"
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-4 text-center">
+                    Quét mã để thanh toán ngay <br />
+                    <span className="text-xs font-medium text-blue-600">(Nội dung và số tiền đã được điền sẵn)</span>
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                      <span className="text-gray-500 text-sm">Ngân hàng</span>
+                      <span className="font-bold text-gray-800">{bank.bankName || bank.shortName}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                      <span className="text-gray-500 text-sm">Số tài khoản</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-blue-700">{bank.bankNumber}</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(bank.bankNumber);
+                            toast.success('Đã copy số tài khoản!');
+                          }}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                      <span className="text-gray-500 text-sm">Chủ tài khoản</span>
+                      <span className="font-bold text-gray-800 uppercase text-xs text-right">{bank.bankHolder}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                      <span className="text-gray-500 text-sm">Số tiền</span>
+                      <span className="font-bold text-red-600 text-lg">{formatPrice(order.totalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-sm">Nội dung CK</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-800">{transferContent}</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(transferContent);
+                            toast.success('Đã copy nội dung!');
+                          }}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 text-xs text-gray-600 italic">
+                    <FiAlertCircle className="mt-0.5 text-blue-500 shrink-0" />
+                    <p>Sau khi chuyển khoản thành công, đơn hàng sẽ được nhân viên xác nhận trong ít phút.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       {/* Progress Bar */}
       {renderProgressBar()}
@@ -454,19 +543,18 @@ const UserOrderDetailPage = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Trạng thái:</span>
-                <span className={`px-2 py-1 rounded text-sm font-medium ${
-                  order.paymentStatus === 'paid' 
+                <span className={`px-2 py-1 rounded text-sm font-medium ${order.paymentStatus === 'paid'
                     ? 'bg-green-100 text-green-700'
                     : order.paymentStatus === 'failed'
-                    ? 'bg-red-100 text-red-700'
-                    : order.paymentStatus === 'refunded'
-                    ? 'bg-gray-100 text-gray-700'
-                    : 'bg-yellow-100 text-yellow-700'
-                }`}>
-                  {order.paymentStatus === 'paid' ? 'Đã thanh toán' : 
-                   order.paymentStatus === 'failed' ? 'Thanh toán lỗi' :
-                   order.paymentStatus === 'refunded' ? 'Đã hoàn tiền' :
-                   'Chưa thanh toán'}
+                      ? 'bg-red-100 text-red-700'
+                      : order.paymentStatus === 'refunded'
+                        ? 'bg-gray-100 text-gray-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                  {order.paymentStatus === 'paid' ? 'Đã thanh toán' :
+                    order.paymentStatus === 'failed' ? 'Thanh toán lỗi' :
+                      order.paymentStatus === 'refunded' ? 'Đã hoàn tiền' :
+                        'Chưa thanh toán'}
                 </span>
               </div>
               {order.paidAt && (
@@ -619,7 +707,7 @@ const UserOrderDetailPage = () => {
               <p className="text-gray-600 mb-4">
                 Bạn có chắc chắn muốn hủy đơn hàng <strong>#{order.orderNumber}</strong>?
               </p>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Lý do hủy đơn <span className="text-red-500">*</span>

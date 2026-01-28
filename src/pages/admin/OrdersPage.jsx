@@ -14,6 +14,7 @@ import {
   FiDollarSign,
   FiChevronLeft,
   FiChevronRight,
+  FiCreditCard,
 } from 'react-icons/fi';
 import { orderService } from '../../services/orderService';
 import { formatPrice, formatDate } from '../../utils/helpers';
@@ -64,12 +65,16 @@ const AdminOrdersPage = () => {
   // Modal states
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [statusForm, setStatusForm] = useState({
     status: '',
     note: '',
     trackingNumber: '',
   });
+  const [paymentNote, setPaymentNote] = useState('');
+  const [securityPIN, setSecurityPIN] = useState('');
+  const [doubleCheck, setDoubleCheck] = useState(false);
 
   // Fetch orders
   const fetchOrders = async () => {
@@ -184,6 +189,49 @@ const AdminOrdersPage = () => {
       trackingNumber: order.trackingNumber || '',
     });
     setShowStatusModal(true);
+  };
+
+  // Open payment verify modal
+  const openPaymentModal = (order) => {
+    setSelectedOrder(order);
+    setPaymentNote('');
+    setShowPaymentModal(true);
+  };
+
+  // Handle payment verification
+  const handlePaymentVerify = async () => {
+    if (!selectedOrder) return;
+
+    if (securityPIN !== '123456') {
+      toast.error('Mã bảo mật không đúng!');
+      return;
+    }
+
+    if (!doubleCheck) {
+      toast.error('Vui lòng xác nhận bạn đã kiểm tra số tiền!');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      await orderService.updatePayment(selectedOrder._id, 'paid', paymentNote);
+      toast.success('Xác nhận thanh toán thành công');
+      setShowPaymentModal(false);
+      setSecurityPIN('');
+      setDoubleCheck(false);
+      fetchOrders();
+    } catch (error) {
+      console.error('Verify payment error:', error);
+      toast.error(error.response?.data?.message || 'Lỗi khi xác nhận thanh toán');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Check if order needs payment verification
+  const needsPaymentVerify = (order) => {
+    return (order.paymentMethod === 'bank_transfer' || order.paymentMethod === 'qr_code')
+      && order.paymentStatus === 'unpaid';
   };
 
   // Render status badge
@@ -435,6 +483,15 @@ const AdminOrdersPage = () => {
                           >
                             <FiEye className="w-5 h-5" />
                           </Link>
+                          {needsPaymentVerify(order) && (
+                            <button
+                              onClick={() => openPaymentModal(order)}
+                              className="p-2 text-yellow-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Xác nhận thanh toán"
+                            >
+                              <FiCreditCard className="w-5 h-5" />
+                            </button>
+                          )}
                           <button
                             onClick={() => openStatusModal(order)}
                             className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
@@ -589,6 +646,112 @@ const AdminOrdersPage = () => {
                 className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 resize-none"
               />
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Payment Verification Modal */}
+      <Modal
+        open={showPaymentModal && !!selectedOrder}
+        onClose={() => setShowPaymentModal(false)}
+        title={selectedOrder ? `Xác nhận thanh toán đơn #${selectedOrder.orderNumber}` : ''}
+        subtitle="Xác nhận khách hàng đã chuyển khoản thành công"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 font-medium"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handlePaymentVerify}
+              disabled={updating}
+              className="px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 font-medium"
+            >
+              {updating && <FiLoader className="animate-spin" />}
+              <FiCheck className="w-4 h-4" />
+              Xác nhận đã thanh toán
+            </button>
+          </div>
+        }
+      >
+        {selectedOrder && (
+          <div className="space-y-4">
+            {/* Order Info */}
+            <div className="bg-blue-50 rounded-xl p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-600">Mã đơn hàng</span>
+                <span className="font-mono font-bold text-blue-600">#{selectedOrder.orderNumber}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-600">Khách hàng</span>
+                <span className="font-medium">{selectedOrder.shippingAddress?.name}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-600">SĐT</span>
+                <span className="font-medium">{selectedOrder.shippingAddress?.phone}</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-blue-200">
+                <span className="text-gray-600">Tổng tiền</span>
+                <span className="text-xl font-bold text-red-600">{formatPrice(selectedOrder.totalAmount)}</span>
+              </div>
+            </div>
+
+            {/* Payment Method */}
+            <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
+              <FiCreditCard className="text-yellow-600" />
+              <span className="text-yellow-800 font-medium">
+                {selectedOrder.paymentMethod === 'qr_code' ? 'Thanh toán VietQR' : 'Chuyển khoản ngân hàng'}
+              </span>
+            </div>
+
+            {/* Note */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ghi chú (tùy chọn)
+              </label>
+              <textarea
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="Ví dụ: Đã kiểm tra biến động số dư, khớp với số tiền đơn hàng"
+                rows={2}
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50 resize-none"
+              />
+            </div>
+
+            {/* Security Check */}
+            <div className="space-y-4 pt-2 border-t border-gray-100">
+              <div>
+                <label className="block text-sm font-medium text-red-600 mb-2">
+                  Mã bảo mật Admin (PIN) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={securityPIN}
+                  onChange={(e) => setSecurityPIN(e.target.value)}
+                  placeholder="Nhập mã bảo mật để xác nhận..."
+                  className="w-full px-4 py-3 border border-red-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 bg-red-50 text-center font-bold tracking-[0.5em]"
+                />
+              </div>
+
+              <label className="flex items-start gap-3 p-3 bg-green-50 rounded-xl cursor-pointer hover:bg-green-100 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={doubleCheck}
+                  onChange={(e) => setDoubleCheck(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                />
+                <span className="text-sm text-green-800 font-medium">
+                  Tôi xác nhận đã kiểm tra biến động số dư và số tiền khớp với mã đơn hàng <strong>#{selectedOrder.orderNumber}</strong>
+                </span>
+              </label>
+            </div>
+
+            <p className="text-center text-xs text-gray-400 italic">
+              * Hành động này sẽ ghi lại nhật ký với định danh người thực hiện.
+            </p>
           </div>
         )}
       </Modal>

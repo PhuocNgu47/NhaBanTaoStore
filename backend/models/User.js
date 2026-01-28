@@ -79,7 +79,7 @@ const userSchema = new mongoose.Schema({
   // Account Status
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'staff', 'owner', 'admin'],
     default: 'user'
   },
   isEmailVerified: {
@@ -130,13 +130,13 @@ const userSchema = new mongoose.Schema({
 });
 
 // Auto update updatedAt
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcryptjs.genSalt(10);
   this.password = await bcryptjs.hash(this.password, salt);
@@ -144,7 +144,7 @@ userSchema.pre('save', async function(next) {
 });
 
 // Method to compare passwords
-userSchema.methods.comparePassword = async function(enteredPassword) {
+userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcryptjs.compare(enteredPassword, this.password);
 };
 
