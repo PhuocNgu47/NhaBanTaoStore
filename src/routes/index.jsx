@@ -17,6 +17,7 @@ const SearchPage = lazy(() => import('../pages/SearchPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
 const StoresPage = lazy(() => import('../pages/StoresPage')); // Added StoresPage
 const TechPage = lazy(() => import('../pages/TechPage')); // Added TechPage
+const TechDetailPage = lazy(() => import('../pages/TechDetailPage')); // Added TechDetailPage
 const TrackOrderPage = lazy(() => import('../pages/TrackOrderPage'));
 const OrderSuccessPage = lazy(() => import('../pages/OrderSuccessPage'));
 
@@ -136,6 +137,14 @@ const router = createBrowserRouter([
         element: (
           <LazyPage>
             <TechPage />
+          </LazyPage>
+        ),
+      },
+      {
+        path: 'goc-cong-nghe/:slug',
+        element: (
+          <LazyPage>
+            <TechDetailPage />
           </LazyPage>
         ),
       },
