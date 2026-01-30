@@ -28,31 +28,31 @@ const cartSlice = createSlice({
   },
   reducers: {
     addToCart: (state, action) => {
-      const { id, name, price, image, quantity = 1, variant } = action.payload;
+      const { id, name, price, image, quantity = 1, variant, variantId } = action.payload;
       const existingItem = state.items.find(
-        (item) => item.id === id && item.variant === variant
+        (item) => item.id === id && (variantId ? item.variantId === variantId : item.variant === variant)
       );
 
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
-        state.items.push({ id, name, price, image, quantity, variant });
+        state.items.push({ id, name, price, image, quantity, variant, variantId });
       }
       saveCartToStorage(state.items);
     },
 
     removeFromCart: (state, action) => {
-      const { id, variant } = action.payload;
+      const { id, variant, variantId } = action.payload;
       state.items = state.items.filter(
-        (item) => !(item.id === id && item.variant === variant)
+        (item) => !(item.id === id && (variantId ? item.variantId === variantId : item.variant === variant))
       );
       saveCartToStorage(state.items);
     },
 
     updateQuantity: (state, action) => {
-      const { id, variant, quantity } = action.payload;
+      const { id, variant, variantId, quantity } = action.payload;
       const item = state.items.find(
-        (item) => item.id === id && item.variant === variant
+        (item) => item.id === id && (variantId ? item.variantId === variantId : item.variant === variant)
       );
       if (item) {
         item.quantity = Math.max(1, quantity);

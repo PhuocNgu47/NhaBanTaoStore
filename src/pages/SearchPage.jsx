@@ -1,28 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/common';
 import { FiSearch } from 'react-icons/fi';
+import { productService } from '../services/productService';
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [searchQuery, setSearchQuery] = useState(query);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Mock search results
-  const results = query
-    ? [
-        {
-          id: 1,
-          name: 'iPad Pro 11 inch M4 2024 WiFi',
-          slug: 'ipad-pro-11-inch-m4-2024-wifi',
-          price: 23990000,
-          originalPrice: 36990000,
-          image: '/products/ipad-pro.jpg',
-          category: 'iPad',
-          inStock: true,
-        },
-      ]
-    : [];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (!query) return; /* Keep empty if no query, or could reset products */
+
+      setLoading(true);
+      try {
+        const data = await productService.searchProducts(query);
+        if (data.success) {
+          setProducts(data.products || []);
+        }
+      } catch (error) {
+        console.error('Failed to search products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [query]);
+
+  // Results used to be 'results', now use 'products'
+  const results = products;
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -58,10 +68,17 @@ const SearchPage = () => {
           <>
             <h1 className="text-xl text-gray-800 mb-6">
               Kết quả tìm kiếm cho: <span className="font-bold">"{query}"</span>
-              <span className="text-gray-500 ml-2">({results.length} sản phẩm)</span>
+              <span className="text-gray-500 ml-2">
+                {loading ? '...' : `(${results.length} sản phẩm)`}
+              </span>
             </h1>
 
-            {results.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                <p className="mt-2 text-gray-600">Đang tìm kiếm...</p>
+              </div>
+            ) : results.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {results.map((product) => (
                   <ProductCard key={product.id} product={product} />
