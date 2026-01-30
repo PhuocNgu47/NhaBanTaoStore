@@ -302,25 +302,17 @@ const buildProductQuery = (filters) => {
     ];
   }
 
-  // Tìm kiếm theo tên hoặc mô tả (không phân biệt hoa thường)
+  // Tìm kiếm theo tên (không phân biệt hoa thường)
   if (search) {
     // Nếu đã có $or từ category, cần kết hợp với $and
     if (query.$or) {
       query.$and = [
         { $or: query.$or },
-        {
-          $or: [
-            { name: { $regex: search, $options: 'i' } },
-            { description: { $regex: search, $options: 'i' } }
-          ]
-        }
+        { name: { $regex: search, $options: 'i' } }
       ];
       delete query.$or;
     } else {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
+      query.name = { $regex: search, $options: 'i' };
     }
   }
 
@@ -433,11 +425,7 @@ export const searchProducts = async (options = {}) => {
 
   const query = {
     status: 'active',
-    $or: [
-      { name: { $regex: q, $options: 'i' } },
-      { description: { $regex: q, $options: 'i' } },
-      { tags: { $in: [new RegExp(q, 'i')] } }
-    ]
+    name: { $regex: q, $options: 'i' }
   };
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
