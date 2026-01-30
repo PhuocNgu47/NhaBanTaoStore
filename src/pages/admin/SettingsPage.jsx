@@ -320,7 +320,13 @@ const AdminSettingsPage = () => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-gray-800">Cài đặt chung</h2>
-              <button onClick={() => handleSaveSection('general')} className="btn-save-section">Lưu phần này</button>
+              <button
+                onClick={() => handleSaveSection('general')}
+                className="px-6 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 ring-4 ring-green-100 active:scale-95 disabled:opacity-50 transition-all flex items-center"
+              >
+                <FiSave className="inline-block mr-2" />
+                Lưu phần này
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -362,7 +368,13 @@ const AdminSettingsPage = () => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-gray-800">Liên kết mạng xã hội</h2>
-              <button onClick={() => handleSaveSection('social')} className="btn-save-section">Lưu phần này</button>
+              <button
+                onClick={() => handleSaveSection('social')}
+                className="px-6 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 ring-4 ring-green-100 active:scale-95 disabled:opacity-50 transition-all flex items-center"
+              >
+                <FiSave className="inline-block mr-2" />
+                Lưu phần này
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {['facebook', 'instagram', 'youtube', 'tiktok'].map(social => (
@@ -384,7 +396,13 @@ const AdminSettingsPage = () => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-gray-800">Cài đặt vận chuyển</h2>
-              <button onClick={() => handleSaveSection('shipping')} className="btn-save-section">Lưu phần này</button>
+              <button
+                onClick={() => handleSaveSection('shipping')}
+                className="px-6 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 ring-4 ring-green-100 active:scale-95 disabled:opacity-50 transition-all flex items-center"
+              >
+                <FiSave className="inline-block mr-2" />
+                Lưu phần này
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -404,7 +422,13 @@ const AdminSettingsPage = () => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-gray-800">Phương thức thanh toán</h2>
-              <button onClick={() => handleSaveSection('payment')} className="btn-save-section">Lưu phần này</button>
+              <button
+                onClick={() => handleSaveSection('payment')}
+                className="px-6 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 ring-4 ring-green-100 active:scale-95 disabled:opacity-50 transition-all flex items-center"
+              >
+                <FiSave className="inline-block mr-2" />
+                Lưu phần này
+              </button>
             </div>
             <div className="space-y-6">
               {/* Payment Methods Toggle */}
@@ -467,7 +491,13 @@ const AdminSettingsPage = () => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-gray-800">Quản lý tài khoản ngân hàng</h2>
-              <button onClick={() => handleSaveSection('bank')} className="btn-save-section">Lưu danh sách</button>
+              <button
+                onClick={() => handleSaveSection('bank')}
+                className="px-6 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 ring-4 ring-green-100 active:scale-95 disabled:opacity-50 transition-all flex items-center"
+              >
+                <FiSave className="inline-block mr-2" />
+                Lưu danh sách
+              </button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -579,7 +609,7 @@ const AdminSettingsPage = () => {
             @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none;
         }
         .btn-save-section {
-            @apply px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition;
+            @apply px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-xl hover:bg-green-700 shadow-lg hover:shadow-green-200 ring-4 ring-green-100 active:scale-95 disabled:opacity-50 transition-all flex items-center;
         }
         .checkbox {
             @apply w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500;
