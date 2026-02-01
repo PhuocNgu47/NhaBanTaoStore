@@ -227,6 +227,7 @@ const ProductDetailPage = () => {
       image: images[0],
       quantity,
       variant: selectedVariant?.name || 'Mặc định',
+      variantId: selectedVariant?._id,
     });
   };
 
@@ -239,6 +240,7 @@ const ProductDetailPage = () => {
       image: images[0],
       quantity,
       variant: selectedVariant?.name || 'Mặc định',
+      variantId: selectedVariant?._id,
     };
     navigate('/thanh-toan', { state: { buyNowItem } });
   };
@@ -303,8 +305,8 @@ const ProductDetailPage = () => {
                       key={index}
                       onClick={() => setSelectedImage(index)}
                       className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
-                          ? 'border-blue-600 ring-2 ring-blue-200'
-                          : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-600 ring-2 ring-blue-200'
+                        : 'border-gray-200 hover:border-gray-300'
                         }`}
                     >
                       <img
@@ -367,10 +369,10 @@ const ProductDetailPage = () => {
                           onClick={() => available && setSelectedType(type)}
                           disabled={!available}
                           className={`relative px-4 py-2 border-2 rounded-xl font-medium transition-all ${selectedType === type
-                              ? `${typeConfig?.color || 'border-blue-600 bg-blue-50 text-blue-700'} border-2 shadow-sm`
-                              : available
-                                ? 'border-gray-300 text-gray-700 hover:border-gray-400'
-                                : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                            ? `${typeConfig?.color || 'border-blue-600 bg-blue-50 text-blue-700'} border-2 shadow-sm`
+                            : available
+                              ? 'border-gray-300 text-gray-700 hover:border-gray-400'
+                              : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
                             }`}
                         >
                           <span className="mr-1">{typeConfig?.badge}</span>
@@ -405,10 +407,10 @@ const ProductDetailPage = () => {
                           onClick={() => available && setSelectedModel(model)}
                           disabled={!available}
                           className={`relative px-5 py-3 border-2 rounded-xl font-medium transition-all ${selectedModel === model
-                              ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                              : available
-                                ? 'border-gray-300 text-gray-700 hover:border-gray-400'
-                                : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                            : available
+                              ? 'border-gray-300 text-gray-700 hover:border-gray-400'
+                              : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
                             }`}
                         >
                           {modelConfig?.label || model}
@@ -435,10 +437,10 @@ const ProductDetailPage = () => {
                           onClick={() => available && setSelectedStorage(storage)}
                           disabled={!available}
                           className={`relative px-6 py-3 border-2 rounded-xl font-medium transition-all ${selectedStorage === storage
-                              ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                              : available
-                                ? 'border-gray-300 text-gray-700 hover:border-gray-400'
-                                : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50 line-through'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                            : available
+                              ? 'border-gray-300 text-gray-700 hover:border-gray-400'
+                              : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50 line-through'
                             }`}
                         >
                           {storage}
@@ -465,10 +467,10 @@ const ProductDetailPage = () => {
                           onClick={() => available && setSelectedColor(color)}
                           disabled={!available}
                           className={`relative px-5 py-3 border-2 rounded-xl font-medium transition-all ${selectedColor === color
-                              ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
-                              : available
-                                ? 'border-gray-300 text-gray-700 hover:border-gray-400'
-                                : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                            : available
+                              ? 'border-gray-300 text-gray-700 hover:border-gray-400'
+                              : 'border-gray-200 text-gray-400 cursor-not-allowed opacity-50'
                             }`}
                         >
                           {color}
@@ -540,8 +542,8 @@ const ProductDetailPage = () => {
                   onClick={handleBuyNow}
                   disabled={isOutOfStock}
                   className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl ${isOutOfStock
-                      ? 'bg-gray-400 text-white cursor-not-allowed opacity-70'
-                      : 'bg-red-600 hover:bg-red-700 text-white'
+                    ? 'bg-gray-400 text-white cursor-not-allowed opacity-70'
+                    : 'bg-red-600 hover:bg-red-700 text-white'
                     }`}
                 >
                   {isOutOfStock ? 'HẾT HÀNG' : 'MUA NGAY'}
@@ -550,8 +552,8 @@ const ProductDetailPage = () => {
                   <button
                     disabled={isOutOfStock}
                     className={`py-3 rounded-xl font-semibold transition-all ${isOutOfStock
-                        ? 'bg-gray-300 text-white cursor-not-allowed opacity-70'
-                        : 'bg-blue-700 hover:bg-blue-800 text-white'
+                      ? 'bg-gray-300 text-white cursor-not-allowed opacity-70'
+                      : 'bg-blue-700 hover:bg-blue-800 text-white'
                       }`}
                   >
                     MUA TRẢ GÓP
@@ -560,8 +562,8 @@ const ProductDetailPage = () => {
                     onClick={handleAddToCart}
                     disabled={isOutOfStock}
                     className={`border-2 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${isOutOfStock
-                        ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
-                        : 'border-blue-700 text-blue-700 hover:bg-blue-50'
+                      ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
+                      : 'border-blue-700 text-blue-700 hover:bg-blue-50'
                       }`}
                   >
                     <FiShoppingCart className="w-5 h-5" />

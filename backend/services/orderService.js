@@ -12,10 +12,10 @@ import * as couponService from './couponService.js';
  * Lấy danh sách orders với phân trang và filter (Admin hoặc User)
  */
 export const getOrders = async (userId, isAdmin = false, options = {}) => {
-  const { 
-    page = 1, 
-    limit = 20, 
-    status, 
+  const {
+    page = 1,
+    limit = 20,
+    status,
     paymentStatus,
     search,
     sortBy = '-createdAt',
@@ -24,7 +24,7 @@ export const getOrders = async (userId, isAdmin = false, options = {}) => {
   } = options;
 
   let query = {};
-  
+
   if (!isAdmin) {
     query.userId = userId;
   }
@@ -89,7 +89,7 @@ export const getOrders = async (userId, isAdmin = false, options = {}) => {
  */
 export const getOrderStats = async (options = {}) => {
   const { startDate, endDate } = options;
-  
+
   let dateFilter = {};
   if (startDate || endDate) {
     dateFilter.createdAt = {};
@@ -112,20 +112,20 @@ export const getOrderStats = async (options = {}) => {
   // Revenue stats
   const revenueStats = await Order.aggregate([
     { $match: { ...dateFilter, status: { $nin: ['cancelled', 'refunded'] } } },
-    { 
-      $group: { 
-        _id: null, 
+    {
+      $group: {
+        _id: null,
         totalRevenue: { $sum: '$totalAmount' },
         totalOrders: { $sum: 1 },
         avgOrderValue: { $avg: '$totalAmount' }
-      } 
+      }
     }
   ]);
 
   // Daily orders (last 30 days)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
+
   const dailyOrders = await Order.aggregate([
     { $match: { createdAt: { $gte: thirtyDaysAgo } } },
     {
@@ -218,25 +218,25 @@ export const createOrder = async (orderData, userId = null) => {
 
   // Validate required fields - Business logic: Accept either dropdown selection (with codes) OR manual input (text only)
   const missingFields = [];
-  
+
   if (!shippingAddress.name?.trim()) {
     missingFields.push('Họ tên');
   }
-  
+
   if (!shippingAddress.phone?.trim()) {
     missingFields.push('Số điện thoại');
   }
-  
+
   // City/Province: Accept either provinceCode (dropdown) OR city (manual input)
   if (!shippingAddress.provinceCode && !shippingAddress.city?.trim()) {
     missingFields.push('Thành phố/Tỉnh (chọn từ danh sách hoặc nhập thủ công)');
   }
-  
+
   // District: Accept either districtCode (dropdown) OR district (manual input)
   if (!shippingAddress.districtCode && !shippingAddress.district?.trim()) {
     missingFields.push('Quận/Huyện (chọn từ danh sách hoặc nhập thủ công)');
   }
-  
+
   // Ward: Accept either wardCode (dropdown) OR ward (manual input)
   if (!shippingAddress.wardCode && !shippingAddress.ward?.trim()) {
     missingFields.push('Phường/Xã (chọn từ danh sách hoặc nhập thủ công)');
@@ -257,9 +257,9 @@ export const createOrder = async (orderData, userId = null) => {
   // - If user is authenticated, get email from User model
   // - If guest, use guestEmail (required)
   let contactEmail = null;
-  
+
   console.log('📧 Email check - userId:', userId, 'guestEmail:', guestEmail);
-  
+
   if (userId) {
     // User is authenticated - get email from User model
     try {
@@ -275,19 +275,19 @@ export const createOrder = async (orderData, userId = null) => {
       console.error('❌ Error fetching user email:', err);
     }
   }
-  
+
   // If user is authenticated but no email in DB, use guestEmail if provided
   if (userId && !contactEmail && guestEmail) {
     contactEmail = guestEmail.trim();
     console.log('✅ Using guestEmail for authenticated user:', contactEmail);
   }
-  
+
   // If still no email, use guestEmail
   if (!contactEmail && guestEmail) {
     contactEmail = guestEmail.trim();
     console.log('✅ Using guestEmail:', contactEmail);
   }
-  
+
   // Final validation: Must have email
   // Guest checkout: Email is REQUIRED
   if (!contactEmail) {
@@ -305,7 +305,7 @@ export const createOrder = async (orderData, userId = null) => {
       }
     }
   }
-  
+
   // Final check - must have email
   if (!contactEmail) {
     throw new Error('Email là bắt buộc để nhận thông tin đơn hàng. Vui lòng đăng nhập hoặc nhập email.');
@@ -358,24 +358,27 @@ export const createOrder = async (orderData, userId = null) => {
       throw new Error(`Sản phẩm "${itemName}" ${variantName ? `(${variantName})` : ''} không đủ tồn kho. Còn lại: ${itemStock}`);
     }
 
-    // Reserve stock (chỉ reserve, chưa trừ stock thật)
-    // Stock thật sẽ được trừ khi order chuyển sang confirmed/processing
-    if (variant) {
-      variant.reserved = (variant.reserved || 0) + quantity;
-      // Validate: reserved không được vượt quá stock
-      if (variant.reserved > variant.stock) {
-        throw new Error(`Không đủ tồn kho cho sản phẩm "${itemName}" ${variantName ? `(${variantName})` : ''}`);
-      }
+    // Deduct stock instead of reserving
+    let targetVariant = variant;
+
+    // Fallback: Nếu không có variantId nhưng product có variants, thử tìm theo variant name
+    if (!targetVariant && product.variants?.length > 0 && item.variant) {
+      targetVariant = product.variants.find(v => v.name === item.variant);
+    }
+
+    if (targetVariant) {
+      const oldStock = targetVariant.stock;
+      targetVariant.stock = Math.max(0, targetVariant.stock - quantity);
+      console.log(`[STOCKS] Product: ${product.name}, Variant: ${targetVariant.name}, Old Stock: ${oldStock}, New Stock: ${targetVariant.stock}`);
+      product.markModified('variants');
     } else {
-      // Nếu không có variant, sử dụng product stock
-      // Note: Product model không có reserved field, nên chỉ validate
-      // Stock thật sẽ được trừ khi order confirmed
-      if (product.stock < quantity) {
-        throw new Error(`Không đủ tồn kho cho sản phẩm "${itemName}"`);
-      }
+      const oldStock = product.stock;
+      product.stock = Math.max(0, product.stock - quantity);
+      console.log(`[STOCKS] Product: ${product.name}, Old Stock: ${oldStock}, New Stock: ${product.stock}`);
     }
 
     await product.save();
+    console.log(`[STOCKS] Product ${product.name} saved successfully.`);
 
     // Tính subtotal
     const itemSubtotal = itemPrice * quantity;
@@ -397,7 +400,7 @@ export const createOrder = async (orderData, userId = null) => {
   // Validate và apply coupon discount nếu có
   let finalDiscount = 0;
   let couponId = null;
-  
+
   if (couponCode) {
     try {
       // Validate coupon với subtotal
@@ -514,10 +517,11 @@ export const updateOrderStatus = async (orderId, status, note, adminId, tracking
 
   // Inventory management based on status change
   if (oldStatus !== status) {
-    // Nếu chuyển từ pending sang confirmed: Trừ stock thật
-    if (oldStatus === 'pending' && status === 'confirmed') {
-      await deductStock(order);
-    }
+    // Stock is now deducted immediately upon order creation.
+    // Transitioning to confirmed no longer needs to call deductStock.
+    // if (oldStatus === 'pending' && status === 'confirmed') {
+    //   await deductStock(order);
+    // }
 
     // Nếu hủy order: Restore stock
     if (status === 'cancelled' && oldStatus !== 'cancelled') {
@@ -534,7 +538,7 @@ export const updateOrderStatus = async (orderId, status, note, adminId, tracking
 
   // Update status
   order.status = status;
-  
+
   // Add to status history
   if (!order.statusHistory) {
     order.statusHistory = [];
@@ -546,7 +550,7 @@ export const updateOrderStatus = async (orderId, status, note, adminId, tracking
     note: note || null,
     trackingNumber: trackingNumber || null
   });
-  
+
   // Mark statusHistory as modified so Mongoose knows it changed
   order.markModified('statusHistory');
 
@@ -631,12 +635,10 @@ const deductStock = async (order) => {
     if (item.variantId) {
       const variant = product.variants.id(item.variantId);
       if (variant) {
-        // Trừ stock thật và giảm reserved
+        // Trừ stock thật
         variant.stock = Math.max(0, variant.stock - item.quantity);
-        variant.reserved = Math.max(0, (variant.reserved || 0) - item.quantity);
       }
     } else {
-      // Backward compatible: trừ ở product level
       product.stock = Math.max(0, (product.stock || 0) - item.quantity);
     }
 
@@ -655,12 +657,10 @@ const restoreStock = async (order) => {
     if (item.variantId) {
       const variant = product.variants.id(item.variantId);
       if (variant) {
-        // Restore stock và giảm reserved
+        // Restore stock
         variant.stock = (variant.stock || 0) + item.quantity;
-        variant.reserved = Math.max(0, (variant.reserved || 0) - item.quantity);
       }
     } else {
-      // Backward compatible: restore ở product level
       product.stock = (product.stock || 0) + item.quantity;
     }
 
@@ -770,7 +770,7 @@ export const getGuestOrder = async (email, orderNumber) => {
   // Normalize email: lowercase và trim
   const normalizedEmail = email ? email.trim().toLowerCase() : '';
   const normalizedOrderNumber = orderNumber ? String(orderNumber).trim() : '';
-  
+
   if (!normalizedEmail || !normalizedOrderNumber) {
     throw new Error('Vui lòng nhập đầy đủ mã đơn hàng và email.');
   }
@@ -779,7 +779,7 @@ export const getGuestOrder = async (email, orderNumber) => {
   const order = await Order.findOne({
     $or: [
       // Exact match với email đã normalize
-      { 
+      {
         guestEmail: { $regex: new RegExp(`^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
         orderNumber: normalizedOrderNumber
       },

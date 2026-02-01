@@ -67,10 +67,10 @@ export const getOverviewStats = async () => {
   const revenue = totalRevenue[0]?.total || 0;
   const todayRev = todayRevenue[0]?.total || 0;
   const yesterdayRev = yesterdayRevenue[0]?.total || 0;
-  
+
   // Calculate growth percentage
-  const revenueGrowth = yesterdayRev > 0 
-    ? Math.round(((todayRev - yesterdayRev) / yesterdayRev) * 100) 
+  const revenueGrowth = yesterdayRev > 0
+    ? Math.round(((todayRev - yesterdayRev) / yesterdayRev) * 100)
     : todayRev > 0 ? 100 : 0;
 
   return {
@@ -96,7 +96,7 @@ export const getOverviewStats = async () => {
 export const getRevenueStats = async (period = '30days') => {
   let startDate = new Date();
   let groupFormat = '%Y-%m-%d';
-  
+
   if (period === '7days') {
     startDate.setDate(startDate.getDate() - 7);
   } else if (period === '30days') {

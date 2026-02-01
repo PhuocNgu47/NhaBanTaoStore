@@ -41,6 +41,7 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, role, logout } = useAuth();
+  const location = useLocation();
 
   const allowedAdminRoles = ['admin', 'owner', 'staff'];
   const hasAccess = allowedAdminRoles.includes(role);
