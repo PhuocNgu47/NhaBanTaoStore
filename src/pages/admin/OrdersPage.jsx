@@ -121,6 +121,20 @@ const AdminOrdersPage = () => {
       if (response.success && response.stats) {
         // Transform stats to match expected format
         const statsData = response.stats;
+        
+        // Validate and sanitize revenue data
+        const revenue = statsData.revenue || {};
+        const avgOrderValue = revenue.avgOrderValue;
+        
+        // Ensure avgOrderValue is a valid number
+        let safeAvgOrderValue = 0;
+        if (avgOrderValue !== null && avgOrderValue !== undefined) {
+          const numValue = Number(avgOrderValue);
+          if (isFinite(numValue) && !isNaN(numValue) && numValue >= 0) {
+            safeAvgOrderValue = Math.round(numValue);
+          }
+        }
+        
         setStats({
           total: statsData.byStatus ? Object.values(statsData.byStatus).reduce((a, b) => a + b, 0) : 0,
           pending: statsData.byStatus?.pending || 0,
@@ -128,7 +142,12 @@ const AdminOrdersPage = () => {
           shipped: statsData.byStatus?.shipped || 0,
           delivered: statsData.byStatus?.delivered || 0,
           cancelled: statsData.byStatus?.cancelled || 0,
-          revenue: statsData.revenue || {},
+          revenue: {
+            ...revenue,
+            avgOrderValue: safeAvgOrderValue,
+            totalRevenue: revenue.totalRevenue || 0,
+            totalOrders: revenue.totalOrders || 0
+          },
         });
       }
     } catch (error) {

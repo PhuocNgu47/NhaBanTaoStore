@@ -108,7 +108,7 @@ const productSchema = new mongoose.Schema({
 
 // Indexes
 // SKU: sparse unique index (allows multiple null but unique for actual values)
-productSchema.index({ sku: 1 }, { unique: true, sparse: true });
+// productSchema.index({ sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ category: 1, status: 1 });
 productSchema.index({ 'variants.sku': 1 });
 productSchema.index({ rating: -1, reviewCount: -1 });

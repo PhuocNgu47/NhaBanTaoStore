@@ -8,7 +8,22 @@ export const formatCurrency = (amount) => {
 
 // Format price with dots (e.g., 1.000.000đ)
 export const formatPrice = (price) => {
-  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ';
+  // Handle invalid values
+  if (price === null || price === undefined || isNaN(price) || !isFinite(price)) {
+    return '0đ';
+  }
+  
+  // Convert to number and round to nearest integer
+  const numPrice = Number(price);
+  if (numPrice === 0) {
+    return '0đ';
+  }
+  
+  // Round to avoid floating point issues
+  const roundedPrice = Math.round(numPrice);
+  
+  // Format with dots
+  return roundedPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ';
 };
 
 // Calculate discount percentage

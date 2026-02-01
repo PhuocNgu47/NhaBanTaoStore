@@ -27,6 +27,9 @@ const getAIClient = () => {
  */
 export const analyzeLeadBehavior = async (lead) => {
     try {
+        if (process.env.AI_ENABLED === 'false') {
+            throw new Error('AI Service is currently disabled');
+        }
         const model = getAIClient().getGenerativeModel({ model: 'gemini-flash-latest' });
 
         // Prepare lead data summary for AI
@@ -79,7 +82,11 @@ Hãy phân tích và trả về JSON với format sau (chỉ trả về JSON, kh
 
         throw new Error('Invalid AI response format');
     } catch (error) {
-        console.error('AI Analysis error:', error);
+        if (error.status === 429 || error.message?.includes('429')) {
+            console.warn('⚠️ Gemini Quota Exceeded. Returning fallback insights.');
+        } else {
+            console.error('AI Analysis error:', error);
+        }
         // Return fallback insights
         return {
             leadScore: 50,
@@ -120,6 +127,9 @@ export const batchAnalyzeLeads = async (leadIds) => {
  */
 export const generateMarketInsights = async () => {
     try {
+        if (process.env.AI_ENABLED === 'false') {
+            throw new Error('AI Service is currently disabled');
+        }
         const model = getAIClient().getGenerativeModel({ model: 'gemini-flash-latest' });
 
         // Aggregate lead statistics
@@ -192,7 +202,11 @@ Hãy phân tích và trả về JSON (chỉ trả về JSON):
 
         throw new Error('Invalid AI response');
     } catch (error) {
-        console.error('Market insights error:', error);
+        if (error.status === 429 || error.message?.includes('429')) {
+            console.warn('⚠️ Gemini Quota Exceeded. Returning fallback statistics.');
+        } else {
+            console.error('Market insights error:', error);
+        }
         return {
             success: false,
             error: error.message,
@@ -209,6 +223,9 @@ Hãy phân tích và trả về JSON (chỉ trả về JSON):
  */
 export const generateChatResponse = async (message, context = {}) => {
     try {
+        if (process.env.AI_ENABLED === 'false') {
+            throw new Error('AI Service is currently disabled');
+        }
         const model = getAIClient().getGenerativeModel({ model: 'gemini-flash-latest' });
 
         // Fetch some products for context (featured or random active)
@@ -253,7 +270,11 @@ Trả lời ngay (không quá 3-4 câu):`;
         const response = await result.response;
         return response.text().trim();
     } catch (error) {
-        console.error('Chat response error:', error);
+        if (error.status === 429 || error.message?.includes('429')) {
+            console.warn('⚠️ Gemini Quota Exceeded. Returning fallback chat response.');
+        } else {
+            console.error('Chat response error:', error);
+        }
         return `U là trời, "Táo Quân" đang bận đi ship hàng tí xíu! 🍎
         
 📞 Cần gấp thì alo: **0935 771 670** nha ${context.customerInfo?.name || ''}!`;

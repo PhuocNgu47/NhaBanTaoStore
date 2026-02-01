@@ -1,78 +1,23 @@
-# 📱 HƯỚNG DẪN THÊM SẢN PHẨM
+Apple Watch Ultra 3 LTE 49mm Vỏ Titan Tự Nhiên - Dây đeo cao su Ocean - Chính Hãng VN/A
+23.100.000 VND 23.520.000 VND
 
-Dán thông tin sản phẩm theo format dưới đây. Mỗi sản phẩm cách nhau bằng dòng `---`.
 
-## FORMAT MẪU:
 
-```
-===SẢN PHẨM===
-Tên: [Tên sản phẩm]
-Giá: [Giá bán] VND
-Giá gốc: [Giá gốc nếu có] VND
-Ảnh: [Link ảnh chính]
-Danh mục: [iphone/ipad/macbook/airpods/apple-watch/phu-kien]
-Loại: [nguyen-seal/openbox/cpo]
+ ảnh 
+https://nhataostore.com/Content/Images/SanPham/apple-watch-ultra-3-lte-49mm-vo-titan-tu-nhien-day-deo-cao-su-ocean-chinh-hang-vna-den.png?v%2023/10/2025%2012:38:01%20SA
 
-Mô tả:
-[Mô tả chi tiết sản phẩm...]
+https://nhataostore.com/Content/Images/SanPham/apple-watch-ultra-3-lte-49mm-vo-titan-tu-nhien-day-deo-cao-su-ocean-chinh-hang-vna-xanh-da-quang.png?v%2023/10/2025%2012:38:01%20SA
 
-Thông số:
-- Màn hình: ...
-- Chip: ...
-- Camera: ...
-- Pin: ...
-- Bộ nhớ: ...
+https://nhataostore.com/Content/Images/SanPham/apple-watch-ultra-3-lte-49mm-vo-titan-tu-nhien-day-deo-cao-su-ocean-chinh-hang-vna-xanh-mo-neo.png?v%2023/10/2025%2012:38:01%20SA
 
-Variants (nếu có nhiều phiên bản):
-- [Tên variant 1] | [Giá] | [Số lượng]
-- [Tên variant 2] | [Giá] | [Số lượng]
-```
 
----
+THÔNG TIN SẢN PHẨM
+Apple Watch Ultra 3: Đồng Hồ Thông Minh Cao Cấp Cho Người Yêu Thể Thao Và Phiêu Lưu
+Apple Watch Ultra 3 là chiếc đồng hồ thông minh cao cấp mới nhất từ Apple, được thiết kế dành riêng cho những ai đam mê thể thao, phiêu lưu và lối sống năng động. Với vỏ titanium tự nhiên hoặc đen, màn hình Retina Luôn Bật sáng đến 3000 nit, và thời lượng pin ấn tượng lên đến 42 giờ, đây là người bạn đồng hành lý tưởng cho mọi hành trình. Hãy khám phá lý do tại sao bạn nên sở hữu Apple Watch Ultra 3 chính hãng tại Nhà Táo ngay hôm nay!
 
-## VÍ DỤ THỰC TẾ (iPhone Xs):
+https://nhataostore.com/Content/Images/Images/20251023001402.png
 
-```
-===SẢN PHẨM===
-Tên: iPhone Xs 64GB - Like New
-Giá: 4480000 VND
-Giá gốc: 4560000 VND
-Ảnh: https://nhataostore.com/Content/Images/SanPham/iphone-xs-64gb-like-new-den.jpeg
-Danh mục: iphone
-Loại: cpo
+https://nhataostore.com/Content/Images/Images/20251023001601.png
 
-Mô tả:
-iPhone Xs 64GB Like New - Smartphone cao cấp sử dụng Face ID đầu tiên của Apple. 
-Ra mắt năm 2018, được cải tiến từ iPhone X với chip A12 Bionic mạnh mẽ.
-Camera kép 12MP, hỗ trợ quay video 4K. Màn hình Super Retina OLED 5.8 inch sắc nét.
-Chống nước IP68, sạc không dây, Face ID nhận diện khuôn mặt.
-
-Thông số:
-- Màn hình: Super Retina OLED 5.8 inches, 1125 x 2436 pixels
-- Chip: Apple A12 Bionic 6 nhân
-- Camera sau: 12 MP kép
-- Camera trước: 7 MP
-- Bộ nhớ: 64 GB
-- Pin: Li-Po, sạc không dây
-- Chống nước: IP68
-- Kích thước: 143.6 x 70.9 x 7.7 mm
-- Trọng lượng: 177g
-
-Variants:
-- iPhone Xs 64GB Like New - Đen | 4480000 | 4
-- iPhone Xs 64GB Like New - Vàng | 4480000 | 3
-- iPhone Xs 64GB Like New - Trắng | 4480000 | 3
-```
-
----
-
-## 💡 LƯU Ý:
-1. **Danh mục** phải đúng: `iphone`, `ipad`, `macbook`, `airpods`, `apple-watch`, `phu-kien`
-2. **Loại sản phẩm**: `nguyen-seal` (mới), `openbox` (mở hộp), `cpo` (like new)
-3. Có thể bỏ qua các trường không cần thiết
-4. Sau khi dán xong, báo cho tôi để seed vào database
-
----
-
-# 📦 DÁN SẢN PHẨM CỦA BẠN TẠI ĐÂY:
+https://nhataostore.com/Content/Images/Images/20251023001803.png
 

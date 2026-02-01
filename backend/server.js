@@ -122,6 +122,11 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     mongodb: dbStatus,
+    aiService: {
+      enabled: process.env.AI_ENABLED !== 'false',
+      model: 'gemini-1.5-flash',
+      hasKey: !!process.env.GEMINI_API_KEY
+    },
     version: '1.0.0'
   });
 });
